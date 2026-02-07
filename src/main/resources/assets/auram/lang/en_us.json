@@ -1,0 +1,4 @@
+{
+  "enchantment.auram.chisel": "Ore Chisel",
+  "enchantment.auram.chisel.desc": "Right clicking an ore will chisel off ore-rocks without always breaking the ore block. Higher levels reduce the chances of breaking the block."
+}
