@@ -1,6 +1,7 @@
 package art.arcane.auram.quests;
 
 import art.arcane.auram.AuramConfig;
+import art.arcane.auram.quests.rewards.QRewardItem;
 import art.arcane.auram.quests.rewards.QRewardRandom;
 import art.arcane.auram.quests.rewards.QRewardXP;
 import art.arcane.auram.quests.tasks.QTaskItem;
@@ -223,10 +224,10 @@ public class QuestWorkspace {
 
                 if (registryName != null) {
                     QQuest a = buildKillQuest(x, y+1, rewards, registryName, 1, "circle");
-                    QQuest b = buildKillQuest(x, y+2, rewards, registryName, 15, "diamond");
-                    QQuest c = buildKillQuest(x, y+3, rewards, registryName, 50, "pentagon");
-                    QQuest d = buildKillQuest(x, y+4, rewards, registryName, 150, "hexagon");
-                    QQuest e = buildKillQuest(x, y+5, rewards, registryName, 500, "octagon");
+                    QQuest b = buildKillQuest(x, y+2, rewards, registryName, 3+Math.round(Math.random() * 5), "diamond");
+                    QQuest c = buildKillQuest(x, y+3, rewards, registryName, 12+Math.round(Math.random() * 16), "pentagon");
+                    QQuest d = buildKillQuest(x, y+4, rewards, registryName, 36+Math.round(Math.random() * 40), "hexagon");
+                    QQuest e = buildKillQuest(x, y+5, rewards, registryName, 100+Math.round(Math.random() * 129), "octagon");
                     e.dependencies.add(d.id);
                     d.dependencies.add(c.id);
                     c.dependencies.add(b.id);
@@ -437,7 +438,13 @@ public class QuestWorkspace {
                 }
                 
                 quest.rewards.add(new QRewardXP(1+(int)Math.round((Math.random() * 10) * node.recipes.size())));
-                quest.rewards.add(new QRewardRandom(rewards.id));
+                
+                //quest.rewards.add(new QRewardRandom(rewards.id));
+                ItemStack item = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryBuild("ftbquests", "lootcrate")));
+                CompoundTag tag = new CompoundTag();
+                tag.putString("type", rewards.crateId);
+                item.setTag(tag);
+                quest.rewards.add(new QRewardItem(item));
                 createdQuests.put(node.id, quest);
                 quest.hideUntilDepsComplete = true;
                 quest.hideDependencyLines = true;
