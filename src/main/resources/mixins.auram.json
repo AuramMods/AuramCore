@@ -8,6 +8,9 @@
   "mixins": [
     "minecraft.EntitySupportMixin",
     "minecraft.NetherFossilMixin",
+    "minecraft.NoiseChunkMappingMixin",
+    "minecraft.DensityHolderMappingMixin",
+    "minecraft.SplineCoordinateMappingMixin",
     "lithostitched.StructurePoolGeneratorMixin",
     "malum.WeepingWellMixin",
     "midnight.BogStriderEnchantmentMixin",

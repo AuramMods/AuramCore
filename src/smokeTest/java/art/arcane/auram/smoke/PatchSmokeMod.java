@@ -49,6 +49,11 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("mappingscope")) {
+                MappingScopeSmoke.run();
+                Files.writeString(Path.of("auram-mappingscope-pass.txt"), "PASS mapping scope lifetime, bound, visitor and concurrency checks\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("density")) {
                 DensitySmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-density-pass.txt"), "PASS terrain fingerprints, mutation and parallel checks\n");

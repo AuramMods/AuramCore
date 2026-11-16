@@ -112,6 +112,25 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - The cache releases with the assembly, retains at most 1,024 entries and serializes access only within that assembly. It never shares NoiseChunks, columns or RNG state between workers.
 - Twelve fixed-seed village assemblies made 2,473 height queries instead of 3,344. Full serialized structure layouts and RNG fingerprints matched. Timing did not fall proportionally; see the recorded measurements rather than assuming a 26% wall-clock gain.
 
+### 14. Shared Density Graph Mapping
+
+- Variable-depth NoiseChunk routers memoize repeated transformations of shared vanilla density-function branches during each constructor mapping pass.
+- The mapping visitor owns its identity cache, capped at 4,096 inputs. The cache clears on success or failure and is disabled afterward, including when a custom function retains the visitor. There is no world-global or worker-global cache.
+- Each constructor still owns its mutable NoiseChunk state; separate queries return independent columns. Vanilla constant-depth Nether/End routers keep the original mapping pass.
+- Independently booted reference/candidate servers matched column/height fingerprints, parallel queries, mutable-column isolation, and generated NOISE chunks across three seeds and all three vanilla dimensions, with both vanilla terrain and the Tectonic fixture. All 60 structure layout/RNG fingerprints also matched.
+
+Local Tectonic fixture measurements (the reference already contains the early-out/support patches; the final candidate also contains assembly height reuse):
+
+| Workload | Reference | Final candidate |
+| --- | ---: | ---: |
+| Median Overworld column | 20.78 ms | 4.15 ms |
+| 12 meteorite attempts | 58.31 s | 9.53 s |
+| 12 village attempts | 65.91 s | 10.13 s |
+| 12 well attempts | 5.19 s | 1.27 s |
+| 12 mushroom attempts | 0.42 s | 0.09 s |
+
+These measure local workloads, not full-pack throughput or the hosted server. Detailed results, hashes, fixture versions and limitations are in `validation/performance.json`.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -201,6 +220,18 @@ Copied snapshots produced zero identity hits in 7,680 provider comparisons. Reus
 `--mode terrain --with-mod ae2 --with-mod malum --with-mod nyctophobia --with-mod lithostitched --with-mod modernfix --with-mod tectonic` records query reuse and structure-piece/RNG fingerprints across 12 neighboring attempts per structure. `--baseline-jar` runs the identical fixture against a reference jar. The test mod skips spawn-region generation in this dry-run mode; production startup is unchanged.
 
 `--mode heightcache --with-mod lithostitched --with-mod modernfix --with-mod tectonic` checks context keys, eviction and concurrent access. `--mode density` records direct column/height fingerprints, mutable-column isolation, parallel-query equivalence, and two generated NOISE chunks per vanilla dimension for comparison across jars. Use the same terrain mods for a Tectonic fixture.
+
+`--mode mappingscope` checks visitor ownership, the 4,096-input bound, nested failures, completed visitor cleanup and concurrent mapping scopes.
+
+### Remaining Performance Work
+
+- Re-profile Nether -> home on the dedicated host. The regression test proves the stale support path is fixed; the original profile did not record the coordinates needed to attribute every live freeze conclusively.
+- Tom Storage still needs live comparison identity rates and a capability-heavy A/B inventory fixture. Its equality candidate remains test-only because the measured copied snapshots had no identity hits and the candidate did not improve update timing.
+- Broad coordinate/column caching needs multiworker hit-rate data, mutable-column cloning and lifecycle validation. AE2's scans contained no duplicates within an attempt. The scoped patches already avoid much of the graph construction cost without storing terrain results globally.
+- Attribute the expensive datapack commands before rewriting NBT selectors. Cached generic entity NBT can become stale within a tick and can change mod capability serialization behavior.
+- Revisit GC/heap or worker counts only with allocation ownership and comparable measurements on the four-CPU host. Execution samples alone do not identify those settings.
+
+The config review found the relevant ModernFix, FerriteCore and Lithostitched optimizations already enabled. No modpack config, EMC value, live jar, launcher tag or release is changed by this performance goal.
 
 ### Full Build (Includes Auto Deploy Step)
 
