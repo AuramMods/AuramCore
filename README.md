@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.1` |
+| Mod Version | `1.0.2` |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -78,6 +78,14 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - Existing speed modifiers are removed when the relevant chunks are unavailable; Midnight's normal behavior runs when they are loaded.
 - The Mixin is skipped when Midnight is not installed.
 
+### 9. Nonblocking Chunk Compatibility Fixes
+
+- Aether Redux 2.0.19: guard the Highlands quicksoil handler before its supporting-block position getter can read an unavailable chunk. Loaded quicksoil behavior is unchanged.
+- Relics 0.8.0.11: read already-loaded chunks in the fluid collision scan. Unavailable samples are treated as empty; loaded fluid collision calculations and events remain in Relics.
+- Mekanism 10.4.16: mark available chunks dirty without a blocking fetch. If a FULL ticket exists but the chunk is still loading, retain the notification until chunk load or a later tick. Cancelled loads and unloaded levels discard pending entries without creating chunk tickets.
+- These patches affect logical server operations only and are optional when the corresponding mod is absent.
+- MixinSquared 0.3.8 is bundled in the release jar to target the Relics mixin handler without relying on its generated method name. No separate installation is required.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -114,18 +122,33 @@ Main settings include:
 macOS/Linux:
 
 ```bash
-./gradlew reobfJar
+./gradlew reobfJarJar
 ```
 
 Windows:
 
 ```bat
-gradlew.bat reobfJar
+gradlew.bat reobfJarJar
 ```
 
 Primary output:
 
-- `build/libs/auram-1.0.1.jar`
+- `build/libs/auram-1.0.2-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
+
+The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
+
+### Headless Chunk Patch Smoke Test
+
+`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.2-smoke-test.jar`. It is never included in the release jar.
+
+Run this test mod alongside the release jar, ProjectE, Aether Redux, Relics, Mekanism and their dependencies in a disposable Forge 47.4.10 dedicated-server directory with Java 17. Use flat terrain and the Highlands quicksoil setting. The test creates remote chunks and a Mekanism tank and stops the server itself.
+
+Start that server twice in the same disposable directory:
+
+1. The first process exercises all three unavailable-chunk hooks with an injector that throws if they call the blocking chunk-fetch API. It also checks Highlands quicksoil acceleration and the Relics fluid event beside an unavailable chunk, then saves a Mekanism tank containing 1234 mB of water.
+2. The second process exercises the pending FULL-ticket dirty-marking path and verifies that the saved fluid survives a process restart.
+
+Successful completion writes `auram-smoke-pass.txt`; failures are logged and write `auram-smoke-failed.txt`. Keep the test mod out of normal client/server installations.
 
 ### Full Build (Includes Auto Deploy Step)
 

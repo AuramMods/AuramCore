@@ -14,6 +14,8 @@ base {
     archivesName = mod_id
 }
 
+jarJar.enable()
+
 mixin {
     add sourceSets.main, "auram.refmap.json"
     config "mixins.auram.json"
@@ -62,6 +64,7 @@ minecraft {
 sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
+    maven { url "https://maven.bawnorton.com/releases" }
     maven {
         url "https://www.cursemaven.com"
         content {
@@ -81,6 +84,10 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    compileOnly(annotationProcessor('com.github.bawnorton.mixinsquared:mixinsquared-common:0.3.8'))
+    implementation(jarJar('com.github.bawnorton.mixinsquared:mixinsquared-forge:0.3.8')) {
+        jarJar.ranged(it, '[0.3.8,)')
+    }
     implementation fg.deobf("curse.maven:projecte-226410:4901949")
     
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
@@ -120,10 +127,18 @@ tasks.named('jar', Jar).configure {
     finalizedBy 'reobfJar'
 }
 
+tasks.named('jarJar').configure {
+    archiveClassifier = 'all'
+    manifest.from(tasks.jar.manifest)
+    finalizedBy 'reobfJarJar'
+}
+
+reobf { jarJar {} }
+
 publishing {
     publications {
         register('mavenJava', MavenPublication) {
-            artifact jar
+            artifact tasks.named('jarJar')
         }
     }
     repositories {
@@ -138,8 +153,8 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 task deployToModpack(type: Copy) {
-    dependsOn 'reobfJar'
-    from tasks.jar
+    dependsOn 'reobfJarJar'
+    from tasks.jarJar
     into file(modpack_deploy)
 
     rename { String fileName ->
@@ -174,3 +189,18 @@ dependencies
         def version = basename.substring(versionSep + 1)
         runtimeOnly fg.deobf("extra-mods:$artifactId:$version")}
 }
+// Separate production-mapped test mod for isolated, headless server validation.
+sourceSets {
+    smokeTest {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+    }
+}
+configurations.smokeTestAnnotationProcessor.extendsFrom(configurations.annotationProcessor)
+mixin.add(sourceSets.smokeTest, "auram-smoke.refmap.json")
+tasks.register('smokeTestJar', Jar) {
+    from sourceSets.smokeTest.output
+    archiveClassifier = 'smoke-test'
+    manifest.attributes('MixinConfigs': 'mixins.auram.smoke.json')
+    finalizedBy 'reobfSmokeTestJar'
+}
+reobf { smokeTestJar {} }
