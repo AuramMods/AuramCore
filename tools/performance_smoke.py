@@ -88,6 +88,11 @@ if 'aether_redux' in wanted:
     'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
     'level-seed=104729\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
+if args.mode == 'well':
+    settings = (runtime/'server.properties').read_text().splitlines()
+    (runtime/'server.properties').write_text('\n'.join(
+        'level-type=minecraft:normal' if s.startswith('level-type=') else
+        'generator-settings={}' if s.startswith('generator-settings=') else s for s in settings)+'\n')
 command = [args.java, '-Xms1G', '-Xmx4G', '-Dmixin.debug.export=true', f'-Dauram.smoke={args.mode}',
            '@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt', 'nogui']
 print(f'Runtime: {runtime}', flush=True)

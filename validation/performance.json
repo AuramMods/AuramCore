@@ -42,6 +42,43 @@
         "baseline": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-movement-kon5w079/console-1.log",
         "candidate": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-movement-jq46arnn/console-1.log"
       }
+    },
+    {
+      "cycle": 2,
+      "target": "Exact early termination of Malum well flatness checks",
+      "artifact_version": "1.0.3",
+      "candidate_sha256": "d1ba0fe4cc8fa24ea7c62c41457aeae51cba087f41b6d2892fe4f023c971b233",
+      "result": "PASS production-mapped headless Java 17 / Forge 47.4.10 terrain equivalence and A/B benchmark",
+      "benchmark": {
+        "boolean_patterns": 5100,
+        "fixed_seed_cases": 12,
+        "actual_candidate_cases": 4,
+        "paired_calls": 36,
+        "original_columns": 9216,
+        "patched_columns": 4644,
+        "original_median_ms": 402.452,
+        "patched_median_ms": 198.320458
+      },
+      "checks": [
+        "5100 complete-pattern reference comparisons across radii 0..16",
+        "Negative radii retain the original empty-scan/int-threshold behavior",
+        "Exact original query-order prefix retained",
+        "12 terrain cases across fixed seeds 104729, 17 and 1907; 4 use actual getValidY candidate heights",
+        "36 alternating-order timed reference/candidate pairs",
+        "All fixed-seed eligibility results and next worldgen RNG values match",
+        "Actual NoiseBasedChunkGenerator.getBaseColumn probes verify the production Malum mixin reduces calls"
+      ],
+      "fixture": {
+        "malum": "ceda6ce4cc19de21ff6c21a732d8f9270ecc83cdae69027b13aaa24b536307f8",
+        "curios": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+        "lodestone": "e9f8b7bc70ba99d97005f2acee2061b149785fbae3c1e37db08c79197bcc7c2d",
+        "projecte": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      },
+      "limitations": [
+        "Real terrain timing samples are rejection cases; accepting outcomes are covered by deterministic predicate patterns.",
+        "Local function benchmark does not establish a pack-wide percentage gain."
+      ],
+      "evidence": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-well-7pyisahv/console-1.log"
     }
   ]
 }

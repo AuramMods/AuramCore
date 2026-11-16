@@ -49,6 +49,11 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("well")) {
+                WellSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-well-pass.txt"), "PASS Malum equivalence and terrain benchmark\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("movement")) {
                 MovementSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-movement-pass.txt"), "PASS movement support regression checks\n");

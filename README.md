@@ -93,6 +93,13 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - Normal movement retains valid contacts. No enchantment callbacks are cancelled; Soul Speed and Frost Walker continue through their original handlers.
 - The separate movement smoke suite covers stale support, fences/slabs, real command teleports between Nether/End/Overworld, and a real vanilla Nether portal search/return.
 
+### 11. Malum Weeping Well Flatness
+
+- The optional Malum 1.6.7 mixin retains its exact air/ceiling predicate and scan order, returning once the original threshold must pass or cannot be reached.
+- Normal radius 8 scans at most 256 columns and needs 128 matches. There is no change to placement criteria or worldgen RNG usage.
+- The headless `well` suite compares 5,100 predicate patterns and 12 fixed-seed terrain cases, including original candidate heights, against the full-scan reference and checks RNG state.
+- The recorded rejection-workload benchmark uses 49.6% fewer columns; its median check time drops from 402.5 ms to 198.3 ms. This measures the local predicate, not whole-pack generation speed. Accepting patterns are covered separately by the equivalence suite.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -166,6 +173,8 @@ python3 tools/performance_smoke.py --mode movement \
 ```
 
 Use `--baseline-jar /path/to/older/Auram.jar` as a regression control. The 1.0.2 control fails at the forbidden stale-support chunk fetch; the patched version passes. See `validation/performance.json` for recorded results. This runner never copies jars into the live instance.
+
+Use `--mode well --with-mod malum` with the same Java/libraries arguments to run the terrain equivalence and paired A/B benchmark in a fresh normal-terrain world. Results are written to `well-benchmark.json` in the printed disposable runtime directory.
 
 ### Full Build (Includes Auto Deploy Step)
 
