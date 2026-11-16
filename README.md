@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.0` |
+| Mod Version | `1.0.1` |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -70,6 +70,14 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - Custom items include `Ender Jade`, `Journey Map`, `Bundled Sticks`, `Rock Catalyst`, `Gear`, and `Plate`.
 - JEI subtype integration is included for NBT-based component variants.
 
+### 8. Midnight Compatibility Fix
+
+- An optional Mixin targets The Midnight 0.6.7's Bog Strider movement and fall handlers.
+- Entities without the enchantment or its active speed modifier skip terrain checks.
+- Bog Strider only examines chunks that are already loaded, preventing its block checks from synchronously generating chunks on the server thread.
+- Existing speed modifiers are removed when the relevant chunks are unavailable; Midnight's normal behavior runs when they are loaded.
+- The Mixin is skipped when Midnight is not installed.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -117,7 +125,7 @@ gradlew.bat reobfJar
 
 Primary output:
 
-- `build/libs/auram-1.0.0.jar`
+- `build/libs/auram-1.0.1.jar`
 
 ### Full Build (Includes Auto Deploy Step)
 

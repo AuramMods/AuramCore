@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "art.arcane.auram.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "auram.refmap.json",
+  "mixins": [
+    "midnight.BogStriderEnchantmentMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
