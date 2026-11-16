@@ -49,6 +49,11 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("movement")) {
+                MovementSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-movement-pass.txt"), "PASS movement support regression checks\n");
+                return;
+            }
             ServerLevel level = event.getServer().overworld();
             Method mark = Class.forName("mekanism.common.util.WorldUtils")
                     .getMethod("markChunkDirty", net.minecraft.world.level.Level.class, BlockPos.class);

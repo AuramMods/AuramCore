@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.2` |
+| Mod Version | `1.0.3` |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -86,6 +86,13 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - These patches affect logical server operations only and are optional when the corresponding mod is absent.
 - MixinSquared 0.3.8 is bundled in the release jar to target the Relics mixin handler without relying on its generated method name. No separate installation is required.
 
+### 10. Vanilla Support Position Cache
+
+- Server-side dimension changes and explicit `moveTo`/`absMoveTo` relocations invalidate supporting-block and feet-state caches.
+- If the cached supporting chunk is unavailable, the support-position getter discards that contact and lets vanilla calculate the position from current coordinates.
+- Normal movement retains valid contacts. No enchantment callbacks are cancelled; Soul Speed and Frost Walker continue through their original handlers.
+- The separate movement smoke suite covers stale support, fences/slabs, real command teleports between Nether/End/Overworld, and a real vanilla Nether portal search/return.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -133,13 +140,13 @@ gradlew.bat reobfJarJar
 
 Primary output:
 
-- `build/libs/auram-1.0.2-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
+- `build/libs/auram-1.0.3-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
 
 ### Headless Chunk Patch Smoke Test
 
-`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.2-smoke-test.jar`. It is never included in the release jar.
+`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.3-smoke-test.jar`. It is never included in the release jar.
 
 Run this test mod alongside the release jar, ProjectE, Aether Redux, Relics, Mekanism and their dependencies in a disposable Forge 47.4.10 dedicated-server directory with Java 17. Use flat terrain and the Highlands quicksoil setting. The test creates remote chunks and a Mekanism tank and stops the server itself.
 
@@ -149,6 +156,16 @@ Start that server twice in the same disposable directory:
 2. The second process exercises the pending FULL-ticket dirty-marking path and verifies that the saved fluid survives a process restart.
 
 Successful completion writes `auram-smoke-pass.txt`; failures are logged and write `auram-smoke-failed.txt`. Keep the test mod out of normal client/server installations.
+
+`tools/performance_smoke.py` prepares a fresh disposable server, resolves dependencies from the installed modpack, builds the production-mapped jars, and records console logs, fixture hashes and results. For the movement suite:
+
+```bash
+python3 tools/performance_smoke.py --mode movement \
+  --java /path/to/java17/bin/java --libraries /path/to/forge-server/libraries \
+  --with-mod aether_redux --with-mod relics --with-mod mekanism --with-mod netherportalfix
+```
+
+Use `--baseline-jar /path/to/older/Auram.jar` as a regression control. The 1.0.2 control fails at the forbidden stale-support chunk fetch; the patched version passes. See `validation/performance.json` for recorded results. This runner never copies jars into the live instance.
 
 ### Full Build (Includes Auto Deploy Step)
 

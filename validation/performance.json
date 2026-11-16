@@ -1,0 +1,47 @@
+{
+  "cycles": [
+    {
+      "cycle": 1,
+      "target": "Invalidate obsolete vanilla supporting-block state",
+      "artifact_version": "1.0.3",
+      "candidate_sha256": "5a5ddf38b8b0b7b5b8f776ccd6d9955e9d250ffbe4ff13a6174369d9a229306c",
+      "baseline_sha256": "926a7c1c371c2e51b2e677807033119748a72cac5397ede37acacfef7e535cb3",
+      "baseline_result": "Guard rejected ServerChunkCache.getChunk(10000,10000) from Entity.getOnPos(float).",
+      "candidate_result": "PASS movement suite in a production-mapped Java 17 / Forge 47.4.10 dedicated server.",
+      "checks": [
+        "Unavailable cached support makes no blocking chunk fetch and falls back to current position",
+        "Explicit absMoveTo and moveTo clear old support",
+        "Level changes clear old support",
+        "Valid support survives ordinary setPos movement",
+        "Fence and bottom slab support heights retained",
+        "Soul Speed applied on soul sand and removed on stone",
+        "Frost Walker callback creates frosted ice",
+        "Real ServerPlayer command teleports cover Nether -> home, End -> home and same-dimension home",
+        "Vanilla Nether portal search/transfer selects the constructed return portal",
+        "Suite passes with Aether Redux, Relics, Mekanism and NetherPortalFix loaded"
+      ],
+      "fixture": {
+        "aether_redux": "cd5103e67618d3876be3afe08e6ef101ddbffe9d4ec6e4df5f6c5987fd48d59e",
+        "aeroblender": "a6cc6b2dbf831ca403ef6312669afd0c91b55aae3f75eb6686447f5631a00d45",
+        "aether": "5cb64ab1f27e78e8338fe67f9c766578904aad9bc1f8bcc90f306ea52aea3fc5",
+        "curios": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f",
+        "geckolib": "8b90e11871a58b63816e99c529e6c932bc88e6beb3fec97ad618e22217df3250",
+        "mekanism": "3b0d191fa4a45e662f9725991d76a30192f30186abb2ba694b873b5f7b9358d2",
+        "netherportalfix": "d75583165a6e4236b4e25dbd7cf416d41cd19d7d64286413f071d8a383fe6a47",
+        "balm": "1f5222d5c0ab72b1f60d83c5b371faa9cf733635810efb2695a7bd56dbfa4458",
+        "projecte": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018",
+        "relics": "eb67ef6da9631cac1ccacb542dce3e03f3f5f3594acb5f88647efc2cd8f8b15a",
+        "octolib": "5bb146c691f2c5054752f006a61aab6335ecb1cd9718a9643733de5367971047",
+        "architectury": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af",
+        "terrablender": "c77a13e3879f9f991cf592abac60ad0c6d2ed17f5ff697ec2db3872b22902d4a"
+      },
+      "limitations": [
+        "No live instance was changed. These are deterministic regression checks, not a measured pack-wide speedup."
+      ],
+      "evidence": {
+        "baseline": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-movement-kon5w079/console-1.log",
+        "candidate": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-movement-jq46arnn/console-1.log"
+      }
+    }
+  ]
+}
