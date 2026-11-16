@@ -8,6 +8,7 @@
   "mixins": [
     "minecraft.EntitySupportMixin",
     "minecraft.NetherFossilMixin",
+    "lithostitched.StructurePoolGeneratorMixin",
     "malum.WeepingWellMixin",
     "midnight.BogStriderEnchantmentMixin",
     "aether.QuicksoilMovementMixin",

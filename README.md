@@ -106,6 +106,12 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - All original random draws still occur. Higher candidates run the complete vanilla search and piece callback.
 - The production-mapped `fossil` suite compares 960 fixed-seed and boundary cases against the original algorithm, including accepted positions and RNG state. Vanilla starts at the sea-level boundary, so this is a small optimization rather than a major solution to fossil generation cost.
 
+### 13. Lithostitched Assembly Height Reuse
+
+- A bounded cache belongs to each alternate jigsaw assembly. It stores integer heights, including the complete generator/state/accessor identity, bounds, position and query type in the key.
+- The cache releases with the assembly, retains at most 1,024 entries and serializes access only within that assembly. It never shares NoiseChunks, columns or RNG state between workers.
+- Twelve fixed-seed village assemblies made 2,473 height queries instead of 3,344. Full serialized structure layouts and RNG fingerprints matched. Timing did not fall proportionally; see the recorded measurements rather than assuming a 26% wall-clock gain.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -189,6 +195,12 @@ Use `--mode fossil --with-mod modernfix --with-mod lithostitched` for the Nether
 `--mode items --with-mod toms_storage --with-mod modernfix` runs the installed terminal sync implementation with copied snapshots, reused wrappers, and reused ItemStacks. Add `--identity-candidate` to enable an experimental shortcut in the **test mod only**.
 
 Copied snapshots produced zero identity hits in 7,680 provider comparisons. Reuse fixtures did hit, and the shortcut passed mutable capability/NBT/quantity checks, but the tested release-jar candidate did not improve the local update timings (see `validation/performance.json`). It is therefore excluded from the release. A live inventory hit-rate trace and a representative capability-heavy A/B benchmark are still needed before revisiting it. No persistent equality cache was added.
+
+### Terrain Query Investigation
+
+`--mode terrain --with-mod ae2 --with-mod malum --with-mod nyctophobia --with-mod lithostitched --with-mod modernfix --with-mod tectonic` records query reuse and structure-piece/RNG fingerprints across 12 neighboring attempts per structure. `--baseline-jar` runs the identical fixture against a reference jar. The test mod skips spawn-region generation in this dry-run mode; production startup is unchanged.
+
+`--mode heightcache --with-mod lithostitched --with-mod modernfix --with-mod tectonic` checks context keys, eviction and concurrent access. `--mode density` records direct column/height fingerprints, mutable-column isolation, parallel-query equivalence, and two generated NOISE chunks per vanilla dimension for comparison across jars. Use the same terrain mods for a Tectonic fixture.
 
 ### Full Build (Includes Auto Deploy Step)
 

@@ -49,6 +49,21 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("density")) {
+                DensitySmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-density-pass.txt"), "PASS terrain fingerprints, mutation and parallel checks\n");
+                return;
+            }
+            if (System.getProperty("auram.smoke", "").equals("heightcache")) {
+                HeightCacheSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-heightcache-pass.txt"), "PASS height cache key, bound and concurrency checks\n");
+                return;
+            }
+            if (System.getProperty("auram.smoke", "").equals("terrain")) {
+                TerrainQuerySmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-terrain-pass.txt"), "PASS structure terrain query trace\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("fossil")) {
                 FossilSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-fossil-pass.txt"), "PASS fossil search equivalence\n");

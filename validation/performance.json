@@ -266,6 +266,184 @@
         "Later piece generation remains the original vanilla callback with the same point and RNG state."
       ],
       "evidence": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-fossil-rx85lpr_"
+    },
+    {
+      "cycle": 5,
+      "target": "Cache repeated Lithostitched assembly terrain heights",
+      "artifact_version": "1.0.3",
+      "candidate_sha256": "4b825ddce59292ed9b914b24354b3545d661122c0a1db54f4af2c5746ae47c38",
+      "baseline_trace": {
+        "results": [
+          {
+            "structure": "ae2:meteorite",
+            "attempts": 12,
+            "accepted": 5,
+            "pieces": 5,
+            "elapsed_ms": 58314.328,
+            "fingerprint": "8a16190dd31b777ab019815da3f9ff91f94b4d2e7f773fd2674a798067bc3604",
+            "trace": {
+              "queries": 2499,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 162,
+              "lru_4096_hits": 164
+            }
+          },
+          {
+            "structure": "malum:weeping_well",
+            "attempts": 12,
+            "accepted": 0,
+            "pieces": 0,
+            "elapsed_ms": 5186.599,
+            "fingerprint": "1eb7e765144b956faedcbf7909a0e9aee1fbde18679cb23f9c283366ecbeada4",
+            "trace": {
+              "queries": 271,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 0,
+              "lru_4096_hits": 0
+            }
+          },
+          {
+            "structure": "nyctophobia:mushroom_structure",
+            "attempts": 12,
+            "accepted": 11,
+            "pieces": 11,
+            "elapsed_ms": 421.175,
+            "fingerprint": "fb5273f8a641e72ea79026a26498465c43044faf91b71fc2ea93d7540a6f18a8",
+            "trace": {
+              "queries": 23,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 0,
+              "lru_4096_hits": 0
+            }
+          },
+          {
+            "structure": "minecraft:village_plains",
+            "attempts": 12,
+            "accepted": 12,
+            "pieces": 1429,
+            "elapsed_ms": 65914.752,
+            "fingerprint": "73999f15d605f42872bb801bef6e9893adacb4ff1facff571c3f7ba11448deb7",
+            "trace": {
+              "queries": 3344,
+              "within_attempt_duplicates": 871,
+              "lru_512_hits": 976,
+              "lru_4096_hits": 1015
+            }
+          },
+          {
+            "structure": "minecraft:nether_fossil",
+            "attempts": 12,
+            "accepted": 7,
+            "pieces": 7,
+            "elapsed_ms": 9.4,
+            "fingerprint": "9004deb18b4303160f0de56c7e96f56dc58c41317239420437ac40176975d79d",
+            "trace": {
+              "queries": 12,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 0,
+              "lru_4096_hits": 0
+            }
+          }
+        ]
+      },
+      "candidate_trace": {
+        "results": [
+          {
+            "structure": "ae2:meteorite",
+            "attempts": 12,
+            "accepted": 5,
+            "pieces": 5,
+            "elapsed_ms": 56441.466,
+            "fingerprint": "8a16190dd31b777ab019815da3f9ff91f94b4d2e7f773fd2674a798067bc3604",
+            "trace": {
+              "queries": 2499,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 162,
+              "lru_4096_hits": 164
+            }
+          },
+          {
+            "structure": "malum:weeping_well",
+            "attempts": 12,
+            "accepted": 0,
+            "pieces": 0,
+            "elapsed_ms": 5778.199,
+            "fingerprint": "1eb7e765144b956faedcbf7909a0e9aee1fbde18679cb23f9c283366ecbeada4",
+            "trace": {
+              "queries": 271,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 0,
+              "lru_4096_hits": 0
+            }
+          },
+          {
+            "structure": "nyctophobia:mushroom_structure",
+            "attempts": 12,
+            "accepted": 11,
+            "pieces": 11,
+            "elapsed_ms": 465.72,
+            "fingerprint": "fb5273f8a641e72ea79026a26498465c43044faf91b71fc2ea93d7540a6f18a8",
+            "trace": {
+              "queries": 23,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 0,
+              "lru_4096_hits": 0
+            }
+          },
+          {
+            "structure": "minecraft:village_plains",
+            "attempts": 12,
+            "accepted": 12,
+            "pieces": 1429,
+            "elapsed_ms": 61873.874,
+            "fingerprint": "73999f15d605f42872bb801bef6e9893adacb4ff1facff571c3f7ba11448deb7",
+            "trace": {
+              "queries": 2473,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 104,
+              "lru_4096_hits": 144
+            }
+          },
+          {
+            "structure": "minecraft:nether_fossil",
+            "attempts": 12,
+            "accepted": 7,
+            "pieces": 7,
+            "elapsed_ms": 10.349,
+            "fingerprint": "9004deb18b4303160f0de56c7e96f56dc58c41317239420437ac40176975d79d",
+            "trace": {
+              "queries": 12,
+              "within_attempt_duplicates": 0,
+              "lru_512_hits": 0,
+              "lru_4096_hits": 0
+            }
+          }
+        ]
+      },
+      "cache_checks": {
+        "context_cases": 54,
+        "eviction_queries": 1100,
+        "concurrent_cases": 24
+      },
+      "checks": [
+        "All 60 structure-attempt position, full piece-NBT and next-RNG fingerprints match",
+        "Queries in 12 village assemblies fall from 3344 to 2473 (26.0%)",
+        "All 871 within-attempt repeated height queries removed in the observed village fixture",
+        "Cache is per StructurePoolGenerator instance, bounded to 1024 integers, and synchronized per assembly",
+        "Keys include generator, random-state and height-accessor identities, bounds, coordinates and heightmap type",
+        "54 complete-context cases match direct generation; 1100-query eviction and 24 concurrent cases pass",
+        "Production-mapped optional mixin applied with ModernFix, Tectonic, AE2, Malum, Nyctophobia and Lithostitched"
+      ],
+      "limitations": [
+        "Village elapsed time was 65914.752 ms in the reference and 61873.874 ms in the candidate; query reduction is the strong result, not a claimed proportional wall-clock speedup.",
+        "The trace is 12 adjacent-chunk attempts per structure, one fixed world seed, on one worker; it is not a live cache-hit estimate.",
+        "AE2 had no within-attempt duplicate queries; this patch does not cache its distinct scan coordinates."
+      ],
+      "evidence": {
+        "baseline": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-terrain-w0lyj88h",
+        "candidate": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-terrain-w5ehz4mq",
+        "cache_checks": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-heightcache-14et088t"
+      }
     }
   ]
 }
