@@ -4,6 +4,6 @@
   "package": "art.arcane.auram.smoke.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "auram-smoke.refmap.json",
-  "mixins": ["ChunkCacheMixin", "EntitySupportProbeMixin", "NoiseColumnProbeMixin"],
+  "mixins": ["ChunkCacheMixin", "EntitySupportProbeMixin", "NoiseColumnProbeMixin", "CapabilityComparisonProbeMixin"],
   "injectors": {"defaultRequire": 1}
 }

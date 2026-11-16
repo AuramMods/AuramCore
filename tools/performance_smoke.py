@@ -20,6 +20,7 @@ parser.add_argument('--mode', default='movement')
 parser.add_argument('--with-mod', action='append', default=[], dest='extra_mods', help='Extra mod id and its dependencies')
 parser.add_argument('--baseline-jar', type=Path, help='Use another Auram jar as a regression control')
 parser.add_argument('--no-build', action='store_true')
+parser.add_argument('--identity-candidate', action='store_true', help='Enable the experimental identity shortcut in the test mod only')
 args = parser.parse_args()
 properties = dict(line.split('=', 1) for line in (ROOT/'gradle.properties').read_text().splitlines()
                   if '=' in line and not line.startswith('#'))
@@ -94,6 +95,7 @@ if args.mode == 'well':
         'level-type=minecraft:normal' if s.startswith('level-type=') else
         'generator-settings={}' if s.startswith('generator-settings=') else s for s in settings)+'\n')
 command = [args.java, '-Xms1G', '-Xmx4G', '-Dmixin.debug.export=true', f'-Dauram.smoke={args.mode}',
+           f'-Dauram.smoke.identityCandidate={str(args.identity_candidate).lower()}',
            '@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt', 'nogui']
 print(f'Runtime: {runtime}', flush=True)
 start = time.monotonic()

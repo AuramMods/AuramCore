@@ -79,6 +79,155 @@
         "Local function benchmark does not establish a pack-wide percentage gain."
       ],
       "evidence": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-well-7pyisahv/console-1.log"
+    },
+    {
+      "cycle": 3,
+      "target": "Measure same-provider capability comparison candidate",
+      "decision": "Do not ship the candidate: copied snapshots have no identity hits and the tested release-jar candidate did not improve terminal update timings. Retain an opt-in test-only candidate for follow-up.",
+      "original_benchmark": {
+        "results": [
+          {
+            "workload": "copied_snapshots",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 0,
+            "instrumented_elapsed_ms": 2.985832,
+            "median_200_updates_ms": 9.12246
+          },
+          {
+            "workload": "reused_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 3840,
+            "identity_hits": 3840,
+            "instrumented_elapsed_ms": 0.677416,
+            "median_200_updates_ms": 2.330173
+          },
+          {
+            "workload": "shared_stack_new_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 7680,
+            "instrumented_elapsed_ms": 0.568417,
+            "median_200_updates_ms": 2.93025
+          }
+        ]
+      },
+      "candidate_benchmark": {
+        "results": [
+          {
+            "workload": "copied_snapshots",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 0,
+            "instrumented_elapsed_ms": 2.959627,
+            "median_200_updates_ms": 9.549297
+          },
+          {
+            "workload": "reused_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 3840,
+            "identity_hits": 3840,
+            "instrumented_elapsed_ms": 0.850416,
+            "median_200_updates_ms": 3.886459
+          },
+          {
+            "workload": "shared_stack_new_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 7680,
+            "instrumented_elapsed_ms": 0.511669,
+            "median_200_updates_ms": 3.402881
+          }
+        ]
+      },
+      "reproducible_test_only_control": {
+        "results": [
+          {
+            "workload": "copied_snapshots",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 0,
+            "instrumented_elapsed_ms": 2.867714,
+            "median_200_updates_ms": 10.925833
+          },
+          {
+            "workload": "reused_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 3840,
+            "identity_hits": 3840,
+            "instrumented_elapsed_ms": 0.69721,
+            "median_200_updates_ms": 4.667709
+          },
+          {
+            "workload": "shared_stack_new_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 7680,
+            "instrumented_elapsed_ms": 0.812042,
+            "median_200_updates_ms": 5.565709
+          }
+        ]
+      },
+      "reproducible_test_only_candidate": {
+        "results": [
+          {
+            "workload": "copied_snapshots",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 0,
+            "instrumented_elapsed_ms": 3.763877,
+            "median_200_updates_ms": 12.949748
+          },
+          {
+            "workload": "reused_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 3840,
+            "identity_hits": 3840,
+            "instrumented_elapsed_ms": 0.96346,
+            "median_200_updates_ms": 5.736406
+          },
+          {
+            "workload": "shared_stack_new_wrappers",
+            "measured_updates": 30,
+            "entries": 64,
+            "provider_comparisons": 7680,
+            "identity_hits": 7680,
+            "instrumented_elapsed_ms": 0.596788,
+            "median_200_updates_ms": 4.323128
+          }
+        ]
+      },
+      "checks": [
+        "Installed Tom Storage 1.7.1 TerminalSyncManager.update called on 64-entry snapshots",
+        "40 instrumented updates per workload (10 warmup), then seven timed 200-update batches",
+        "Production-mapped Forge 47.4.10 with ModernFix 5.25.2 and ProjectE",
+        "Object equality ignores quantity; typed overload observes quantity",
+        "Different normal NBT remains unequal",
+        "Same-object candidate avoids lazy capability gathering",
+        "Distinct mutable capability providers still initialize and serialize; subsequent mutations are observed"
+      ],
+      "limitations": [
+        "Fixtures establish hit rates for their specific allocation patterns, not live inventory hit rates.",
+        "The timings are small local terminal-update workloads with vanilla swords, not a full modpack inventory benchmark.",
+        "No capability comparison patch is included in the release jar."
+      ],
+      "evidence": {
+        "original": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-items-x7d9gyko",
+        "candidate_removed": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-items-jastf67s",
+        "reproducible_control": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-items-ksarkdoq",
+        "reproducible_test_only_candidate": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-items-hsq3j2t1"
+      }
     }
   ]
 }

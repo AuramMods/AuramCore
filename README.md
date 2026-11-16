@@ -176,6 +176,12 @@ Use `--baseline-jar /path/to/older/Auram.jar` as a regression control. The 1.0.2
 
 Use `--mode well --with-mod malum` with the same Java/libraries arguments to run the terrain equivalence and paired A/B benchmark in a fresh normal-terrain world. Results are written to `well-benchmark.json` in the printed disposable runtime directory.
 
+### Performance Investigation: Item Equality
+
+`--mode items --with-mod toms_storage --with-mod modernfix` runs the installed terminal sync implementation with copied snapshots, reused wrappers, and reused ItemStacks. Add `--identity-candidate` to enable an experimental shortcut in the **test mod only**.
+
+Copied snapshots produced zero identity hits in 7,680 provider comparisons. Reuse fixtures did hit, and the shortcut passed mutable capability/NBT/quantity checks, but the tested release-jar candidate did not improve the local update timings (see `validation/performance.json`). It is therefore excluded from the release. A live inventory hit-rate trace and a representative capability-heavy A/B benchmark are still needed before revisiting it. No persistent equality cache was added.
+
 ### Full Build (Includes Auto Deploy Step)
 
 ```bash
