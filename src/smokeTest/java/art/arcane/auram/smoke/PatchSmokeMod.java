@@ -49,6 +49,11 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("fossil")) {
+                FossilSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-fossil-pass.txt"), "PASS fossil search equivalence\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("items")) {
                 ItemComparisonSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-items-pass.txt"), "PASS installed terminal comparison workload\n");

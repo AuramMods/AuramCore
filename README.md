@@ -100,6 +100,12 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - The headless `well` suite compares 5,100 predicate patterns and 12 fixed-seed terrain cases, including original candidate heights, against the full-scan reference and checks RNG state.
 - The recorded rejection-workload benchmark uses 49.6% fewer columns; its median check time drops from 402.5 ms to 198.3 ms. This measures the local predicate, not whole-pack generation speed. Accepting patterns are covered separately by the equivalence suite.
 
+### 12. Nether Fossil Search
+
+- Rejects sampled heights at or below sea level before synthesizing a noise column. The original search can only decrease that height and would reject it anyway.
+- All original random draws still occur. Higher candidates run the complete vanilla search and piece callback.
+- The production-mapped `fossil` suite compares 960 fixed-seed and boundary cases against the original algorithm, including accepted positions and RNG state. Vanilla starts at the sea-level boundary, so this is a small optimization rather than a major solution to fossil generation cost.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -175,6 +181,8 @@ python3 tools/performance_smoke.py --mode movement \
 Use `--baseline-jar /path/to/older/Auram.jar` as a regression control. The 1.0.2 control fails at the forbidden stale-support chunk fetch; the patched version passes. See `validation/performance.json` for recorded results. This runner never copies jars into the live instance.
 
 Use `--mode well --with-mod malum` with the same Java/libraries arguments to run the terrain equivalence and paired A/B benchmark in a fresh normal-terrain world. Results are written to `well-benchmark.json` in the printed disposable runtime directory.
+
+Use `--mode fossil --with-mod modernfix --with-mod lithostitched` for the Nether fossil equivalence suite.
 
 ### Performance Investigation: Item Equality
 

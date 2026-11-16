@@ -228,6 +228,44 @@
         "reproducible_control": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-items-ksarkdoq",
         "reproducible_test_only_candidate": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-items-hsq3j2t1"
       }
+    },
+    {
+      "cycle": 4,
+      "target": "Reject impossible Nether fossil searches before terrain synthesis",
+      "artifact_version": "1.0.3",
+      "candidate_sha256": "aa5e90fc8601894e9ef4cf46426f730201d08c03b0da555972281a0b0c75ac56",
+      "benchmark": {
+        "fixed_seed_cases": 960,
+        "accepted": 431,
+        "rejected": 529,
+        "paired_calls": 2880,
+        "original_columns": 2880,
+        "patched_columns": 2571,
+        "vanilla_distribution_original_columns": 2304,
+        "vanilla_distribution_patched_columns": 2283,
+        "original_median_ms": 0.141834,
+        "patched_median_ms": 0.138
+      },
+      "checks": [
+        "960 fixed-seed cases across seeds 104729, 17 and 1907",
+        "768 cases use the actual vanilla height provider; 192 cover below-sea, at-sea, above-sea and high boundary values",
+        "Three alternating-order reference/candidate pairs per case",
+        "Eligibility, exact generation point and next RNG value match the original search",
+        "Accepting and rejecting searches both covered",
+        "Noise-column counters confirm real production mixin application",
+        "ModernFix and Lithostitched loaded in the isolated production-mapped server"
+      ],
+      "fixture": {
+        "lithostitched": "c19a5a36c0e6cb3782cf7ca5b9648fb1bce5fc41fd737bed423a1f4971bccf75",
+        "modernfix": "6da98d88031f2f5377c0e66fb7ebfd8da8be64c6e46a2d1b1fcf8c717b040653",
+        "projecte": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      },
+      "limitations": [
+        "Vanilla starts at height 32, so the saved query is only at its lowest sampled height; expected overall benefit is small.",
+        "Combined timing includes deliberately constructed boundary cases and is not an estimate of normal-world speedup.",
+        "Later piece generation remains the original vanilla callback with the same point and RNG state."
+      ],
+      "evidence": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-fossil-rx85lpr_"
     }
   ]
 }
