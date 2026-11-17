@@ -151,6 +151,12 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - `--mode wrought --with-mod mowziesmobs` exercises the installed mod's entry point and records query counts, pieces and RNG/output fingerprints. `--mode columnscope` tests bounds, cleanup, nested exceptions, uncached external calls and parallel search ownership.
 - The initial 24-attempt Tectonic fixture removed only five repeated queries out of 862. This is a small avoided-work improvement; it did not establish a material wall-clock speedup. Nearby-column batching is a separate follow-up cycle.
 
+### 18. Sparse Malum Terrain Checks
+
+- Well flatness checks sample only the two block states they inspect. The cell sampler keeps the original complete height settings, aquifer/fluid picker, default block and empty-beardifier behavior; it skips constructing a full column array and evaluating every vertical block.
+- Every sampler is owned and closed by its caller. Custom generator subclasses and unusual partial-cell height accessors retain the original generator path.
+- `--mode sparse --with-mod modernfix --with-mod lithostitched --with-mod tectonic --with-mod bettercaves` compares shuffled-height, negative-coordinate and boundary queries with original full columns across three seeds/dimensions, including parallel ownership checks. The `well` benchmark compares the new sampler against the already-shipped early-out scan, rather than counting that earlier optimization a second time.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).

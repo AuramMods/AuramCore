@@ -3,6 +3,7 @@ package art.arcane.auram.util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 
 public final class WellFlatness {
     private WellFlatness() { }
@@ -14,6 +15,14 @@ public final class WellFlatness {
 
     public static boolean test(Structure.GenerationContext context, BlockPos center, int radius) {
         return scan(radius, (dx, dz) -> {
+            int x=center.getX()+dx,z=center.getZ()+dz;
+            if (context.chunkGenerator().getClass()==NoiseBasedChunkGenerator.class) {
+                try (TerrainCell cell=TerrainCell.open((NoiseBasedChunkGenerator)context.chunkGenerator(),x,z,
+                        context.heightAccessor(),context.randomState())) {
+                    if (cell!=null) return cell.state(x,center.getY(),z).isAir()
+                            && !cell.state(x,center.getY()+1,z).isAir();
+                }
+            }
             NoiseColumn column = context.chunkGenerator().getBaseColumn(center.getX() + dx, center.getZ() + dz,
                     context.heightAccessor(), context.randomState());
             return column.getBlock(center.getY()).isAir() && !column.getBlock(center.getY() + 1).isAir();

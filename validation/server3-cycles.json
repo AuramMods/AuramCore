@@ -555,6 +555,38 @@
       "limitations": [
         "Only five repeated queries occur in this fixture; no material wall-clock improvement is claimed. Cell batching later addresses the much larger cost of unique columns."
       ]
+    },
+    {
+      "cycle": 3,
+      "target": "Sparse Malum block-state sampling with full height/aquifer context",
+      "baseline_commit": "c27d266",
+      "results": {
+        "sparse": {
+          "reference_columns": 1152,
+          "state_comparisons": 19584,
+          "parallel_queries": 108
+        },
+        "well": {
+          "boolean_patterns": 5100,
+          "fixed_seed_cases": 12,
+          "actual_candidate_cases": 3,
+          "paired_calls": 36,
+          "original_columns": 4686,
+          "patched_columns": 0,
+          "original_median_ms": 466.460042,
+          "patched_median_ms": 290.037
+        }
+      },
+      "checks": [
+        "1152 reference columns and 19584 shuffled-height/negative-coordinate/boundary state comparisons match",
+        "108 parallel queries match their serial reference columns",
+        "5100 scan-pattern checks and 12 actual terrain cases preserve eligibility/RNG; three cases use real well candidate heights",
+        "36 alternating-order pairs compare against the already-shipped early-out scan: median 466.460ms to 290.037ms"
+      ],
+      "limitations": [
+        "Local well-check timings do not establish full-pack chunk throughput.",
+        "Custom generators and non-cell-aligned height accessors use original column queries."
+      ]
     }
   ]
 }

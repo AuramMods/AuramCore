@@ -87,7 +87,7 @@ public final class WellSmoke {
                         double millis = (System.nanoTime()-start)/1e6;
                         long calls = ColumnProbe.stop();
                         long next = context.random().nextLong();
-                        if (reference) { a=value;ra=next;oldCalls+=calls;oldTimes.add(millis);check(calls==256,"original scans all columns"); }
+                        if (reference) { a=value;ra=next;oldCalls+=calls;oldTimes.add(millis);check(calls<=256,"reference retains the shipped early out"); }
                         else { b=value;rb=next;newCalls+=calls;newTimes.add(millis);check(calls<=256,"patched query count cannot increase"); }
                     }
                     check(a == b, "fixed-seed terrain eligibility matches");
@@ -108,14 +108,11 @@ public final class WellSmoke {
     }
 
     private static boolean original(Structure.GenerationContext context, BlockPos center, int radius) {
-        List<BlockPos> positions = new ArrayList<>();
-        for (int x=-radius;x<radius;x++) for(int z=-radius;z<radius;z++) positions.add(center.offset(x,0,z));
-        int matches=0;
-        for(BlockPos pos:positions) {
-            NoiseColumn column=context.chunkGenerator().getBaseColumn(pos.getX(),pos.getZ(),context.heightAccessor(),context.randomState());
-            if(column.getBlock(pos.getY()).isAir() && !column.getBlock(pos.above().getY()).isAir()) matches++;
-        }
-        return matches>=radius*radius*2;
+        return WellFlatness.scan(radius,(dx,dz)->{
+            int x=center.getX()+dx,z=center.getZ()+dz;
+            NoiseColumn column=context.chunkGenerator().getBaseColumn(x,z,context.heightAccessor(),context.randomState());
+            return column.getBlock(center.getY()).isAir() && !column.getBlock(center.getY()+1).isAir();
+        });
     }
 
     private static void check(boolean value, String message) {

@@ -49,6 +49,11 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("sparse")) {
+                SparseTerrainSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-sparse-pass.txt"), "PASS sparse/column state equivalence and worker isolation\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("columnscope")) {
                 ColumnScopeSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-columnscope-pass.txt"), "PASS column cache lifetime, bound, nested exception and worker isolation\n");

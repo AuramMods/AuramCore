@@ -9,6 +9,8 @@
     "minecraft.EntitySupportMixin",
     "minecraft.NetherFossilMixin",
     "minecraft.NoiseChunkMappingMixin",
+    "minecraft.NoiseGeneratorAccess",
+    "minecraft.NoiseChunkAccess",
     "minecraft.DensityHolderMappingMixin",
     "minecraft.SplineCoordinateMappingMixin",
     "lithostitched.StructurePoolGeneratorMixin",
