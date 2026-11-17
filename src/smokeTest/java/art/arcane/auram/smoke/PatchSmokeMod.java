@@ -49,6 +49,16 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("columnscope")) {
+                ColumnScopeSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-columnscope-pass.txt"), "PASS column cache lifetime, bound, nested exception and worker isolation\n");
+                return;
+            }
+            if (System.getProperty("auram.smoke", "").equals("wrought")) {
+                WroughtColumnsSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-wrought-pass.txt"), "PASS installed Wroughtnaut column workload\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("mappingperf")) {
                 MappingScopeSmoke.run();
                 MappingPerfSmoke.run(event.getServer());

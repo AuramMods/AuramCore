@@ -144,6 +144,13 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - Both vanilla's `computeIfAbsent` and ModernFix's `get`/`put` implementation are supported without allocating a cancellable callback per node.
 - `--mode mappingperf` runs eight warmup batches and 25 measured batches of 16 columns per dimension, fingerprints every resulting block state outside the timed interval, and checks mapping-scope bounds/lifetime/concurrency. Results for the four follow-up cycles are recorded in `validation/server3-cycles.json`.
 
+### 17. Wroughtnaut Search Columns
+
+- Mowzie's Wroughtnaut candidate and wall checks reuse read-only columns within a single `generatePieces` search. Coordinates use a full-width X/Z key; generator, height-accessor and random-state identity must match.
+- Each search owns at most 1,024 columns, releases them in `finally`, and restores an enclosing search after nested calls/errors. Custom generator subclasses retain their original query path.
+- `--mode wrought --with-mod mowziesmobs` exercises the installed mod's entry point and records query counts, pieces and RNG/output fingerprints. `--mode columnscope` tests bounds, cleanup, nested exceptions, uncached external calls and parallel search ownership.
+- The initial 24-attempt Tectonic fixture removed only five repeated queries out of 862. This is a small avoided-work improvement; it did not establish a material wall-clock speedup. Nearby-column batching is a separate follow-up cycle.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).

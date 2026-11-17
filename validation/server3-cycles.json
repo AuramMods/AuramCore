@@ -466,6 +466,95 @@
         "These are local terrain-column timings, not pack-wide chunks/second.",
         "No-op wrapper canonicalization identity may differ; block-state fingerprints match the measured baseline."
       ]
+    },
+    {
+      "cycle": 2,
+      "target": "Wroughtnaut invocation-local read-only column reuse",
+      "baseline_commit": "ce9b9aa",
+      "results": {
+        "baseline": {
+          "attempts": 24,
+          "pieces": 14,
+          "fingerprint": "9866d0ab0b572b8d8d012fc3e3dbe7d9607575abeef2b87a95e4737d48de0915",
+          "trace": {
+            "queries": 862,
+            "within_attempt_duplicates": 5,
+            "lru_512_hits": 5,
+            "lru_4096_hits": 5
+          },
+          "attempt_ms": [
+            338.60225,
+            41.860125,
+            13.580083,
+            249.5525,
+            340.058709,
+            189.414541,
+            18.140375,
+            19.687791,
+            34.579375,
+            263.926334,
+            23.827875,
+            81.328084,
+            41.324166,
+            223.589208,
+            47.721125,
+            19.397209,
+            192.585083,
+            250.917833,
+            233.755,
+            42.227,
+            246.260417,
+            219.699125,
+            194.6025,
+            309.7885
+          ]
+        },
+        "candidate": {
+          "attempts": 24,
+          "pieces": 14,
+          "fingerprint": "9866d0ab0b572b8d8d012fc3e3dbe7d9607575abeef2b87a95e4737d48de0915",
+          "trace": {
+            "queries": 857,
+            "within_attempt_duplicates": 0,
+            "lru_512_hits": 0,
+            "lru_4096_hits": 0
+          },
+          "attempt_ms": [
+            307.056542,
+            41.417916,
+            12.95375,
+            243.719292,
+            338.832,
+            190.835542,
+            18.10075,
+            18.644916,
+            32.036709,
+            267.686041,
+            23.889334,
+            74.723958,
+            41.718958,
+            239.356917,
+            38.812584,
+            15.600833,
+            196.706959,
+            249.960792,
+            237.590625,
+            38.783584,
+            250.27175,
+            223.387041,
+            197.072125,
+            313.291417
+          ]
+        }
+      },
+      "checks": [
+        "24 installed-mod generatePieces attempts retain the same 14 pieces and output/RNG fingerprint",
+        "Terrain queries fall from 862 to 857; remaining within-attempt duplicate count is zero",
+        "1101-query ownership test covers a 1024-entry bound, cleanup, nested exception, uncached external calls and 16 concurrent cases"
+      ],
+      "limitations": [
+        "Only five repeated queries occur in this fixture; no material wall-clock improvement is claimed. Cell batching later addresses the much larger cost of unique columns."
+      ]
     }
   ]
 }
