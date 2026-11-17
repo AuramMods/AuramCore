@@ -133,7 +133,13 @@ tasks.named('jarJar').configure {
     finalizedBy 'reobfJarJar'
 }
 
-reobf { jarJar {} }
+reobf {
+    jarJar {
+        // MixinGradle does not associate jarJar with the main source set.
+        // Carry its @Shadow mappings into the bundled production artifact.
+        extraMappings.from layout.buildDirectory.file('tmp/compileJava/compileJava-mappings.tsrg')
+    }
+}
 
 publishing {
     publications {

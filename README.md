@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.3` |
+| Mod Version | `1.0.4` |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -131,6 +131,12 @@ Local Tectonic fixture measurements (the reference already contains the early-ou
 
 These measure local workloads, not full-pack throughput or the hosted server. Detailed results, hashes, fixture versions and limitations are in `validation/performance.json`.
 
+### 15. KubeJS Update Check
+
+- KubeJS 2001.6.5-build.16 performs an unconditional startup update request without a configuration switch.
+- An optional mixin cancels only that updater task before it creates an HTTP client. Script loading, lifecycle events, and reload handling still run normally.
+- The mixin is skipped when KubeJS is absent. Other mods' update checks are disabled through the pack's Forge and individual mod configuration files.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -178,13 +184,13 @@ gradlew.bat reobfJarJar
 
 Primary output:
 
-- `build/libs/auram-1.0.3-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
+- `build/libs/auram-1.0.4-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
 
 ### Headless Chunk Patch Smoke Test
 
-`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.3-smoke-test.jar`. It is never included in the release jar.
+`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.4-smoke-test.jar`. It is never included in the release jar.
 
 Run this test mod alongside the release jar, ProjectE, Aether Redux, Relics, Mekanism and their dependencies in a disposable Forge 47.4.10 dedicated-server directory with Java 17. Use flat terrain and the Highlands quicksoil setting. The test creates remote chunks and a Mekanism tank and stops the server itself.
 

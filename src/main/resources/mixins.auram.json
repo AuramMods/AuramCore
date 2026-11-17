@@ -13,6 +13,7 @@
     "minecraft.SplineCoordinateMappingMixin",
     "lithostitched.StructurePoolGeneratorMixin",
     "malum.WeepingWellMixin",
+    "kubejs.UpdateCheckMixin",
     "midnight.BogStriderEnchantmentMixin",
     "aether.QuicksoilMovementMixin",
     "relics.FluidCollisionMixin",
