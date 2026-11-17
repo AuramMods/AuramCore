@@ -23,9 +23,12 @@ import java.util.HexFormat;
 
 public final class TerrainQuerySmoke {
     public static void run(MinecraftServer server) throws Exception {
+        run(server,new String[]{"ae2:meteorite","malum:weeping_well","nyctophobia:mushroom_structure",
+                "minecraft:village_plains","minecraft:nether_fossil"},12);
+    }
+    public static void run(MinecraftServer server,String[] structures,int attempts) throws Exception {
         List<String> results=new ArrayList<>();
-        for(String id:new String[]{"ae2:meteorite","malum:weeping_well","nyctophobia:mushroom_structure",
-                "minecraft:village_plains","minecraft:nether_fossil"}) {
+        for(String id:structures) {
             ServerLevel level=id.endsWith("nether_fossil") ? server.getLevel(Level.NETHER) : server.overworld();
             var generator=level.getChunkSource().getGenerator();
             var state=level.getChunkSource().randomState();
@@ -35,7 +38,7 @@ public final class TerrainQuerySmoke {
             MessageDigest digest=MessageDigest.getInstance("SHA-256");
             TerrainQueryProbe.start();
             long start=System.nanoTime();
-            for(int i=0;i<12;i++) {
+            for(int i=0;i<attempts;i++) {
                 // Neighboring chunks, one attempt each: no artificial replay of
                 // the same attempt to inflate prospective cache hit rates.
                 TerrainQueryProbe.nextAttempt();
@@ -55,7 +58,7 @@ public final class TerrainQuerySmoke {
             double millis=(System.nanoTime()-start)/1e6;
             TerrainQueryProbe.Trace trace=TerrainQueryProbe.stop();
             String result=String.format(java.util.Locale.ROOT,
-                    "{\"structure\":\"%s\",\"attempts\":12,\"accepted\":%d,\"pieces\":%d,\"elapsed_ms\":%.3f,\"fingerprint\":\"%s\",\"trace\":%s}",id,accepted,pieces,millis,HexFormat.of().formatHex(digest.digest()),trace.json());
+                    "{\"structure\":\"%s\",\"attempts\":%d,\"accepted\":%d,\"pieces\":%d,\"elapsed_ms\":%.3f,\"fingerprint\":\"%s\",\"trace\":%s}",id,attempts,accepted,pieces,millis,HexFormat.of().formatHex(digest.digest()),trace.json());
             results.add(result);
             LogUtils.getLogger().info("[AURAM TERRAIN] {}",result);
         }

@@ -24,7 +24,8 @@
     "mekanism.WorldUtilsMixin",
     "minecraft.SelectedItemSelectorMixin",
     "tomsstorage.TerminalIdMixin",
-    "tomsstorage.StoredQuantityAccess"
+    "tomsstorage.StoredQuantityAccess",
+    "nyctophobia.MushroomHeightMixin"
   ],
   "injectors": {
     "defaultRequire": 1

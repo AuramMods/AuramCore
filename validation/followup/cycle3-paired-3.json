@@ -1,0 +1,224 @@
+{
+  "result": {
+    "mode": "structureprobes",
+    "runtime": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-structureprobes-j2wpa_yz",
+    "passed": true,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 39.76472866599215,
+    "artifact_sha256": "b6e44b365e19773226b09a0a457c8e58790b2df39790fbdbc7882eb5dd5c9ced",
+    "fixture": {
+      "lithostitched": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lithostitched-forge-1.20.1-1.4.11.jar",
+        "sha256": "c19a5a36c0e6cb3782cf7ca5b9648fb1bce5fc41fd737bed423a1f4971bccf75"
+      },
+      "modernfix": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/modernfix-forge-5.25.2+mc1.20.1.jar",
+        "sha256": "6da98d88031f2f5377c0e66fb7ebfd8da8be64c6e46a2d1b1fcf8c717b040653"
+      },
+      "nyctophobia": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Nyctophobia_1.6_(FORGE)_for_1.20+.jar",
+        "sha256": "b79d10517e4c7d73cccc284c7142faf7a6cbf8eba82da503c5144e931a64d99a"
+      },
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      },
+      "tectonic": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/tectonic-3.0.17-forge-1.20.1.jar",
+        "sha256": "c6de479b27cf090510de3f029918afc9fe17226981bd703e0002f7a25f4d8969"
+      },
+      "terrablender": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/TerraBlender-forge-1.20.1-3.0.1.10.jar",
+        "sha256": "c77a13e3879f9f991cf592abac60ad0c6d2ed17f5ff697ec2db3872b22902d4a"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/Library/Application Support/PrismLauncher/java/java-runtime-gamma/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=structureprobes",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "datapacks": []
+  },
+  "mushroom-benchmark": {
+    "patched_median_batch_ms": 346.1918269999998,
+    "original_median_batch_ms": 474.89495900000003,
+    "patched_batch_ms": [
+      343.46916200000004,
+      345.68945699999995,
+      349.27083100000004,
+      352.05902900000007,
+      348.0597119999999,
+      353.34745800000013,
+      347.3008319999999,
+      343.0156719999999,
+      346.0533770000002,
+      343.7552,
+      344.927703,
+      343.1245830000001,
+      346.63104399999975,
+      352.04441899999995,
+      346.1918269999998,
+      349.10012499999993,
+      344.473553,
+      344.378956,
+      348.97203699999994,
+      348.91207899999995,
+      342.1178760000001,
+      348.17654000000016,
+      349.7419949999999,
+      342.5060029999999,
+      343.68941300000023
+    ],
+    "measured_batches": 25,
+    "original_batch_ms": [
+      478.847366,
+      480.97725999999994,
+      474.54871300000013,
+      478.11192000000005,
+      475.74316999999985,
+      476.31605199999984,
+      474.63908699999996,
+      473.6338370000001,
+      474.89495900000003,
+      471.2069219999998,
+      473.3070849999999,
+      474.38557999999995,
+      471.0596219999998,
+      482.99192199999976,
+      477.7769109999999,
+      476.09779399999996,
+      473.6756260000002,
+      471.734666,
+      471.61383299999983,
+      477.7126699999999,
+      474.36034000000006,
+      478.1069119999999,
+      476.722202,
+      472.656428,
+      477.59192499999983
+    ],
+    "cases_per_batch": 144,
+    "occupied_height_64_cases": 4
+  },
+  "fossil-benchmark": {
+    "fixed_seed_cases": 1056,
+    "accepted": 479,
+    "rejected": 577,
+    "paired_calls": 3168,
+    "original_columns": 3168,
+    "patched_columns": 0,
+    "vanilla_distribution_original_columns": 2304,
+    "vanilla_distribution_patched_columns": 0,
+    "original_median_ms": 0.072334,
+    "patched_median_ms": 0.059
+  },
+  "terrain-query-trace": {
+    "results": [
+      {
+        "structure": "nyctophobia:mushroom_structure",
+        "attempts": 96,
+        "accepted": 67,
+        "pieces": 67,
+        "elapsed_ms": 503.417,
+        "fingerprint": "75b4dddc4c38f0a57ae7371ba9020db2656420332e30e159db4acce400a8dad9",
+        "trace": {
+          "queries": 67,
+          "noise_chunks": 163,
+          "within_attempt_duplicates": 0,
+          "lru_512_hits": 0,
+          "lru_4096_hits": 0
+        }
+      },
+      {
+        "structure": "minecraft:nether_fossil",
+        "attempts": 96,
+        "accepted": 52,
+        "pieces": 52,
+        "elapsed_ms": 10.134,
+        "fingerprint": "9ea5d130ae7d8049067d4bcf38dc5384dbb471a9df1f84ca45902145ae3f674a",
+        "trace": {
+          "queries": 0,
+          "noise_chunks": 96,
+          "within_attempt_duplicates": 0,
+          "lru_512_hits": 0,
+          "lru_4096_hits": 0
+        }
+      }
+    ]
+  },
+  "structure-probe-checks": {
+    "negative": 4892,
+    "nyctophobia_benchmark": {
+      "patched_median_batch_ms": 346.1918269999998,
+      "original_median_batch_ms": 474.89495900000003,
+      "patched_batch_ms": [
+        343.46916200000004,
+        345.68945699999995,
+        349.27083100000004,
+        352.05902900000007,
+        348.0597119999999,
+        353.34745800000013,
+        347.3008319999999,
+        343.0156719999999,
+        346.0533770000002,
+        343.7552,
+        344.927703,
+        343.1245830000001,
+        346.63104399999975,
+        352.04441899999995,
+        346.1918269999998,
+        349.10012499999993,
+        344.473553,
+        344.378956,
+        348.97203699999994,
+        348.91207899999995,
+        342.1178760000001,
+        348.17654000000016,
+        349.7419949999999,
+        342.5060029999999,
+        343.68941300000023
+      ],
+      "measured_batches": 25,
+      "original_batch_ms": [
+        478.847366,
+        480.97725999999994,
+        474.54871300000013,
+        478.11192000000005,
+        475.74316999999985,
+        476.31605199999984,
+        474.63908699999996,
+        473.6338370000001,
+        474.89495900000003,
+        471.2069219999998,
+        473.3070849999999,
+        474.38557999999995,
+        471.0596219999998,
+        482.99192199999976,
+        477.7769109999999,
+        476.09779399999996,
+        473.6756260000002,
+        471.734666,
+        471.61383299999983,
+        477.7126699999999,
+        474.36034000000006,
+        478.1069119999999,
+        476.722202,
+        472.656428,
+        477.59192499999983
+      ],
+      "cases_per_batch": 144,
+      "occupied_height_64_cases": 4
+    },
+    "closed_scope_checked": true,
+    "parallel_queries": 72,
+    "positive": 6340,
+    "threshold_comparisons": 11232
+  }
+}

@@ -38,7 +38,7 @@ public final class FossilSmoke {
         int sea = generator.getSeaLevel();
         List<NetherFossilStructure> variants = new ArrayList<>();
         variants.add(standard);
-        for (int height : new int[]{sea-1, sea, sea+1, 128}) {
+        for (int height : new int[]{-100, sea-1, sea, sea+1, 128, 512}) {
             variants.add(new NetherFossilStructure(standard.getModifiedStructureSettings(), ConstantHeight.of(VerticalAnchor.absolute(height))));
         }
         long originalColumns = 0, patchedColumns = 0, normalOriginal = 0, normalPatched = 0;

@@ -12,6 +12,6 @@ public abstract class ServerSpawnMixin {
     @Inject(method="prepareLevels",at=@At("HEAD"),cancellable=true)
     private void auramSmoke$skipSpawn(CallbackInfo ci) {
         String mode=System.getProperty("auram.smoke","");
-        if(mode.equals("terrain") || mode.equals("density") || mode.equals("heightcache") || mode.equals("mappingperf") || mode.equals("wrought") || mode.equals("sparse") || mode.equals("terrainbatch")) ci.cancel();
+        if(mode.equals("structureprobes") || mode.equals("terrain") || mode.equals("density") || mode.equals("heightcache") || mode.equals("mappingperf") || mode.equals("wrought") || mode.equals("sparse") || mode.equals("terrainbatch")) ci.cancel();
     }
 }

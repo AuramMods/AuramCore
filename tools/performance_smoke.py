@@ -94,7 +94,7 @@ if 'aether_redux' in wanted:
     'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
     'level-seed=104729\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
-if args.mode in {'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch'}:
+if args.mode in {'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch'}:
     settings = (runtime/'server.properties').read_text().splitlines()
     (runtime/'server.properties').write_text('\n'.join(
         'level-type=minecraft:normal' if s.startswith('level-type=') else

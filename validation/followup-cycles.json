@@ -22,8 +22,9 @@
     },
     {
       "cycle": 3,
-      "status": "pending",
-      "target": "Single-column structure probes"
+      "status": "validated",
+      "target": "Single-column structure probes",
+      "evidence": "followup/cycle3-summary.json"
     },
     {
       "cycle": 4,

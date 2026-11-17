@@ -1,0 +1,80 @@
+{
+  "target": "Sparse Nether fossil searches and exact occupied-height threshold for Nyctophobia",
+  "paired_runs": 3,
+  "threshold_comparisons_per_run": 11232,
+  "parallel_queries_per_run": 72,
+  "fossil_cases_per_run": 1056,
+  "fossil_original_columns": 3168,
+  "fossil_patched_columns": 0,
+  "structure_fingerprints": [
+    {
+      "structure": "nyctophobia:mushroom_structure",
+      "attempts": 96,
+      "accepted": 67,
+      "pieces": 67,
+      "elapsed_ms": 672.186,
+      "fingerprint": "75b4dddc4c38f0a57ae7371ba9020db2656420332e30e159db4acce400a8dad9",
+      "trace": {
+        "queries": 163,
+        "noise_chunks": 163,
+        "within_attempt_duplicates": 0,
+        "lru_512_hits": 0,
+        "lru_4096_hits": 0
+      }
+    },
+    {
+      "structure": "minecraft:nether_fossil",
+      "attempts": 96,
+      "accepted": 52,
+      "pieces": 52,
+      "elapsed_ms": 12.84,
+      "fingerprint": "9ea5d130ae7d8049067d4bcf38dc5384dbb471a9df1f84ca45902145ae3f674a",
+      "trace": {
+        "queries": 96,
+        "noise_chunks": 96,
+        "within_attempt_duplicates": 0,
+        "lru_512_hits": 0,
+        "lru_4096_hits": 0
+      }
+    }
+  ],
+  "mushroom_medians_ms": {
+    "original_median_batch_ms": [
+      484.89507899999984,
+      496.2768859999998,
+      474.89495900000003
+    ],
+    "patched_median_batch_ms": [
+      351.079044,
+      360.24145899999996,
+      346.1918269999998
+    ]
+  },
+  "fossil_medians_ms": {
+    "original_median_ms": [
+      0.071708,
+      0.068875,
+      0.072334
+    ],
+    "patched_median_ms": [
+      0.058458,
+      0.058,
+      0.059
+    ]
+  },
+  "checks": [
+    "144 installed mushroom checks per batch, including all four occupied-height-64 regression coordinates",
+    "5 warmup and 25 measured mushroom batches; alternating A/B order",
+    "1056 fossil searches across three seeds and below/at/above-sea plus 128/512 height boundaries preserve positions and next RNG",
+    "96 actual mushroom and 96 actual fossil placement/piece-NBT/RNG fingerprints match the previous jar",
+    "Threshold results agree with complete heights for all four heightmap predicates in three dimensions",
+    "No missing/empty cells or custom generators bypass their original paths"
+  ],
+  "limitations": [
+    "Local fixed-seed fixtures do not establish hosted-server chunks per second.",
+    "Fossil timing includes constructed boundary heights; treat it as a mixed search benchmark, not vanilla-only throughput.",
+    "The pre-correction Y64 draft failed placement parity and was corrected to occupied-height cutoff Y65 before commit."
+  ],
+  "mushroom_median_change_percent": -27.596905144091977,
+  "fossil_median_change_percent": -18.477715178222788
+}

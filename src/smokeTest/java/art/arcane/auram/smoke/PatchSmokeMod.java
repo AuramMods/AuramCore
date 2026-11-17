@@ -49,6 +49,14 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("structureprobes")) {
+                if(!Boolean.getBoolean("auram.smoke.structureReference")) StructureProbeSmoke.run(event.getServer());
+                else StructureProbeSmoke.benchmarkMushroom(event.getServer());
+                FossilSmoke.run(event.getServer());
+                TerrainQuerySmoke.run(event.getServer(),new String[]{"nyctophobia:mushroom_structure","minecraft:nether_fossil"},96);
+                Files.writeString(Path.of("auram-structureprobes-pass.txt"), "PASS sparse fossils, threshold probes and structure fingerprints\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("terminal")) {
                 TerminalSyncSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-terminal-pass.txt"), "PASS capability-heavy terminal packets and comparisons\n");

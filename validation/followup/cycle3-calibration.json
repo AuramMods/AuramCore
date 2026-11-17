@@ -1,0 +1,157 @@
+{
+  "result": {
+    "mode": "structureprobes",
+    "runtime": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-structureprobes-t06v2or8",
+    "passed": true,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 46.234067249984946,
+    "artifact_sha256": "f37b830f5f0fef6974240494366db7a9b154a4607b0cd51c682536b4bb29676f",
+    "fixture": {
+      "lithostitched": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lithostitched-forge-1.20.1-1.4.11.jar",
+        "sha256": "c19a5a36c0e6cb3782cf7ca5b9648fb1bce5fc41fd737bed423a1f4971bccf75"
+      },
+      "modernfix": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/modernfix-forge-5.25.2+mc1.20.1.jar",
+        "sha256": "6da98d88031f2f5377c0e66fb7ebfd8da8be64c6e46a2d1b1fcf8c717b040653"
+      },
+      "nyctophobia": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Nyctophobia_1.6_(FORGE)_for_1.20+.jar",
+        "sha256": "b79d10517e4c7d73cccc284c7142faf7a6cbf8eba82da503c5144e931a64d99a"
+      },
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      },
+      "tectonic": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/tectonic-3.0.17-forge-1.20.1.jar",
+        "sha256": "c6de479b27cf090510de3f029918afc9fe17226981bd703e0002f7a25f4d8969"
+      },
+      "terrablender": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/TerraBlender-forge-1.20.1-3.0.1.10.jar",
+        "sha256": "c77a13e3879f9f991cf592abac60ad0c6d2ed17f5ff697ec2db3872b22902d4a"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/Library/Application Support/PrismLauncher/java/java-runtime-gamma/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dauram.smoke.structureReference=true",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=structureprobes",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "datapacks": []
+  },
+  "mushroom-benchmark": {
+    "measured_batches": 25,
+    "original_batch_ms": [
+      527.8911680000002,
+      537.8165409999999,
+      519.3452529999998,
+      524.1104180000001,
+      518.5313349999999,
+      531.146712,
+      550.6052970000002,
+      536.4983369999999,
+      532.05371,
+      533.4521699999999,
+      527.689994,
+      530.9263360000002,
+      535.098166,
+      525.207001,
+      531.2064589999999,
+      524.4190089999998,
+      510.17383399999994,
+      518.794208,
+      516.3043329999998,
+      523.244499,
+      536.1925480000002,
+      520.229493,
+      513.708627,
+      519.5354930000001,
+      518.248752
+    ],
+    "cases_per_batch": 144,
+    "occupied_height_64_cases": 4,
+    "patched_median_batch_ms": 526.3222440000002,
+    "original_median_batch_ms": 525.207001,
+    "patched_batch_ms": [
+      521.4458769999999,
+      543.7165860000001,
+      522.447832,
+      518.1393739999997,
+      523.0054159999997,
+      523.241293,
+      532.423701,
+      539.444664,
+      533.1788679999999,
+      530.4910890000002,
+      531.2116249999998,
+      530.3243389999999,
+      533.1567900000001,
+      527.6040040000001,
+      529.0256220000001,
+      526.3222440000002,
+      510.202997,
+      516.2772960000003,
+      519.1430380000002,
+      526.6943730000002,
+      528.415753,
+      521.0262489999997,
+      513.2980780000001,
+      516.5737859999999,
+      519.4157570000001
+    ]
+  },
+  "fossil-benchmark": {
+    "fixed_seed_cases": 1056,
+    "accepted": 479,
+    "rejected": 577,
+    "paired_calls": 3168,
+    "original_columns": 3168,
+    "patched_columns": 2715,
+    "vanilla_distribution_original_columns": 2304,
+    "vanilla_distribution_patched_columns": 2283,
+    "original_median_ms": 0.07775,
+    "patched_median_ms": 0.076958
+  },
+  "terrain-query-trace": {
+    "results": [
+      {
+        "structure": "nyctophobia:mushroom_structure",
+        "attempts": 96,
+        "accepted": 67,
+        "pieces": 67,
+        "elapsed_ms": 672.186,
+        "fingerprint": "75b4dddc4c38f0a57ae7371ba9020db2656420332e30e159db4acce400a8dad9",
+        "trace": {
+          "queries": 163,
+          "noise_chunks": 163,
+          "within_attempt_duplicates": 0,
+          "lru_512_hits": 0,
+          "lru_4096_hits": 0
+        }
+      },
+      {
+        "structure": "minecraft:nether_fossil",
+        "attempts": 96,
+        "accepted": 52,
+        "pieces": 52,
+        "elapsed_ms": 12.84,
+        "fingerprint": "9ea5d130ae7d8049067d4bcf38dc5384dbb471a9df1f84ca45902145ae3f674a",
+        "trace": {
+          "queries": 96,
+          "noise_chunks": 96,
+          "within_attempt_duplicates": 0,
+          "lru_512_hits": 0,
+          "lru_4096_hits": 0
+        }
+      }
+    ]
+  }
+}

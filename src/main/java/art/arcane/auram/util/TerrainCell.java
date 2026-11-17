@@ -79,6 +79,20 @@ public final class TerrainCell implements AutoCloseable {
         return fallback;
     }
 
+    /** A block at the cutoff already proves the surface is strictly above it. */
+    public boolean heightExceeds(int x,int z,Heightmap.Types type,int cutoff,int fallback) {
+        if(closed) throw new IllegalStateException("Terrain cell is closed");
+        if(fallback>cutoff) return true;
+        int first=Math.max(minY,cutoff);
+        if(first>=maxY) return false;
+        var opaque=type.isOpaque();
+        if(opaque.test(state(x,first,z))) return true;
+        // Air at the cutoff does not disprove an overhang/floating island.
+        // Search the entire remaining upper interval before rejecting.
+        for(int y=maxY-1;y>first;y--) if(opaque.test(state(x,y,z))) return true;
+        return false;
+    }
+
     /** Dense callers share each interpolated vertical cell across every X/Z. */
     public int[] heights(Heightmap.Types type,int fallback) {
         int[] values=new int[width*width];
