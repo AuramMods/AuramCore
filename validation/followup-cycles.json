@@ -28,8 +28,12 @@
     },
     {
       "cycle": 4,
-      "status": "pending",
-      "target": "Four-CPU heap and worker comparisons"
+      "status": "validated",
+      "target": "Four-CPU heap and worker comparisons",
+      "evidence": "followup/cycle4-summary.json",
+      "scope": "Ten full-pack JVMs on isolated four-vCPU Linux, five warmup and twenty measured batches per JVM; actual worker counts, chunk/tick/CPU/allocation/GC metrics and canonical saved-region comparisons.",
+      "decision": "Retain current production JVM settings: no repeated tuning improvement established.",
+      "limitations": "ARM fresh-world screening fixture differs from hosted AMD x86 hardware and retained save; actual worldgen variability occurs even with identical settings."
     }
   ]
 }

@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.5` |
+| Mod Version | `1.0.6` (unreleased) |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -103,8 +103,8 @@ Source of truth: `gradle.properties` and `build.gradle`.
 ### 12. Nether Fossil Search
 
 - Rejects sampled heights at or below sea level before synthesizing a noise column. The original search can only decrease that height and would reject it anyway.
-- All original random draws still occur. Higher candidates run the complete vanilla search and piece callback.
-- The production-mapped `fossil` suite compares 960 fixed-seed and boundary cases against the original algorithm, including accepted positions and RNG state. Vanilla starts at the sea-level boundary, so this is a small optimization rather than a major solution to fossil generation cost.
+- Higher candidates sample successive block states lazily, reusing the previous floor as the next above-block state. Unsupported generator contexts retain the original complete-column path.
+- All original random draws, sturdy-face tests, positions and piece callbacks remain. The follow-up `fossil` suite compares 1,056 fixed-seed/boundary cases per run, including full piece/RNG fingerprints from actual structure attempts. See `validation/followup/cycle3-summary.json` for the mixed-search benchmark and its limits.
 
 ### 13. Lithostitched Assembly Height Reuse
 
@@ -164,6 +164,23 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - Each batch retains at most 16 cells. Invocation-owned batches close on success/failure; jigsaw batches belong only to their assembly cache, serialize access there, and close when generator/state/accessor context changes. World, accessor bounds and random-state contexts never share mutable interpolation state.
 - `--mode terrainbatch` checks all heightmap types, complete column snapshots, negative coordinates, eviction, mutable snapshot isolation, closed/nested scopes and independent workers. It also runs the existing assembly-cache and column-scope checks. `--mode terrain` records real structure/RNG fingerprints and NoiseChunk construction counts for the installed structure mods.
 
+### 20. Selected Held-Item NBT Selectors
+
+- For a server player holding an item, test the live `SelectedItem` projection first. A mismatch or a predicate containing only that field avoids serializing the full player and its capabilities.
+- Empty hands, non-player entities and successful predicates with additional root keys retain full serialization. There is no NBT cache.
+- `--mode selectors` replays installed Guns/Scorched/Incendium functions and compares command traces, results and serialization counts. `tools/compare_selectors.py` repeats control/candidate runs. The 291 semantic checks include inversion, malformed types, custom serializers and same-stack mutations. See `validation/followup/cycle1-summary.json`.
+
+### 21. Tom Storage Packet ID Reuse
+
+- Tom Storage 1.7.1 already looks up an item's ID before writing it. Reuse that exact nonzero ID instead of performing the same capability-heavy map lookup a second time.
+- New items, ID zero and custom map implementations retain the original path. Quantity encoding, flags, packet splitting and oversized-NBT fallback are preserved.
+- `--mode terminal --with-mod toms_storage --with-mod mekanism` compares packet bytes and decoded client state with 128 powered Mekanism items, mutable supplemental capabilities and 60 transition cases. This removes approximately 25% of provider comparisons in that fixture; it does not cache equality across calls.
+
+### 22. Nyctophobia Mushroom Threshold
+
+- Mushroom placement needs only to know whether first **occupied** height exceeds 64. Query the threshold state first and scan higher states only if needed; do not construct a complete column or conflate occupied and free height.
+- Floating terrain, all heightmap predicates, custom-generator fallback, closed contexts and independent workers are covered by `--mode structureprobes`. Actual piece/RNG fingerprints match the previous jar; see `validation/followup/cycle3-summary.json`.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -211,13 +228,13 @@ gradlew.bat reobfJarJar
 
 Primary output:
 
-- `build/libs/auram-1.0.5-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
+- `build/libs/auram-1.0.6-all.jar` (reobfuscated, includes MixinSquared; install as `AuramCore-1.0.6.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
 
 ### Headless Chunk Patch Smoke Test
 
-`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.5-smoke-test.jar`. It is never included in the release jar.
+`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.6-smoke-test.jar`. It is never included in the release jar.
 
 Run this test mod alongside the release jar, ProjectE, Aether Redux, Relics, Mekanism and their dependencies in a disposable Forge 47.4.10 dedicated-server directory with Java 17. Use flat terrain and the Highlands quicksoil setting. The test creates remote chunks and a Mekanism tank and stops the server itself.
 
@@ -246,7 +263,7 @@ Use `--mode fossil --with-mod modernfix --with-mod lithostitched` for the Nether
 
 `--mode items --with-mod toms_storage --with-mod modernfix` runs the installed terminal sync implementation with copied snapshots, reused wrappers, and reused ItemStacks. Add `--identity-candidate` to enable an experimental shortcut in the **test mod only**.
 
-Copied snapshots produced zero identity hits in 7,680 provider comparisons. Reuse fixtures did hit, and the shortcut passed mutable capability/NBT/quantity checks, but the tested release-jar candidate did not improve the local update timings (see `validation/performance.json`). It is therefore excluded from the release. A live inventory hit-rate trace and a representative capability-heavy A/B benchmark are still needed before revisiting it. No persistent equality cache was added.
+Copied snapshots produced zero identity hits in 7,680 provider comparisons. Reuse fixtures did hit, and the shortcut passed mutable capability/NBT/quantity checks, but the tested release-jar candidate did not improve the local update timings (see `validation/performance.json`). It is therefore excluded from the release. A different production optimization now reuses the ID already looked up during the same packet write; it needs no equality shortcut or persistent cache. The capability-heavy packet suite validates this path with actual Mekanism items. See `validation/followup/cycle2-summary.json`.
 
 ### Terrain Query Investigation
 
@@ -259,10 +276,10 @@ Copied snapshots produced zero identity hits in 7,680 provider comparisons. Reus
 ### Remaining Performance Work
 
 - Re-profile Nether -> home on the dedicated host. The regression test proves the stale support path is fixed; the original profile did not record the coordinates needed to attribute every live freeze conclusively.
-- Tom Storage still needs live comparison identity rates and a capability-heavy A/B inventory fixture. Its equality candidate remains test-only because the measured copied snapshots had no identity hits and the candidate did not improve update timing.
+- Tom Storage packet ID reuse now passes the capability-heavy paired fixture. A live factory benchmark would establish its impact on total server tick time; the separate identity-shortcut experiment remains excluded.
 - Broad coordinate/column caching needs multiworker hit-rate data, mutable-column cloning and lifecycle validation. AE2's scans contained no duplicates within an attempt. The scoped patches already avoid much of the graph construction cost without storing terrain results globally.
-- Attribute the expensive datapack commands before rewriting NBT selectors. Cached generic entity NBT can become stale within a tick and can change mod capability serialization behavior.
-- Revisit GC/heap or worker counts only with allocation ownership and comparable measurements on the four-CPU host. Execution samples alone do not identify those settings.
+- Installed function replay now identifies the held-item selector work in Guns. Inventory and successful multi-key predicates still serialize the full entity. Generic NBT caching remains unsafe because commands and capabilities can mutate within a tick.
+- The four-CPU VM comparison is documented in `validation/followup/cycle4-tuning.md`. Repeat it on the actual host and retained save before adopting JVM changes; fresh-world measurements do not establish the existing factory's memory needs.
 
 The config review found the relevant ModernFix, FerriteCore and Lithostitched optimizations already enabled. No modpack config, EMC value, live jar, launcher tag or release is changed by this performance goal.
 

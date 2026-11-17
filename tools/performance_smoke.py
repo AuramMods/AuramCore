@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Run the production-mapped test mod in a fresh disposable Forge server (Python 3.11+)."""
 import argparse
+import ctypes
 import hashlib
 import io
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import tomllib
@@ -24,6 +27,10 @@ parser.add_argument('--datapack', type=Path, action='append', default=[], help='
 parser.add_argument('--java-arg', action='append', default=[], help='Additional JVM argument (use --java-arg=VALUE)')
 parser.add_argument('--xms', default='1G', help='Initial JVM heap')
 parser.add_argument('--xmx', default='4G', help='Maximum JVM heap')
+parser.add_argument('--runtime-parent', type=Path, help='Directory for disposable fixture servers')
+parser.add_argument('--no-mixin-export', action='store_true', help='Disable class-file export during throughput measurements')
+parser.add_argument('--server-template', type=Path, help='Copy a complete exported server pack instead of a minimal mod set')
+parser.add_argument('--threadtweak-workers', type=int, help='Override ThreadTweak main workers in this disposable fixture only')
 parser.add_argument('--identity-candidate', action='store_true', help='Enable the experimental identity shortcut in the test mod only')
 args = parser.parse_args()
 properties = dict(line.split('=', 1) for line in (ROOT/'gradle.properties').read_text().splitlines()
@@ -32,8 +39,39 @@ version = properties['mod_version']
 if not args.no_build:
     subprocess.run([str(ROOT/'gradlew'), 'reobfJarJar', 'reobfSmokeTestJar'], cwd=ROOT, check=True)
 
-runtime = Path(tempfile.mkdtemp(prefix=f'auram-{args.mode}-'))
-(runtime/'mods').mkdir()
+if args.runtime_parent:
+    args.runtime_parent.mkdir(parents=True, exist_ok=True)
+runtime = Path(tempfile.mkdtemp(prefix=f'auram-{args.mode}-', dir=args.runtime_parent))
+
+def copy_private(source, target):
+    # APFS clonefile gives each fixture independent writable files without
+    # copying a gigabyte of mod jars for every JVM comparison.
+    if sys.platform == 'darwin' and ctypes.CDLL(None, use_errno=True).clonefile(
+            os.fsencode(source), os.fsencode(target), 0) == 0:
+        return str(target)
+    return shutil.copy2(source, target)
+
+if args.server_template:
+    for entry in args.server_template.iterdir():
+        if entry.name in {'libraries', 'world', 'logs', 'crash-reports'}:
+            continue
+        target=runtime/entry.name
+        if entry.is_dir():
+            shutil.copytree(entry, target, copy_function=copy_private)
+        else:
+            copy_private(entry, target)
+(runtime/'mods').mkdir(exist_ok=True)
+# Remove the distributed core by mod ID; renamed/versioned jars must not leave
+# a second auram mod in a full-server fixture.
+if args.server_template:
+    for jar in (runtime/'mods').glob('*.jar'):
+        with zipfile.ZipFile(jar) as archive:
+            try:
+                mods=tomllib.loads(archive.read('META-INF/mods.toml').decode()).get('mods', [])
+            except KeyError:
+                mods=[]
+            if any(mod.get('modId')=='auram' for mod in mods):
+                jar.unlink()
 (runtime/'libraries').symlink_to(args.libraries.resolve(), target_is_directory=True)
 mod_index = {}
 
@@ -73,7 +111,8 @@ while wanted - done:
     data = source.read_bytes() if isinstance(source, Path) else source
     if label not in copied:
         target = runtime/'mods'/Path(label.split('!')[-1]).name
-        target.write_bytes(data)
+        if not target.exists():
+            target.write_bytes(data)
         copied.add(label)
     fixture[mod_id] = {'source': label, 'sha256': hashlib.sha256(data).hexdigest()}
     wanted.update(dep['modId'] for dep in meta.get('dependencies', {}).get(mod_id, [])
@@ -83,7 +122,14 @@ artifact = args.baseline_jar or ROOT/f'build/libs/auram-{version}-all.jar'
 shutil.copy2(artifact, runtime/'mods/Auram.jar')
 shutil.copy2(ROOT/f'build/libs/auram-{version}-smoke-test.jar', runtime/'mods/auram-smoke.jar')
 config = runtime/'config'
-config.mkdir()
+config.mkdir(exist_ok=True)
+fixture_overrides = {}
+if args.threadtweak_workers is not None:
+    threadtweak = config/'threadtweak.json'
+    settings = json.loads(threadtweak.read_text())
+    settings['threadCount']['main'] = args.threadtweak_workers
+    threadtweak.write_text(json.dumps(settings, indent=2)+'\n')
+    fixture_overrides['threadtweak_main_workers'] = args.threadtweak_workers
 (config/'fml.toml').write_text('versionCheck = false\n')
 source_config = Path(properties['modpack_deploy']).parent/'config/aether_redux_common.toml'
 if 'aether_redux' in wanted:
@@ -94,7 +140,7 @@ if 'aether_redux' in wanted:
     'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
     'level-seed=104729\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
-if args.mode in {'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch'}:
+if args.mode in {'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch'}:
     settings = (runtime/'server.properties').read_text().splitlines()
     (runtime/'server.properties').write_text('\n'.join(
         'level-type=minecraft:normal' if s.startswith('level-type=') else
@@ -103,7 +149,7 @@ for datapack in args.datapack:
     destination=runtime/'world/datapacks'
     destination.mkdir(parents=True,exist_ok=True)
     shutil.copy2(datapack,destination/(datapack.stem+'.zip'))
-command = [args.java, f'-Xms{args.xms}', f'-Xmx{args.xmx}', *args.java_arg, '-Dmixin.debug.export=true', f'-Dauram.smoke={args.mode}',
+command = [args.java, *([] if args.xms=='default' else [f'-Xms{args.xms}']), f'-Xmx{args.xmx}', *args.java_arg, *([] if args.no_mixin_export else ['-Dmixin.debug.export=true']), f'-Dauram.smoke={args.mode}',
            f'-Dauram.smoke.identityCandidate={str(args.identity_candidate).lower()}',
            '@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt', 'nogui']
 print(f'Runtime: {runtime}', flush=True)
@@ -118,6 +164,9 @@ passed = all(code == 0 for code in codes) and (runtime/marker).exists()
 summary = {'mode': args.mode, 'runtime': str(runtime), 'passed': passed, 'exit_codes': codes,
            'elapsed_seconds': time.monotonic()-start, 'artifact_sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),
            'fixture': fixture, 'jvm_command': command,
+           'server_template': str(args.server_template) if args.server_template else None,
+           'fixture_overrides': fixture_overrides,
+           'mod_jar_count': len(list((runtime/'mods').glob('*.jar'))),
            'datapacks': [{'source': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
                         for path in args.datapack]}
 (runtime/'result.json').write_text(json.dumps(summary, indent=2)+'\n')

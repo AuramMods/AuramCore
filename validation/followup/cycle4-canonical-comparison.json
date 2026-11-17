@@ -1,0 +1,410 @@
+{
+  "worlds": [
+    "/tmp/lima/auram-bench/chunk-evidence/captured",
+    "/tmp/lima/auram-bench/chunk-evidence/g1_defaults"
+  ],
+  "compared_blocks": 22282240,
+  "differing_blocks": 45062,
+  "differing_chunks": 60,
+  "canonical_block_fingerprints": [
+    "7328b6a034d610d2f5c271e9b3c451d8c4bb511dd19af64c67e98d04bef93ba2",
+    "004a2a62291a2cff9e8bdaacf5d188084f7eee6b35feab4918fd560c7d504655"
+  ],
+  "largest_differences": [
+    {
+      "first": {
+        "Name": "minecraft:stone",
+        "Properties": {
+          "weathering": "false"
+        }
+      },
+      "second": {
+        "Name": "minecraft:moss_block"
+      },
+      "count": 2593
+    },
+    {
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "minecraft:moss_block"
+      },
+      "count": 2316
+    },
+    {
+      "first": {
+        "Name": "minecraft:moss_block"
+      },
+      "second": {
+        "Name": "minecraft:stone",
+        "Properties": {
+          "weathering": "false"
+        }
+      },
+      "count": 2043
+    },
+    {
+      "first": {
+        "Name": "minecraft:moss_block"
+      },
+      "second": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "count": 1623
+    },
+    {
+      "first": {
+        "Name": "minecraft:clay"
+      },
+      "second": {
+        "Name": "minecraft:stone",
+        "Properties": {
+          "weathering": "false"
+        }
+      },
+      "count": 1226
+    },
+    {
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "minecraft:clay"
+      },
+      "count": 1174
+    },
+    {
+      "first": {
+        "Name": "minecraft:stone",
+        "Properties": {
+          "weathering": "false"
+        }
+      },
+      "second": {
+        "Name": "minecraft:clay"
+      },
+      "count": 1128
+    },
+    {
+      "first": {
+        "Name": "minecraft:clay"
+      },
+      "second": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "count": 1128
+    },
+    {
+      "first": {
+        "Name": "minecraft:air"
+      },
+      "second": {
+        "Name": "verdant:sporophyte"
+      },
+      "count": 1068
+    },
+    {
+      "first": {
+        "Name": "verdant:sporophyte"
+      },
+      "second": {
+        "Name": "minecraft:air"
+      },
+      "count": 847
+    },
+    {
+      "first": {
+        "Name": "minecraft:rooted_dirt"
+      },
+      "second": {
+        "Name": "minecraft:stone",
+        "Properties": {
+          "weathering": "false"
+        }
+      },
+      "count": 658
+    },
+    {
+      "first": {
+        "Name": "minecraft:clay"
+      },
+      "second": {
+        "Name": "minecraft:moss_block"
+      },
+      "count": 625
+    },
+    {
+      "first": {
+        "Name": "minecraft:air"
+      },
+      "second": {
+        "Name": "minecraft:cave_vines_plant",
+        "Properties": {
+          "berries": "false"
+        }
+      },
+      "count": 596
+    },
+    {
+      "first": {
+        "Name": "minecraft:cave_vines_plant",
+        "Properties": {
+          "berries": "false"
+        }
+      },
+      "second": {
+        "Name": "minecraft:air"
+      },
+      "count": 574
+    },
+    {
+      "first": {
+        "Name": "minecraft:air"
+      },
+      "second": {
+        "Name": "minecraft:moss_carpet"
+      },
+      "count": 563
+    },
+    {
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "alltheores:deepslate_nickel_ore"
+      },
+      "count": 466
+    },
+    {
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "grounded:silt"
+      },
+      "count": 437
+    },
+    {
+      "first": {
+        "Name": "immersive_weathering:silt"
+      },
+      "second": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "count": 437
+    },
+    {
+      "first": {
+        "Name": "minecraft:moss_carpet"
+      },
+      "second": {
+        "Name": "minecraft:air"
+      },
+      "count": 421
+    },
+    {
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "immersive_weathering:silt"
+      },
+      "count": 401
+    }
+  ],
+  "examples": [
+    {
+      "position": [
+        1295,
+        -59,
+        1281
+      ],
+      "first": {
+        "Name": "grounded:silt"
+      },
+      "second": {
+        "Name": "immersive_weathering:silt"
+      }
+    },
+    {
+      "position": [
+        1295,
+        -58,
+        1281
+      ],
+      "first": {
+        "Name": "grounded:silt"
+      },
+      "second": {
+        "Name": "immersive_weathering:silt"
+      }
+    },
+    {
+      "position": [
+        1284,
+        -58,
+        1294
+      ],
+      "first": {
+        "Name": "forbidden_arcanus:darkstone"
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1282,
+        -58,
+        1295
+      ],
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1283,
+        -58,
+        1295
+      ],
+      "first": {
+        "Name": "forbidden_arcanus:darkstone"
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1284,
+        -58,
+        1295
+      ],
+      "first": {
+        "Name": "forbidden_arcanus:darkstone"
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1285,
+        -58,
+        1295
+      ],
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1286,
+        -58,
+        1295
+      ],
+      "first": {
+        "Name": "minecraft:deepslate",
+        "Properties": {
+          "axis": "y"
+        }
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1295,
+        -57,
+        1281
+      ],
+      "first": {
+        "Name": "grounded:silt"
+      },
+      "second": {
+        "Name": "immersive_weathering:silt"
+      }
+    },
+    {
+      "position": [
+        1280,
+        -57,
+        1294
+      ],
+      "first": {
+        "Name": "immersive_weathering:silt"
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1284,
+        -57,
+        1294
+      ],
+      "first": {
+        "Name": "forbidden_arcanus:darkstone"
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    },
+    {
+      "position": [
+        1280,
+        -57,
+        1295
+      ],
+      "first": {
+        "Name": "immersive_weathering:silt"
+      },
+      "second": {
+        "Name": "grounded:silt"
+      }
+    }
+  ],
+  "scope": "Same 80 target chunks; saved palette names/properties and packed state arrays, independent of numeric global registry IDs.",
+  "differing_block_percent": 0.20223280962775736,
+  "finding": "Real saved block differences exist across the captured/default GC-only runs, not merely global registry-ID differences. Repeated same-setting runs are needed to characterize baseline variability; do not infer a settings win from this pair."
+}

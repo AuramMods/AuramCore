@@ -1,0 +1,237 @@
+{
+  "run": {
+    "mode": "tuning",
+    "runtime": "/tmp/lima/auram-bench/runs/auram-tuning-qgag6s6a",
+    "passed": true,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 350.73782279202715,
+    "artifact_sha256": "b6e44b365e19773226b09a0a457c8e58790b2df39790fbdbc7882eb5dd5c9ced",
+    "fixture": {
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      }
+    },
+    "jvm_command": [
+      "/tmp/auram-bench-vm-java",
+      "-Xmx12000M",
+      "--add-modules=jdk.jfr,jdk.management",
+      "-XX:+UseG1GC",
+      "-Dauram.smoke=tuning",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "server_template": "/tmp/lima/auram-bench/server-template",
+    "fixture_overrides": {
+      "threadtweak_main_workers": 2
+    },
+    "mod_jar_count": 479,
+    "datapacks": [],
+    "smoke_artifact_sha256": "483b3cc6c75ee88bbc5a29b595fc0628d1a2b1e632e5797ca59c52977f4815f4",
+    "runtime_core_sha256": "b6e44b365e19773226b09a0a457c8e58790b2df39790fbdbc7882eb5dd5c9ced",
+    "runtime_threadtweak_main": 2
+  },
+  "benchmark": {
+    "measured_full_chunks": 80,
+    "elapsed_seconds": 72.769754804,
+    "full_chunks_per_second": 1.0993578336971745,
+    "warmup_batches": 5,
+    "measured_batches": 20,
+    "chunks_per_batch": 4,
+    "tick_ms": {
+      "max": 28660.599968,
+      "p99": 28660.599968,
+      "median": 1536.756341,
+      "count": 20,
+      "p95": 7262.628029
+    },
+    "tick_interval_ms": {
+      "max": 28669.243707,
+      "p99": 28669.243707,
+      "median": 1645.297355,
+      "count": 19,
+      "p95": 28669.243707
+    },
+    "chunk_batch_seconds": {
+      "max": 28.676289858,
+      "p99": 28.676289858,
+      "median": 1.539538434,
+      "count": 20,
+      "p95": 7.264375035
+    },
+    "process_cpu_seconds": 117.98,
+    "server_thread_cpu_seconds": 3.705509831,
+    "live_java_thread_allocated_bytes_delta": 36819029808,
+    "peak_sampled_heap_bytes": 8470843392,
+    "heap_end": "init = 394264576(385024K) used = 7569142784(7391741K) committed = 9621733376(9396224K) max = 12582912000(12288000K)",
+    "nbt_entity_serializations": 2560,
+    "nbt_entities": 128,
+    "available_processors": 4,
+    "max_heap_bytes": 12582912000,
+    "java_version": "17.0.21.0.3+1-1-24.04.1-Ubuntu",
+    "os": "Linux aarch64",
+    "jvm_arguments": [
+      "-Xmx12000M",
+      "--add-modules=jdk.jfr,jdk.management",
+      "-XX:+UseG1GC",
+      "-Dauram.smoke=tuning",
+      "-Dauram.smoke.identityCandidate=false",
+      "--module-path=libraries/cpw/mods/bootstraplauncher/1.1.2/bootstraplauncher-1.1.2.jar:libraries/cpw/mods/securejarhandler/2.1.10/securejarhandler-2.1.10.jar:libraries/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar:libraries/org/ow2/asm/asm-util/9.8/asm-util-9.8.jar:libraries/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar:libraries/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar:libraries/org/ow2/asm/asm/9.8/asm-9.8.jar:libraries/net/minecraftforge/JarJarFileSystems/0.3.19/JarJarFileSystems-0.3.19.jar",
+      "--add-modules=ALL-MODULE-PATH",
+      "--add-opens=java.base/java.util.jar=cpw.mods.securejarhandler",
+      "--add-opens=java.base/java.lang.invoke=cpw.mods.securejarhandler",
+      "--add-exports=java.base/sun.security.util=cpw.mods.securejarhandler",
+      "--add-exports=jdk.naming.dns/com.sun.jndi.dns=java.naming",
+      "-Djava.net.preferIPv6Addresses=system",
+      "-DignoreList=bootstraplauncher-1.1.2.jar,securejarhandler-2.1.10.jar,asm-commons-9.8.jar,asm-util-9.8.jar,asm-analysis-9.8.jar,asm-tree-9.8.jar,asm-9.8.jar,JarJarFileSystems-0.3.19.jar",
+      "-DlibraryDirectory=libraries",
+      "-DlegacyClassPath=libraries/cpw/mods/securejarhandler/2.1.10/securejarhandler-2.1.10.jar:libraries/org/ow2/asm/asm/9.8/asm-9.8.jar:libraries/org/ow2/asm/asm-commons/9.8/asm-commons-9.8.jar:libraries/org/ow2/asm/asm-tree/9.8/asm-tree-9.8.jar:libraries/org/ow2/asm/asm-util/9.8/asm-util-9.8.jar:libraries/org/ow2/asm/asm-analysis/9.8/asm-analysis-9.8.jar:libraries/net/minecraftforge/accesstransformers/8.0.4/accesstransformers-8.0.4.jar:libraries/org/antlr/antlr4-runtime/4.9.1/antlr4-runtime-4.9.1.jar:libraries/net/minecraftforge/eventbus/6.0.5/eventbus-6.0.5.jar:libraries/net/minecraftforge/forgespi/7.0.1/forgespi-7.0.1.jar:libraries/net/minecraftforge/coremods/5.2.4/coremods-5.2.4.jar:libraries/cpw/mods/modlauncher/10.0.9/modlauncher-10.0.9.jar:libraries/net/minecraftforge/unsafe/0.2.0/unsafe-0.2.0.jar:libraries/net/minecraftforge/mergetool/1.1.5/mergetool-1.1.5-api.jar:libraries/com/electronwill/night-config/core/3.6.4/core-3.6.4.jar:libraries/com/electronwill/night-config/toml/3.6.4/toml-3.6.4.jar:libraries/org/apache/maven/maven-artifact/3.8.5/maven-artifact-3.8.5.jar:libraries/net/jodah/typetools/0.6.3/typetools-0.6.3.jar:libraries/net/minecrell/terminalconsoleappender/1.2.0/terminalconsoleappender-1.2.0.jar:libraries/org/jline/jline-reader/3.12.1/jline-reader-3.12.1.jar:libraries/org/jline/jline-terminal/3.12.1/jline-terminal-3.12.1.jar:libraries/org/spongepowered/mixin/0.8.5/mixin-0.8.5.jar:libraries/org/openjdk/nashorn/nashorn-core/15.4/nashorn-core-15.4.jar:libraries/net/minecraftforge/JarJarSelector/0.3.19/JarJarSelector-0.3.19.jar:libraries/net/minecraftforge/JarJarMetadata/0.3.19/JarJarMetadata-0.3.19.jar:libraries/net/minecraftforge/fmlloader/1.20.1-47.4.10/fmlloader-1.20.1-47.4.10.jar:libraries/net/minecraft/server/1.20.1-20230612.114412/server-1.20.1-20230612.114412-extra.jar:libraries/com/github/oshi/oshi-core/6.2.2/oshi-core-6.2.2.jar:libraries/com/google/code/gson/gson/2.10/gson-2.10.jar:libraries/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar:libraries/com/google/guava/guava/31.1-jre/guava-31.1-jre.jar:libraries/com/mojang/authlib/4.0.43/authlib-4.0.43.jar:libraries/com/mojang/brigadier/1.1.8/brigadier-1.1.8.jar:libraries/com/mojang/datafixerupper/6.0.8/datafixerupper-6.0.8.jar:libraries/com/mojang/logging/1.1.1/logging-1.1.1.jar:libraries/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar:libraries/io/netty/netty-buffer/4.1.82.Final/netty-buffer-4.1.82.Final.jar:libraries/io/netty/netty-codec/4.1.82.Final/netty-codec-4.1.82.Final.jar:libraries/io/netty/netty-common/4.1.82.Final/netty-common-4.1.82.Final.jar:libraries/io/netty/netty-handler/4.1.82.Final/netty-handler-4.1.82.Final.jar:libraries/io/netty/netty-resolver/4.1.82.Final/netty-resolver-4.1.82.Final.jar:libraries/io/netty/netty-transport/4.1.82.Final/netty-transport-4.1.82.Final.jar:libraries/io/netty/netty-transport-classes-epoll/4.1.82.Final/netty-transport-classes-epoll-4.1.82.Final.jar:libraries/io/netty/netty-transport-native-epoll/4.1.82.Final/netty-transport-native-epoll-4.1.82.Final-linux-x86_64.jar:libraries/io/netty/netty-transport-native-epoll/4.1.82.Final/netty-transport-native-epoll-4.1.82.Final-linux-aarch_64.jar:libraries/io/netty/netty-transport-native-unix-common/4.1.82.Final/netty-transport-native-unix-common-4.1.82.Final.jar:libraries/it/unimi/dsi/fastutil/8.5.9/fastutil-8.5.9.jar:libraries/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar:libraries/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1.jar:libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar:libraries/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar:libraries/org/apache/logging/log4j/log4j-api/2.19.0/log4j-api-2.19.0.jar:libraries/org/apache/logging/log4j/log4j-core/2.19.0/log4j-core-2.19.0.jar:libraries/org/apache/logging/log4j/log4j-slf4j2-impl/2.19.0/log4j-slf4j2-impl-2.19.0.jar:libraries/org/joml/joml/1.10.5/joml-1.10.5.jar:libraries/org/slf4j/slf4j-api/2.0.1/slf4j-api-2.0.1.jar"
+    ],
+    "background_executor": "java.util.concurrent.ForkJoinPool",
+    "background_parallelism": 2,
+    "background_peak_pool_size": 3,
+    "background_peak_active": 0,
+    "core_version": "1.0.6",
+    "loaded_mod_count": 562,
+    "jfr": {
+      "gc_pause_ms": {
+        "max": 27.866392,
+        "p99": 27.866392,
+        "median": 18.106315,
+        "count": 27,
+        "p95": 24.880589
+      },
+      "sampled_allocation_classes": [
+        {
+          "sampled_weight_bytes": 3135352600,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$Spline$Point"
+        },
+        {
+          "sampled_weight_bytes": 3078715560,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$HolderHolder"
+        },
+        {
+          "sampled_weight_bytes": 2616291656,
+          "name": "net.minecraft.core.Holder$Direct"
+        },
+        {
+          "sampled_weight_bytes": 2488700312,
+          "name": "[D"
+        },
+        {
+          "sampled_weight_bytes": 1970488584,
+          "name": "org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable"
+        },
+        {
+          "sampled_weight_bytes": 1935223856,
+          "name": "java.util.ImmutableCollections$ListItr"
+        },
+        {
+          "sampled_weight_bytes": 1709184656,
+          "name": "java.lang.Double"
+        },
+        {
+          "sampled_weight_bytes": 1704921480,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$Marker"
+        },
+        {
+          "sampled_weight_bytes": 1654856152,
+          "name": "[Ljava.lang.Object;"
+        },
+        {
+          "sampled_weight_bytes": 1507653144,
+          "name": "java.util.stream.ReferencePipeline$3"
+        },
+        {
+          "sampled_weight_bytes": 1418539472,
+          "name": "java.util.stream.ReferencePipeline$Head"
+        },
+        {
+          "sampled_weight_bytes": 1286251528,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$MulOrAdd"
+        },
+        {
+          "sampled_weight_bytes": 1068798976,
+          "name": "java.util.AbstractList$RandomAccessSpliterator"
+        },
+        {
+          "sampled_weight_bytes": 1058872288,
+          "name": "com.google.common.collect.Iterators$ArrayItr"
+        },
+        {
+          "sampled_weight_bytes": 955050464,
+          "name": "net.minecraft.util.CubicSpline$Multipoint$$Lambda$82609+0x000000900a3c65b0.1892129009"
+        }
+      ],
+      "allocation_sample_note": "First event per thread excluded; sampled weights are estimates, not exact allocated bytes.",
+      "sampled_allocation_owners": [
+        {
+          "sampled_weight_bytes": 8513287056,
+          "name": "net.minecraft.util.CubicSpline$Multipoint.m_211396_"
+        },
+        {
+          "sampled_weight_bytes": 5159318208,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$HolderHolder.m_207456_"
+        },
+        {
+          "sampled_weight_bytes": 3135352600,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$Spline.m_207386_"
+        },
+        {
+          "sampled_weight_bytes": 2384039016,
+          "name": "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer.m_207104_"
+        },
+        {
+          "sampled_weight_bytes": 1835608088,
+          "name": "net.minecraft.util.CubicSpline$Multipoint.m_216143_"
+        },
+        {
+          "sampled_weight_bytes": 1709184656,
+          "name": "org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable.<init>"
+        },
+        {
+          "sampled_weight_bytes": 1704921480,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$MarkerOrMarked.m_207456_"
+        },
+        {
+          "sampled_weight_bytes": 1229421032,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$Ap2.m_207362_"
+        },
+        {
+          "sampled_weight_bytes": 1077486144,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$MulOrAdd.m_207456_"
+        },
+        {
+          "sampled_weight_bytes": 1058872288,
+          "name": "com.google.common.collect.Iterators.forArray"
+        },
+        {
+          "sampled_weight_bytes": 1015675256,
+          "name": "net.minecraft.util.CubicSpline$Multipoint.equals"
+        },
+        {
+          "sampled_weight_bytes": 905016288,
+          "name": "net.minecraft.world.level.levelgen.DensityFunctions$Spline$Coordinate.m_224127_"
+        },
+        {
+          "sampled_weight_bytes": 786280144,
+          "name": "com.yungnickyoung.minecraft.bettercaves.noise.NoiseGen.interpolateNoiseCube"
+        },
+        {
+          "sampled_weight_bytes": 681977696,
+          "name": "net.minecraft.world.level.levelgen.Aquifer$NoiseBasedAquifer.handler$boc000$bettercaves$fixAquiferLiquids"
+        },
+        {
+          "sampled_weight_bytes": 589673600,
+          "name": "net.minecraft.world.level.levelgen.XoroshiroRandomSource.<init>"
+        }
+      ],
+      "gc_total_pause_ms": 503.702765
+    },
+    "generated_block_fingerprint": "54b2a90983f6c6b22351bf22e4747582867a1a31102cc22d4b6c1ac182fdb677",
+    "scope": "Fresh playerless disposable server, fixed seed 104729, contiguous synchronous FULL chunk requests, forced origin and fixed capability-heavy entity NBT serialization load; startup/fingerprint/shutdown excluded from workload metrics. Entity objects are serialized directly rather than selected through player-dependent world tracking."
+  }
+}

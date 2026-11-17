@@ -48,6 +48,10 @@ public final class PatchSmokeMod {
 
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
+        if(System.getProperty("auram.smoke", "").equals("tuning")) {
+            TuningSmoke.start(event.getServer());
+            return;
+        }
         try {
             if (System.getProperty("auram.smoke", "").equals("structureprobes")) {
                 if(!Boolean.getBoolean("auram.smoke.structureReference")) StructureProbeSmoke.run(event.getServer());
@@ -156,6 +160,15 @@ public final class PatchSmokeMod {
             forbiddenChunkLookups.clear();
             event.getServer().halt(false);
         }
+    }
+
+    @SubscribeEvent(priority=EventPriority.HIGHEST)
+    public static void tuningTickStart(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if(event.phase==net.minecraftforge.event.TickEvent.Phase.START) TuningSmoke.tickStart();
+    }
+    @SubscribeEvent(priority=EventPriority.LOWEST)
+    public static void tuningTickEnd(net.minecraftforge.event.TickEvent.ServerTickEvent event) {
+        if(event.phase==net.minecraftforge.event.TickEvent.Phase.END) TuningSmoke.tickEnd();
     }
 
     private static void verifyUnloadedHooks(ServerLevel level, Method mark) throws Exception {
