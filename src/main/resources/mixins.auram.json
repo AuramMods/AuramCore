@@ -21,7 +21,8 @@
     "midnight.BogStriderEnchantmentMixin",
     "aether.QuicksoilMovementMixin",
     "relics.FluidCollisionMixin",
-    "mekanism.WorldUtilsMixin"
+    "mekanism.WorldUtilsMixin",
+    "minecraft.SelectedItemSelectorMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,0 +1,33 @@
+{
+  "objective": [
+    "Attribute and optimize datapack/NBT selector processing while preserving command results",
+    "Improve Tom Storage comparison/synchronization using capability-heavy inventories",
+    "Evaluate and optimize remaining Nether fossil and Nyctophobia structure probes with terrain/RNG equivalence",
+    "Compare CPU/heap/worker configurations using chunk throughput, tick latency, allocation and GC pauses"
+  ],
+  "cycles": [
+    {
+      "cycle": 1,
+      "status": "validated",
+      "target": "Player SelectedItem NBT selectors",
+      "evidence": "followup/cycle1-summary.json",
+      "scope": "291 semantics checks, installed-function traces, three JVM runs per arm, five warmup and 25 measured batches per run",
+      "limitations": "Controlled replay cannot recover function IDs that were not captured in the historical Spark profile."
+    },
+    {
+      "cycle": 2,
+      "status": "pending",
+      "target": "Tom Storage synchronization"
+    },
+    {
+      "cycle": 3,
+      "status": "pending",
+      "target": "Single-column structure probes"
+    },
+    {
+      "cycle": 4,
+      "status": "pending",
+      "target": "Four-CPU heap and worker comparisons"
+    }
+  ]
+}

@@ -49,6 +49,11 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("selectors")) {
+                SelectorSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-selectors-pass.txt"), "PASS selector equivalence and installed function attribution\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("terrainbatch")) {
                 TerrainBatchSmoke.run(event.getServer());
                 HeightCacheSmoke.run(event.getServer());

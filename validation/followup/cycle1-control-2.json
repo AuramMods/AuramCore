@@ -1,0 +1,413 @@
+{
+  "run": {
+    "mode": "selectors",
+    "runtime": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-selectors-_9kac5ff",
+    "passed": true,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 10.358525290968828,
+    "artifact_sha256": "12fa481f0952cab2bcad00c59f0f8a1e5d334f63a98fbc225e2402df1bc07945",
+    "fixture": {
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/Library/Application Support/PrismLauncher/java/java-runtime-gamma/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=selectors",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "datapacks": [
+      {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/config/paxi/datapacks/guns1-20-0.1.2-dp.zip",
+        "sha256": "35da44e9f360bf09339c30dc430331bc1c7cbfac6f808822a1c5d51f602a0711"
+      },
+      {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/scorched-1.1.3e.jar",
+        "sha256": "e9f19619f72ddbe65e2efb593fd8dd39235e16d118331339d1d5879064702a7e"
+      },
+      {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Incendium_1.20.x_v5.3.5.jar",
+        "sha256": "96068e4d66ea503efebb1e31d28c2d6ce85db749049463cab9f799c8c0ae1e75"
+      }
+    ]
+  },
+  "benchmark": {
+    "semantic_comparisons": 291,
+    "functions": [
+      {
+        "function": "ggunz:loop",
+        "measured_calls": 500,
+        "entity_serializations": 14500,
+        "median_20_calls_ms": 16.586083,
+        "p95_20_calls_ms": 18.915083,
+        "batch_ms": [
+          20.578541,
+          18.468208,
+          18.308833,
+          17.511959,
+          17.310291,
+          16.6935,
+          17.488333,
+          18.915083,
+          16.48275,
+          16.352583,
+          16.586083,
+          16.741209,
+          16.362125,
+          16.35725,
+          16.184458,
+          16.51275,
+          16.108584,
+          16.422666,
+          18.544166,
+          17.858417,
+          16.945583,
+          16.028917,
+          16.344583,
+          15.714,
+          15.950917
+        ],
+        "traced_serializations": 12,
+        "trace_by_function": {
+          "ggunz:loop": {
+            "command_errors": 10,
+            "commands": 44,
+            "entity_serializations": 6,
+            "nanos": 2726000,
+            "result_hash": -982114313891066362
+          },
+          "ggunz:projectiles/hit/entity/laser": {
+            "command_errors": 4,
+            "commands": 12,
+            "entity_serializations": 0,
+            "nanos": 178708,
+            "result_hash": -8000134883644631422
+          },
+          "ggunz:recipe/recipe": {
+            "command_errors": 3,
+            "commands": 4,
+            "entity_serializations": 0,
+            "nanos": 5170541,
+            "result_hash": -36133628457
+          },
+          "ggunz:utilities/dolphin": {
+            "command_errors": 3,
+            "commands": 13,
+            "entity_serializations": 0,
+            "nanos": 165125,
+            "result_hash": 914893892867926913
+          },
+          "ggunz:utilities/laserattach": {
+            "command_errors": 3,
+            "commands": 9,
+            "entity_serializations": 0,
+            "nanos": 94208,
+            "result_hash": -1641193473826534122
+          },
+          "ggunz:utilities/player_tick": {
+            "command_errors": 1,
+            "commands": 13,
+            "entity_serializations": 0,
+            "nanos": 722999,
+            "result_hash": 1806145491403082451
+          },
+          "ggunz:utilities/scopes": {
+            "command_errors": 2,
+            "commands": 8,
+            "entity_serializations": 6,
+            "nanos": 1321042,
+            "result_hash": -208801668859896388
+          },
+          "ggunz:utilities/shooting_delay": {
+            "command_errors": 53,
+            "commands": 57,
+            "entity_serializations": 0,
+            "nanos": 322874,
+            "result_hash": -1755658121552175
+          },
+          "ggunz:utilities/suppress": {
+            "command_errors": 10,
+            "commands": 30,
+            "entity_serializations": 0,
+            "nanos": 427043,
+            "result_hash": -35398587097978663
+          }
+        }
+      },
+      {
+        "function": "ggunz:utilities/player_tick",
+        "measured_calls": 500,
+        "entity_serializations": 0,
+        "median_20_calls_ms": 0.26575,
+        "p95_20_calls_ms": 0.293459,
+        "batch_ms": [
+          0.282375,
+          0.263916,
+          0.262875,
+          0.260333,
+          0.276917,
+          0.293459,
+          0.295208,
+          0.26625,
+          0.258333,
+          0.271791,
+          0.270042,
+          0.259125,
+          0.255083,
+          0.25975,
+          0.252833,
+          0.26575,
+          0.283917,
+          0.287958,
+          0.252208,
+          0.265709,
+          0.249,
+          0.275833,
+          0.264375,
+          0.28175,
+          0.291209
+        ],
+        "traced_serializations": 0,
+        "trace_by_function": {
+          "ggunz:utilities/player_tick": {
+            "command_errors": 1,
+            "commands": 13,
+            "entity_serializations": 0,
+            "nanos": 61125,
+            "result_hash": 1806145491403101082
+          }
+        }
+      },
+      {
+        "function": "ggunz:utilities/scopes",
+        "measured_calls": 500,
+        "entity_serializations": 3000,
+        "median_20_calls_ms": 6.180625,
+        "p95_20_calls_ms": 6.325541,
+        "batch_ms": [
+          6.114083,
+          6.216833,
+          6.147,
+          6.136291,
+          6.213125,
+          6.270333,
+          6.124292,
+          6.182208,
+          6.053084,
+          6.325541,
+          5.983542,
+          6.291042,
+          6.191208,
+          6.1675,
+          6.227167,
+          6.309125,
+          6.050458,
+          6.302792,
+          6.180625,
+          6.058167,
+          6.175875,
+          6.233042,
+          6.140417,
+          6.935958,
+          6.014375
+        ],
+        "traced_serializations": 6,
+        "trace_by_function": {
+          "ggunz:utilities/scopes": {
+            "command_errors": 2,
+            "commands": 8,
+            "entity_serializations": 6,
+            "nanos": 374001,
+            "result_hash": -208801668859896388
+          }
+        }
+      },
+      {
+        "function": "ggunz:reload/timer",
+        "measured_calls": 500,
+        "entity_serializations": 30000,
+        "median_20_calls_ms": 60.786583,
+        "p95_20_calls_ms": 61.65825,
+        "batch_ms": [
+          60.640333,
+          60.718792,
+          61.574375,
+          60.578167,
+          60.786583,
+          61.65825,
+          60.454833,
+          60.987625,
+          61.257292,
+          60.742,
+          61.656625,
+          60.893167,
+          60.578958,
+          61.198959,
+          60.98275,
+          60.462334,
+          61.499917,
+          60.58175,
+          60.772917,
+          61.350375,
+          60.727667,
+          60.583583,
+          62.291084,
+          60.927542,
+          60.352917
+        ],
+        "traced_serializations": 61,
+        "trace_by_function": {
+          "ggunz:reload/timer": {
+            "commands": 63,
+            "entity_serializations": 61,
+            "nanos": 4363251,
+            "result_hash": 6903540546114491647
+          }
+        }
+      },
+      {
+        "function": "scorched:tick",
+        "measured_calls": 500,
+        "entity_serializations": 375,
+        "median_20_calls_ms": 0.283625,
+        "p95_20_calls_ms": 0.383417,
+        "batch_ms": [
+          0.303375,
+          0.283209,
+          0.28725,
+          0.283625,
+          0.285709,
+          0.283917,
+          0.282875,
+          0.278,
+          0.280458,
+          0.279834,
+          0.293708,
+          0.3495,
+          0.294292,
+          0.289083,
+          0.324042,
+          0.283625,
+          0.277333,
+          0.387041,
+          0.310417,
+          0.277083,
+          0.383417,
+          0.250167,
+          0.257875,
+          0.254916,
+          0.244542
+        ],
+        "traced_serializations": 0,
+        "trace_by_function": {
+          "scorched:tick": {
+            "command_errors": 1,
+            "commands": 15,
+            "entity_serializations": 0,
+            "nanos": 130583,
+            "result_hash": 1254468289356599152
+          }
+        }
+      },
+      {
+        "function": "incendium:clocks/main",
+        "measured_calls": 500,
+        "entity_serializations": 0,
+        "median_20_calls_ms": 2.680208,
+        "p95_20_calls_ms": 3.991458,
+        "batch_ms": [
+          4.012791,
+          3.991458,
+          3.500042,
+          3.182625,
+          3.234167,
+          3.359625,
+          2.781458,
+          3.146541,
+          2.786667,
+          3.019375,
+          2.590417,
+          2.538958,
+          2.933666,
+          2.680208,
+          2.8975,
+          2.458584,
+          2.461,
+          2.387,
+          2.39975,
+          2.181625,
+          2.331083,
+          2.360917,
+          2.257,
+          2.12225,
+          2.04
+        ],
+        "traced_serializations": 3,
+        "trace_by_function": {
+          "incendium:castle/main": {
+            "commands": 2,
+            "entity_serializations": 0,
+            "nanos": 26541,
+            "result_hash": -462433773500
+          },
+          "incendium:clocks/main": {
+            "command_errors": 1,
+            "commands": 14,
+            "entity_serializations": 0,
+            "nanos": 1721457,
+            "result_hash": 6379720314484843487
+          },
+          "incendium:entity/mob/init": {
+            "command_errors": 25,
+            "commands": 475,
+            "entity_serializations": 0,
+            "nanos": 549288,
+            "result_hash": 1485635025676661559
+          },
+          "incendium:entity/other/init": {
+            "command_errors": 280,
+            "commands": 560,
+            "entity_serializations": 3,
+            "nanos": 14255795,
+            "result_hash": 3262837628213125061
+          },
+          "incendium:player/main": {
+            "command_errors": 14,
+            "commands": 59,
+            "entity_serializations": 0,
+            "nanos": 1483703,
+            "result_hash": -5305557478824609364
+          },
+          "incendium:technical/entity_id/check": {
+            "commands": 52,
+            "entity_serializations": 0,
+            "nanos": 173003,
+            "result_hash": 1797490116356580076
+          },
+          "incendium:technical/entity_id/init": {
+            "commands": 1586,
+            "entity_serializations": 0,
+            "nanos": 3674759,
+            "result_hash": 4876286873800509229
+          },
+          "incendium:technical/main": {
+            "command_errors": 1,
+            "commands": 3,
+            "entity_serializations": 0,
+            "nanos": 193166,
+            "result_hash": -650945233106
+          }
+        }
+      }
+    ],
+    "scope": "Installed datapacks, one live server player with tagged inventory and 32 armor stands; not a hosted-server speedup estimate."
+  }
+}

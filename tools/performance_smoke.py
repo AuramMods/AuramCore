@@ -20,6 +20,10 @@ parser.add_argument('--mode', default='movement')
 parser.add_argument('--with-mod', action='append', default=[], dest='extra_mods', help='Extra mod id and its dependencies')
 parser.add_argument('--baseline-jar', type=Path, help='Use another Auram jar as a regression control')
 parser.add_argument('--no-build', action='store_true')
+parser.add_argument('--datapack', type=Path, action='append', default=[], help='Installed datapack zip/jar to load in the fixture')
+parser.add_argument('--java-arg', action='append', default=[], help='Additional JVM argument (use --java-arg=VALUE)')
+parser.add_argument('--xms', default='1G', help='Initial JVM heap')
+parser.add_argument('--xmx', default='4G', help='Maximum JVM heap')
 parser.add_argument('--identity-candidate', action='store_true', help='Enable the experimental identity shortcut in the test mod only')
 args = parser.parse_args()
 properties = dict(line.split('=', 1) for line in (ROOT/'gradle.properties').read_text().splitlines()
@@ -95,7 +99,11 @@ if args.mode in {'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wr
     (runtime/'server.properties').write_text('\n'.join(
         'level-type=minecraft:normal' if s.startswith('level-type=') else
         'generator-settings={}' if s.startswith('generator-settings=') else s for s in settings)+'\n')
-command = [args.java, '-Xms1G', '-Xmx4G', '-Dmixin.debug.export=true', f'-Dauram.smoke={args.mode}',
+for datapack in args.datapack:
+    destination=runtime/'world/datapacks'
+    destination.mkdir(parents=True,exist_ok=True)
+    shutil.copy2(datapack,destination/(datapack.stem+'.zip'))
+command = [args.java, f'-Xms{args.xms}', f'-Xmx{args.xmx}', *args.java_arg, '-Dmixin.debug.export=true', f'-Dauram.smoke={args.mode}',
            f'-Dauram.smoke.identityCandidate={str(args.identity_candidate).lower()}',
            '@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt', 'nogui']
 print(f'Runtime: {runtime}', flush=True)
@@ -109,7 +117,9 @@ marker = 'auram-smoke-pass.txt' if args.mode == 'chunks' else f'auram-{args.mode
 passed = all(code == 0 for code in codes) and (runtime/marker).exists()
 summary = {'mode': args.mode, 'runtime': str(runtime), 'passed': passed, 'exit_codes': codes,
            'elapsed_seconds': time.monotonic()-start, 'artifact_sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),
-           'fixture': fixture}
+           'fixture': fixture, 'jvm_command': command,
+           'datapacks': [{'source': str(path), 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+                        for path in args.datapack]}
 (runtime/'result.json').write_text(json.dumps(summary, indent=2)+'\n')
 print(json.dumps(summary, indent=2), flush=True)
 raise SystemExit(0 if passed else 1)

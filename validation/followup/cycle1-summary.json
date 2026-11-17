@@ -1,0 +1,163 @@
+{
+  "runs": {
+    "control": [
+      "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-selectors-wwbqoo7x",
+      "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-selectors-_9kac5ff",
+      "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-selectors-_af87fbi"
+    ],
+    "candidate": [
+      "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-selectors-6us8gev6",
+      "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-selectors-na9f08wj",
+      "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-selectors-3c22l9i0"
+    ]
+  },
+  "semantic_comparisons": 291,
+  "function_summary": [
+    {
+      "function": "ggunz:loop",
+      "process_medians_ms": {
+        "control": [
+          16.382334,
+          16.586083,
+          16.652791
+        ],
+        "candidate": [
+          15.432459,
+          13.389458,
+          13.226458
+        ]
+      },
+      "entity_serializations_per_500_calls": {
+        "control": 14500,
+        "candidate": 13000
+      },
+      "command_results_match": true,
+      "median_change_percent": -19.27293502631091
+    },
+    {
+      "function": "ggunz:utilities/player_tick",
+      "process_medians_ms": {
+        "control": [
+          0.270291,
+          0.26575,
+          0.273958
+        ],
+        "candidate": [
+          0.272,
+          0.264708,
+          0.278209
+        ]
+      },
+      "entity_serializations_per_500_calls": {
+        "control": 0,
+        "candidate": 0
+      },
+      "command_results_match": true,
+      "median_change_percent": 0.6322815040086471
+    },
+    {
+      "function": "ggunz:utilities/scopes",
+      "process_medians_ms": {
+        "control": [
+          6.170584,
+          6.180625,
+          7.381584
+        ],
+        "candidate": [
+          7.067542,
+          6.241625,
+          6.132166
+        ]
+      },
+      "entity_serializations_per_500_calls": {
+        "control": 3000,
+        "candidate": 3000
+      },
+      "command_results_match": true,
+      "median_change_percent": 0.986955202750539
+    },
+    {
+      "function": "ggunz:reload/timer",
+      "process_medians_ms": {
+        "control": [
+          60.976625,
+          60.786583,
+          60.856084
+        ],
+        "candidate": [
+          35.927625,
+          31.994375,
+          31.566792
+        ]
+      },
+      "entity_serializations_per_500_calls": {
+        "control": 30000,
+        "candidate": 15000
+      },
+      "command_results_match": true,
+      "median_change_percent": -47.426168598032035
+    },
+    {
+      "function": "scorched:tick",
+      "process_medians_ms": {
+        "control": [
+          0.202708,
+          0.283625,
+          0.279458
+        ],
+        "candidate": [
+          0.333166,
+          0.213708,
+          0.285208
+        ]
+      },
+      "entity_serializations_per_500_calls": {
+        "control": 375,
+        "candidate": 375
+      },
+      "command_results_match": true,
+      "median_change_percent": 2.0575542657572887
+    },
+    {
+      "function": "incendium:clocks/main",
+      "process_medians_ms": {
+        "control": [
+          3.13575,
+          2.680208,
+          2.649125
+        ],
+        "candidate": [
+          3.0325,
+          2.905375,
+          2.811459
+        ]
+      },
+      "entity_serializations_per_500_calls": {
+        "control": 0,
+        "candidate": 0
+      },
+      "command_results_match": true,
+      "median_change_percent": 8.401101705539272
+    }
+  ],
+  "limitations": [
+    "Original Spark capture has no function identifiers; attribution is from controlled installed-function replay, not retrospective per-function CPU attribution.",
+    "One player, tagged inventory, 32 armor stands; no claim of pack-wide or hosted-server speedup.",
+    "Full entity serializers remain for inventory queries, empty hands, other entities, and successful multi-key predicates."
+  ],
+  "source_inventory": {
+    "nbt_selector_commands": {
+      "guns": 737,
+      "scorched": 104,
+      "incendium": 19
+    },
+    "largest_files": {
+      "ggunz:projectiles/hit/entity/bullet_12": 319,
+      "ggunz:projectiles/hit/entity/bullet_13": 316,
+      "ggunz:reload/timer": 60
+    },
+    "interpretation": "Static command counts are not CPU shares. The tick-loop replay attributes nested commands and results to actual function IDs."
+  },
+  "artifact_version": "1.0.6",
+  "artifact_sha256": "84c9da7e267990c99ff298451319428312848fee6c3f160b412a0c5340aab85a"
+}
