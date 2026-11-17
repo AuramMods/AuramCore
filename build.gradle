@@ -83,6 +83,7 @@ repositories {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    testImplementation 'junit:junit:4.13.2'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     compileOnly(annotationProcessor('com.github.bawnorton.mixinsquared:mixinsquared-common:0.3.8'))
     implementation(jarJar('com.github.bawnorton.mixinsquared:mixinsquared-forge:0.3.8')) {
@@ -219,5 +220,26 @@ reobf { smokeTestJar {} }
     tasks.named(compileName, JavaCompile).configure {
         outputs.file(layout.buildDirectory.file("tmp/${compileName}/${compileName}-refmap.json"))
         outputs.file(layout.buildDirectory.file("tmp/${compileName}/${compileName}-mappings.tsrg"))
+    }
+}
+
+// An isolated, invisible client checks the stitched rock sprites and item models.
+if (providers.gradleProperty('rockClientSmoke').isPresent()) {
+    minecraft.runs.client {
+        workingDirectory project.file('build/rock-client-smoke')
+        property 'auram.smoke.rocks', 'true'
+        property 'auram.smoke.hiddenWindow', 'true'
+        mods {
+            auram_patch_smoke { source sourceSets.smokeTest }
+        }
+    }
+    tasks.configureEach {
+        if (name == 'runClient') doFirst {
+            file('build/rock-client-smoke/auram-rock-client-pass.txt').delete()
+            file('build/rock-client-smoke/auram-rock-client-failed.txt').delete()
+            def config = file('build/rock-client-smoke/config')
+            config.mkdirs()
+            new File(config, 'fml.toml').text = 'earlyWindowControl = false\nversionCheck = false\n'
+        }
     }
 }

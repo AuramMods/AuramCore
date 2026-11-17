@@ -1,0 +1,7 @@
+{
+  "sources": [
+    { "type": "minecraft:single", "resource": "auram:item/rock", "sprite": "auram:item/rock_netherrack" },
+    { "type": "minecraft:single", "resource": "auram:item/rock", "sprite": "auram:item/rock_end_stone" },
+    { "type": "minecraft:single", "resource": "auram:item/rock", "sprite": "auram:item/rock_deepslate" }
+  ]
+}

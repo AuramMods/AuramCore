@@ -26,6 +26,8 @@ Source of truth: `gradle.properties` and `build.gradle`.
 - Replaces ore block loot with generated rock items through a global loot modifier.
 - Uses higher rock counts for deepslate ores.
 - Applies dynamic names/colors so generated rocks match their source ore.
+- Nether/netherrack, End/end-stone, and deepslate ore variants use matching host-stone surfaces while retaining a separately tinted ore interior. Host selection uses whole words in the source block ID, then its particle texture path; material names such as `enderium` do not imply an End host.
+- The client generates these surfaces from the existing rock silhouette and the active vanilla host textures during atlas loading. Resource reloads rebuild the surfaces and clear cached ore/component colors. Ore tint sampling excludes pixels close to the host texture, so pale quartz is not overwhelmed by red netherrack.
 
 ### 2. Rock Conversion and Caching
 
@@ -231,6 +233,12 @@ Primary output:
 - `build/libs/auram-1.0.6-all.jar` (reobfuscated, includes MixinSquared; install as `AuramCore-1.0.6.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
+
+### Rock Appearance Validation
+
+`./gradlew test` checks host detection, ore/background color separation, transparency, and differently sized source textures.
+
+`./gradlew runClient -ProckClientSmoke` launches an isolated invisible client at the main menu, validates stitched host sprites, vanilla rock models and quartz tint, reloads resources, and repeats the checks before exiting. It writes `build/rock-client-smoke/auram-rock-client-pass.txt` on success (or `auram-rock-client-failed.txt` on failure) and exports the three generated host sprites beside it. It does not load a world or deploy to the pack.
 
 ### Headless Chunk Patch Smoke Test
 

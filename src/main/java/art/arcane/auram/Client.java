@@ -1,9 +1,11 @@
 package art.arcane.auram;
 
-import art.arcane.auram.item.GearItem;
 import art.arcane.auram.util.ColorHelper;
 import art.arcane.auram.util.ComponentItem;
+import art.arcane.auram.util.RockHost;
+import art.arcane.auram.util.RockSpriteLoader;
 import net.minecraft.client.color.item.ItemColor;
+import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -12,6 +14,7 @@ import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterColorHandlersEvent;
+import net.minecraftforge.client.event.RegisterTextureAtlasSpriteLoadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -19,30 +22,48 @@ import net.minecraftforge.registries.RegistryObject;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class Client {
     private static final Map<Item, Integer> ROCK_COLOR_CACHE = new HashMap<>();
+    private static volatile Map<Item, RockHost> ROCK_HOSTS = Map.of();
     private static final Map<String, Integer> COMPONENT_COLOR_CACHE = new HashMap<>();
 
     @SubscribeEvent
     public static void onRegisterGeometry(ModelEvent.RegisterAdditional event) {
-        event.register(Objects.requireNonNull(ResourceLocation.tryBuild(Auram.MODID, "item/rock_ore")));
+        for (RockHost host : RockHost.values()) {
+            event.register(ResourceLocation.tryBuild(Auram.MODID, "item/" + host.model));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onRegisterSpriteLoaders(RegisterTextureAtlasSpriteLoadersEvent event) {
+        event.register("rock_host", new RockSpriteLoader());
     }
 
     @SubscribeEvent
     public static void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
         Map<ResourceLocation, BakedModel> modelRegistry = event.getModels();
-        ResourceLocation parentLocation = ResourceLocation.tryBuild(Auram.MODID, "item/rock_ore");
-        BakedModel parentModel = modelRegistry.get(parentLocation);
-
-        if (parentModel == null) return;
-
-        for (ResourceLocation rockId : Auram.GENERATED_ROCKS) {
+        Map<Item, RockHost> hosts = new HashMap<>();
+        Auram.ROCK_ITEM_TO_ORE_BLOCK.forEach((rock, ore) -> {
+            ResourceLocation oreId = ForgeRegistries.BLOCKS.getKey(ore);
+            BakedModel oreModel = modelRegistry.get(BlockModelShaper.stateToModelLocation(ore.defaultBlockState()));
+            String texturePath = oreModel == null ? "" : oreModel.getParticleIcon().contents().name().getPath();
+            RockHost host = RockHost.detect(oreId.getPath(), texturePath);
+            BakedModel parentModel = modelRegistry.get(ResourceLocation.tryBuild(Auram.MODID, "item/" + host.model));
+            ResourceLocation rockId = ForgeRegistries.ITEMS.getKey(rock);
             ModelResourceLocation itemModelRL = new ModelResourceLocation(rockId, "inventory");
-            modelRegistry.put(itemModelRL, parentModel);
-        }
+            if (parentModel != null) modelRegistry.put(itemModelRL, parentModel);
+            hosts.put(rock, host);
+        });
+        ROCK_HOSTS = Map.copyOf(hosts);
+    }
+
+    @SubscribeEvent
+    public static void onBakingCompleted(ModelEvent.BakingCompleted event) {
+        // This event runs on the render thread, after the new models are installed.
+        ROCK_COLOR_CACHE.clear();
+        COMPONENT_COLOR_CACHE.clear();
     }
 
     @SubscribeEvent
@@ -67,7 +88,7 @@ public class Client {
                     }
                     var oreBlock = Auram.ROCK_ITEM_TO_ORE_BLOCK.get(item);
                     if (oreBlock != null) {
-                        int color = ColorHelper.getDominantColor(oreBlock);
+                        int color = ColorHelper.getDominantColor(oreBlock, ROCK_HOSTS.getOrDefault(item, RockHost.STONE));
                         if (color == -1) color = oreBlock.defaultMapColor().col;
                         ROCK_COLOR_CACHE.put(item, color);
                         return color;

@@ -1,0 +1,6 @@
+{
+  "parent": "auram:item/rock_ore",
+  "textures": {
+    "layer0": "auram:item/rock_netherrack"
+  }
+}
