@@ -1,0 +1,32 @@
+{
+  "target": "Reuse Tom Storage item IDs within one packet write",
+  "paired_runs": 3,
+  "control_medians_ms": [
+    3.047458,
+    3.074543,
+    3.4862070000000003
+  ],
+  "candidate_medians_ms": [
+    2.683667,
+    2.6584179999999997,
+    3.028581
+  ],
+  "provider_comparisons": {
+    "control_provider_comparisons": 128500,
+    "candidate_provider_comparisons": 96250
+  },
+  "checks": [
+    "128 actual Mekanism powered items with mutable supplemental capabilities",
+    "60 paired packet cases and matching decoded client states per run",
+    "61 outgoing packets compared per arm, including a split packet",
+    "Oversized NBT fallback executed in both arms",
+    "First ID zero, missing/new IDs, plain items, quantities zero and Long.MAX_VALUE, removals, normal NBT mutation and capability-only mutation",
+    "Custom-map fallback calibrated using previous unpatched release: equal comparison counts and equivalent timings",
+    "No capability/NBT equality caching or cross-call item ID cache"
+  ],
+  "limitations": [
+    "Local 128-entry copied-snapshot workload, not a pack-wide tick improvement estimate.",
+    "The paired reference uses an otherwise behavior-identical Object2IntOpenHashMap subclass to retain the original lookup path. The old-jar calibration confirms that this does not itself reduce comparisons."
+  ],
+  "median_change_percent": -12.713304058521867
+}

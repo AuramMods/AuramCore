@@ -49,6 +49,11 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("terminal")) {
+                TerminalSyncSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-terminal-pass.txt"), "PASS capability-heavy terminal packets and comparisons\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("selectors")) {
                 SelectorSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-selectors-pass.txt"), "PASS selector equivalence and installed function attribution\n");

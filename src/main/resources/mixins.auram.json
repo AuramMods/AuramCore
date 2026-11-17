@@ -22,7 +22,9 @@
     "aether.QuicksoilMovementMixin",
     "relics.FluidCollisionMixin",
     "mekanism.WorldUtilsMixin",
-    "minecraft.SelectedItemSelectorMixin"
+    "minecraft.SelectedItemSelectorMixin",
+    "tomsstorage.TerminalIdMixin",
+    "tomsstorage.StoredQuantityAccess"
   ],
   "injectors": {
     "defaultRequire": 1

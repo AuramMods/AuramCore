@@ -16,8 +16,9 @@
     },
     {
       "cycle": 2,
-      "status": "pending",
-      "target": "Tom Storage synchronization"
+      "status": "validated",
+      "target": "Tom Storage synchronization",
+      "evidence": "followup/cycle2-summary.json"
     },
     {
       "cycle": 3,

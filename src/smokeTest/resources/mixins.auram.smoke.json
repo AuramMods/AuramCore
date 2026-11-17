@@ -12,7 +12,9 @@
     "CapabilityComparisonProbeMixin",
     "ServerSpawnMixin",
     "SelectorProbeMixin",
-    "PlayerListAccess"
+    "PlayerListAccess",
+    "TerminalPacketProbeMixin",
+    "TerminalWriteProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1

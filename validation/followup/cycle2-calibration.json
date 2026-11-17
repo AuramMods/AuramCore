@@ -1,0 +1,103 @@
+{
+  "run": {
+    "mode": "terminal",
+    "runtime": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-terminal-3ae4tf6w",
+    "passed": true,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 9.062409791979007,
+    "artifact_sha256": "84c9da7e267990c99ff298451319428312848fee6c3f160b412a0c5340aab85a",
+    "fixture": {
+      "mekanism": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Mekanism-1.20.1-10.4.16.80.jar",
+        "sha256": "3b0d191fa4a45e662f9725991d76a30192f30186abb2ba694b873b5f7b9358d2"
+      },
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      },
+      "toms_storage": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/toms_storage-1.20-1.7.1.jar",
+        "sha256": "08552be86f960111e501227707dc089c91b8a55f6c1be09baee188338576ff9b"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/Library/Application Support/PrismLauncher/java/java-runtime-gamma/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=terminal",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "datapacks": []
+  },
+  "benchmark": {
+    "inventory_entries": 128,
+    "real_energy_items": 128,
+    "paired_packet_cases": 60,
+    "packets_compared": 61,
+    "overflow_fallbacks": 2,
+    "control_provider_comparisons": 128500,
+    "candidate_provider_comparisons": 128500,
+    "control_median_10_updates_ms": 3.0474569999999996,
+    "candidate_median_10_updates_ms": 3.0226230000000003,
+    "control_batch_ms": [
+      3.091042,
+      3.229294,
+      2.849,
+      2.908458,
+      3.129584,
+      3.073208,
+      3.0387929999999996,
+      3.158542,
+      3.0384189999999998,
+      3.063626,
+      2.973585,
+      2.8581269999999996,
+      3.107251,
+      3.135584,
+      2.857958,
+      3.196584,
+      3.070709,
+      3.0100819999999997,
+      2.956001,
+      3.1085830000000003,
+      5.900251,
+      3.0474569999999996,
+      2.923918,
+      2.8229569999999997,
+      2.9057090000000003
+    ],
+    "candidate_batch_ms": [
+      3.0865,
+      2.9248760000000003,
+      3.002166,
+      2.847333,
+      3.244459,
+      3.0498340000000006,
+      3.124376,
+      3.1349579999999997,
+      3.7679580000000006,
+      2.996249,
+      2.887791,
+      3.0098759999999998,
+      3.0449179999999996,
+      3.059125,
+      2.903459,
+      2.9885020000000004,
+      3.055707,
+      3.0226230000000003,
+      3.04929,
+      3.0377080000000003,
+      3.0137929999999997,
+      2.856459,
+      2.805043,
+      2.793,
+      3.1710420000000004
+    ],
+    "scope": "128 real Mekanism powered items plus mutable capability payloads; alternating paired update order; 5 warmup and 25 measured batches."
+  }
+}
