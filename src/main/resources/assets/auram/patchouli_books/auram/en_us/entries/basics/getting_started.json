@@ -1,0 +1,23 @@
+{
+  "name": "Welcome to Auram",
+  "icon": "minecraft:book",
+  "category": "auram:basics",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "The Field Guide",
+      "text": "AuramCore adds $(l:auram:rocks/mining)ore rocks$(/l), a $(l:auram:rocks/catalyst)Rock Catalyst$(/l), $(l:auram:chaos/getting_started)recipe chaos$(/l), and $(l:auram:chaos/quests)quest generation$(/l). It also supplies automatic compatibility patches for the Auram pack.$(br2)Right-click this book to open it. Use the category list, search, and page arrows to explore."
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "auram:guide_book",
+      "text": "Combine a book, cobblestone and purple dye in any arrangement. The guide also appears in the $(thing)Auram$() creative tab when Patchouli is installed."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Player or Operator?",
+      "text": "Players can use rocks, the catalyst, and Ore Chisel without running admin commands.$(br2)Chaos and quest generation require permission level 2: an operator, or a singleplayer world with commands enabled. Their commands change recipes or quest files for everyone using that world or installation."
+    }
+  ]
+}

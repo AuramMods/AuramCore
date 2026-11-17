@@ -1,0 +1,16 @@
+{
+  "forge:conditions": [{ "type": "forge:mod_loaded", "modid": "patchouli" }],
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_purple_dye": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": { "items": [{ "items": ["minecraft:purple_dye"] }] }
+    },
+    "has_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": { "recipe": "auram:guide_book" }
+    }
+  },
+  "requirements": [["has_purple_dye", "has_recipe"]],
+  "rewards": { "recipes": ["auram:guide_book"] }
+}

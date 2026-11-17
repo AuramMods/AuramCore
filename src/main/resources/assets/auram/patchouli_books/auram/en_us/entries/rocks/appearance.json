@@ -1,0 +1,18 @@
+{
+  "name": "Rock Surfaces",
+  "icon": "auram:nether_quartz_rock",
+  "category": "auram:rocks",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "auram:nether_quartz_rock",
+      "text": "Nether or netherrack ores make reddish netherrack rocks. End or end-stone ores make pale End stone rocks. Deepslate ores make darker rocks.$(br2)The ore interior is tinted separately, so quartz stays pale inside a red host instead of becoming a red ore fleck."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "How a Host Is Chosen",
+      "text": "Auram checks whole words in the source ore ID, then its particle texture path. For example, $(thing)end_draconium_ore$() selects End stone, while $(thing)enderium_ore$() alone does not.$(br2)The client uses the active host textures with Auram’s rock silhouette. Resource reloads rebuild these surfaces and their color caches."
+    }
+  ]
+}

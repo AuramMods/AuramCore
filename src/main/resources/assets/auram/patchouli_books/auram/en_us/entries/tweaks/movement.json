@@ -1,0 +1,18 @@
+{
+  "name": "Movement & Chunks",
+  "icon": "minecraft:leather_boots",
+  "category": "auram:tweaks",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Loaded Terrain",
+      "text": "Midnight’s Bog Strider, Aether Redux quicksoil and Relics fluid-collision checks avoid synchronously generating unavailable chunks during server-side movement.$(br2)The normal loaded-terrain handlers still supply their effects. Missing terrain samples do not force new chunk tickets just to calculate movement."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Teleports and Saving",
+      "text": "Vanilla support-position caches are invalidated after explicit relocations or dimension changes, avoiding stale contacts after teleports. Soul Speed and Frost Walker still use their normal handlers.$(br2)Mekanism dirty-chunk notifications are applied to available chunks or retained for a pending loaded chunk, without a blocking fetch."
+    }
+  ]
+}

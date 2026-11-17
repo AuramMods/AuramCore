@@ -1,0 +1,18 @@
+{
+  "name": "Pack Integration Items",
+  "icon": "auram:bundled_sticks",
+  "category": "auram:basics",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "auram:bundled_sticks",
+      "text": "$(item)Bundled Sticks$() are a crafting component. The Auram pack replaces many wooden-stick recipe inputs with bundles. Check JEI for the recipe and output in your installed pack; pack scripts can replace the built-in recipe."
+    },
+    {
+      "type": "patchouli:spotlight",
+      "item": "auram:ender_jade",
+      "text": "$(item)Ender Jade$() and $(item)Journey Map$() are integration items. Their item classes do not grant powers or open a map on their own. Recipes, stages, and access rules belong to the installed pack scripts.$(br2)This guide documents AuramCore. Other Auram mods and pack scripts can add their own rules."
+    }
+  ]
+}

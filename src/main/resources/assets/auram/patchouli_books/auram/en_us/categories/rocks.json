@@ -1,0 +1,6 @@
+{
+  "name": "Ore Rocks",
+  "description": "Mine, identify, convert and chisel rocks from vanilla and modded ores.",
+  "icon": "auram:iron_rock",
+  "sortnum": 10
+}

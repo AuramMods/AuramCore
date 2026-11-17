@@ -1,0 +1,18 @@
+{
+  "name": "Rocks into Drops",
+  "icon": "auram:iron_rock",
+  "category": "auram:rocks",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Four Rocks, One Recipe",
+      "text": "Put four matching rocks in a 2×2 square to craft their mapped ore drop. The output item and quantity are derived from the source ore’s sampled loot; check JEI for the exact result.$(br2)The $(l:auram:rocks/catalyst)Rock Catalyst$(/l) performs the same four-rock conversion during pickup."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Generated Recipes",
+      "text": "Auram loads $(thing)config/auram/rock_recipes.json$() and exposes its mappings as the built-in $(thing)auram_generated_recipes$() datapack.$(br2)On the first run, mappings may be calculated after packs load. If conversion recipes are missing, run $(thing)/reload$() once or restart. Mappings are refreshed on server start and data reload."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Startup & Updates",
+  "icon": "minecraft:clock",
+  "category": "auram:tweaks",
+  "sortnum": 40,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "KubeJS Startup Check",
+      "text": "Auram cancels the unconditional startup update request in the supported KubeJS version. Script loading, lifecycle events and reloads still run.$(br2)The patch is optional when KubeJS is absent. It does not disable every mod’s independent update system."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Pack Updates",
+      "text": "The Auram pack disables other update checks through Forge and individual mod config files. Those choices live in the pack, not in this book or a universal AuramCore toggle.$(br2)Use the pack’s normal update process. Restart after installing a new AuramCore jar so its code and mixins can load; a resource reload alone cannot apply Java code changes."
+    }
+  ]
+}

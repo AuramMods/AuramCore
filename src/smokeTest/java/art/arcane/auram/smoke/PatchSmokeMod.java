@@ -48,6 +48,7 @@ public final class PatchSmokeMod {
 
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
+        if (System.getProperty("auram.smoke", "").equals("book")) return;
         if(System.getProperty("auram.smoke", "").equals("tuning")) {
             TuningSmoke.start(event.getServer());
             return;

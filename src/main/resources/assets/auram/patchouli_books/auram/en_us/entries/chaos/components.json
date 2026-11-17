@@ -1,0 +1,18 @@
+{
+  "name": "Gears and Plates",
+  "icon": "auram:plate",
+  "category": "auram:chaos",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "auram:gear",
+      "text": "Chaos can replace a single-item ingredient with an Auram gear or plate made from that material. The variant stores its material and display name in NBT.$(br2)Use the named material variant shown in JEI. A plain creative-tab gear or plate is not interchangeable with every material variant."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Component Recipes",
+      "text": "Generated gears use four matching material items around an iron nugget in a cross. Plates use eight matching material items around an iron nugget.$(br2)These supporting recipes are exported with the chaos pack when needed. JEI distinguishes component material variants; check the active generated recipe before crafting."
+    }
+  ]
+}

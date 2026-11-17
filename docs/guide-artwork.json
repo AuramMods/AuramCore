@@ -1,0 +1,26 @@
+{
+  "tool": "Built-in image_gen (not CLI)",
+  "assets": [
+    {
+      "path": "src/main/resources/assets/auram/textures/item/book.png",
+      "source": "../Satiscraftory/src/main/resources/assets/satiscraftory/textures/item/book.png",
+      "method": "ImageGen edit, then nearest-neighbor reduction to 16x16 pixels.",
+      "prompt": "Use case: precise-object-edit. Edit target: this 16x16 Minecraft inventory book icon from Satiscraftory. Make a matching AuramCore book icon in the SAME pixel-art silhouette, angle, pixel grid, object size and centered positioning. Replace the orange/yellow leather cover with rich amethyst-purple leather; use lavender highlights and darker violet shading. Retain pale ivory page edges and a small pale lavender/gold clasp or rune accent. Do not add text, scenery, gradients, smooth curves or extra objects. Preserve the transparent background. It must read cleanly as a vanilla-style 16x16 Minecraft inventory sprite. Output a square image with the exact same 16x16 pixel-art grid (an integer upscale of it is fine)."
+    },
+    {
+      "path": "src/main/resources/assets/auram/textures/gui/book.png",
+      "source": "../Satiscraftory/src/main/resources/assets/satiscraftory/textures/gui/book.png",
+      "method": "ImageGen provided a purple color reference. The final atlas is an exact-geometry recolor of the source, preserving its 512x256 dimensions and alpha for Patchouli UV compatibility.",
+      "command": "magick SOURCE -modulate 100,75,238.888889 DESTINATION",
+      "reference_prompt": "Use case: precise-object-edit. Edit target: the attached local Patchouli Minecraft GUI texture atlas from Satiscraftory, which is a 512 by 256 pixel transparent PNG. Create an Auram purple recolor of this EXACT GUI atlas. Preserve the exact canvas aspect ratio, exact pixel positions, shapes, silhouettes, transparency, all UV region boundaries, every blank region, both page panels, small UI buttons/icons along the right/bottom edges, black/gray placeholder rectangles, and page margins. This is a game texture atlas, NOT a screenshot or an illustration: absolutely no reframing, no extra objects, no text, no decorative elements in the reading areas. Recolor the existing orange/gold cover and trim to rich violet/amethyst/purple. Recolor the yellow stitched spine and accents to soft lavender. Retain the parchment pages as very pale ivory with a subtle lavender cast for readable dark text. Controls should be purple/lavender in exactly their existing positions. Pixel-art texture style, no blur. Transparent background must remain transparent. Return the image with the same aspect ratio and ideally EXACTLY 512x256 pixels. Keep all original alpha boundaries."
+    },
+    {
+      "paths": [
+        "src/main/resources/assets/auram/textures/gui/page_filler.png",
+        "src/main/resources/assets/auram/textures/gui/crafting.png"
+      ],
+      "source": "../Imperium/src/main/resources/assets/imperium/textures/gui/",
+      "method": "Copied unchanged; neutral page edges and recipe frames."
+    }
+  ]
+}

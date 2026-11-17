@@ -71,6 +71,7 @@ Source of truth: `gradle.properties` and `build.gradle`.
 
 - Custom items include `Ender Jade`, `Journey Map`, `Bundled Sticks`, `Rock Catalyst`, `Gear`, and `Plate`.
 - JEI subtype integration is included for NBT-based component variants.
+- With Patchouli installed, the purple **Auram Field Guide** is available in the Auram creative tab and can be crafted shapelessly from a book, cobblestone, and purple dye. Its five sections cover rocks, chaos/quest generation, configuration, integration items, and automatic compatibility patches. The book ID is `auram:auram`; Patchouli remains optional.
 
 ### 8. Midnight Compatibility Fix
 
@@ -233,6 +234,10 @@ Primary output:
 - `build/libs/auram-1.0.6-all.jar` (reobfuscated, includes MixinSquared; install as `AuramCore-1.0.6.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
+
+### Field Guide Validation
+
+`./gradlew runClient -PbookClientSmoke` starts an invisible client in `build/book-client-smoke`, creates a disposable flat world, validates Patchouli content, the guide recipe and creative-tab entry, and renders every book spread to `guide-screenshots/`. It writes `auram-book-pass.txt` or `auram-book-failed.txt` in that runtime directory and exits. No live pack or existing save is used.
 
 ### Rock Appearance Validation
 

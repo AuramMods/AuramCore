@@ -1,0 +1,18 @@
+{
+  "name": "Chaos Difficulty",
+  "icon": "auram:gear",
+  "category": "auram:chaos",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Difficulty Gates",
+      "text": "Difficulty gates modifiers and influences their random chances.$(br2)$(li)0–14: no modifier is enabled.$(li)15+: material gear/plate substitutions.$(li)25+: extra crafting ingredients.$(li)75+: EMC-filtered ingredient swaps.$(br2)Eligible recipes are not all guaranteed to change."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Recipe Types",
+      "text": "Ingredient swaps and additions use ProjectE EMC comparisons and dependency checks. This does not prove that every generated progression path is obtainable.$(br2)Handlers cover shaped/shapeless crafting, smelting, blasting, smoking, campfire cooking, stonecutting and smithing. Other mods’ custom machine recipe types are outside those handlers."
+    }
+  ]
+}

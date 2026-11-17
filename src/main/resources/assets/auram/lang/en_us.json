@@ -1,4 +1,6 @@
 {
   "enchantment.auram.chisel": "Ore Chisel",
-  "enchantment.auram.chisel.desc": "Right clicking an ore will chisel off ore-rocks without always breaking the ore block. Higher levels reduce the chances of breaking the block."
+  "enchantment.auram.chisel.desc": "Right clicking an ore will chisel off ore-rocks without always breaking the ore block. Higher levels reduce the chances of breaking the block.",
+  "book.auram.name": "Auram Field Guide",
+  "book.auram.landing": "Ore into rocks. Recipes into chaos.$(br2)Start with $(l:auram:basics/getting_started)this guide$(/l), learn $(l:auram:rocks/mining)ore rocks$(/l), or prepare a $(l:auram:chaos/getting_started)chaos world$(/l).$(br2)Server owners can find $(l:auram:configuration/settings)configuration$(/l) and players can browse $(l:auram:tweaks/overview)the other tweaks$(/l)."
 }

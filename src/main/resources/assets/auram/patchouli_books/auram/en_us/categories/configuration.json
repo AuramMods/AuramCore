@@ -1,0 +1,6 @@
+{
+  "name": "Server Configuration",
+  "description": "Working settings, optional quest text generation and values that are currently unused.",
+  "icon": "minecraft:comparator",
+  "sortnum": 30
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Ore Chisel",
+  "icon": "minecraft:enchanted_book",
+  "category": "auram:rocks",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Chip Away at an Ore",
+      "text": "$(item)Ore Chisel$() has five levels. Right-click a recognized ore with an enchanted pickaxe that can harvest that block to chip off rocks.$(br2)Each use costs durability and may destroy the ore without a second drop. Higher levels lower that chance and shorten the cooldown. It is incompatible with Silk Touch."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Levels and Fortune",
+      "text": "The break chance is about 1/2 at level I and 1/6 at level V. Cooldowns for I–V are 20, 16, 12, 8 and 2 game ticks.$(br2)Fortune can add rocks, but also raises durability cost: $(thing)(10 − Chisel level) × (Fortune level + 1)$() per successful use. Chiseling is not an unlimited ore source."
+    }
+  ]
+}

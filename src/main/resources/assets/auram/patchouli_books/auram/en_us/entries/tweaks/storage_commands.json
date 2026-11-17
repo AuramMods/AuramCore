@@ -1,0 +1,18 @@
+{
+  "name": "Selectors & Storage",
+  "icon": "minecraft:command_block",
+  "category": "auram:tweaks",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Held-Item Selectors",
+      "text": "For server-player selectors that inspect $(thing)SelectedItem$(), Auram first tests the live held stack. A mismatch, or a predicate containing only that field, can avoid full player/capability serialization.$(br2)Empty hands, non-player entities and successful tests needing other root fields retain the full serialization path. No stale NBT snapshot is cached."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Tom’s Storage IDs",
+      "text": "Tom’s Storage already looks up an item’s packet ID. Auram reuses that known nonzero ID during the same packet entry instead of repeating a capability-heavy lookup.$(br2)New entries, zero IDs and custom maps retain the original path. Quantities, packet splitting and large-NBT fallback remain part of Tom’s Storage."
+    }
+  ]
+}

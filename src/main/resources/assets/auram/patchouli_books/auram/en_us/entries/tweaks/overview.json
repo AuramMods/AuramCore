@@ -1,0 +1,18 @@
+{
+  "name": "Other Tweaks",
+  "icon": "auram:ender_jade",
+  "category": "auram:tweaks",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Automatic Patches",
+      "text": "AuramCore also patches selected vanilla and modded paths to reduce avoidable chunk waits, repeated terrain work and expensive item comparisons.$(br2)These patches apply automatically when their target mods are present. Auram’s common config does not expose individual on/off switches for them."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Gameplay Boundaries",
+      "text": "The terrain patches aim to retain structure placement rules and random draws while avoiding repeated work. They do not add a world preset, new ores, or a new dimension.$(br2)Local fixture benchmarks are not a promise of the same speedup in every world. Pack recipes, starter gear, map stages and other mods’ mechanics remain separate from these patches."
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "name": "Terrain & Structures",
+  "icon": "minecraft:end_stone",
+  "category": "auram:tweaks",
+  "sortnum": 20,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Reuse Nearby Terrain",
+      "text": "Auram reduces repeated density-graph mapping and reuses bounded terrain samples during selected structure searches.$(br2)Targets include AE2 meteorites, Lithostitched jigsaw assemblies, Mowzie’s Wroughtnaut searches and Malum wells. Mutable sampling state belongs to the operation using it, rather than a global world cache."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Skip Unneeded Samples",
+      "text": "Nether fossil searches avoid full columns when a candidate can already be rejected. Malum wells stop when their original threshold is decided and sample only needed states.$(br2)Nyctophobia mushroom placement checks the height threshold without always constructing a full column. Custom generator contexts keep their original path where the optimized sampler is unsupported."
+    }
+  ]
+}

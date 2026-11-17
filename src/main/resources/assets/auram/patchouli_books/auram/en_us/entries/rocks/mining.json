@@ -1,0 +1,18 @@
+{
+  "name": "Mining Ore Rocks",
+  "icon": "auram:iron_rock",
+  "category": "auram:rocks",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:spotlight",
+      "item": "auram:iron_rock",
+      "text": "When Auram recognizes an ore, breaking that block replaces its normal block loot with matching rocks. Ordinary ore gives 1–4 rocks; ore whose item ID contains $(thing)deepslate$() gives 3–6.$(br2)This replacement also applies when mining with Silk Touch; it is not a way to recover the ore block."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Which Ores Count?",
+      "text": "Rock items are generated from registered block IDs containing $(thing)_ore$(). This covers vanilla ores and many modded variants, rather than every block a mod calls a mineral.$(br2)Each generated rock keeps a link to its source block. Names follow the source ore, so modded variants stay distinguishable."
+    }
+  ]
+}

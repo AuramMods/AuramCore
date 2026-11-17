@@ -1,0 +1,18 @@
+{
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [{ "type": "forge:mod_loaded", "modid": "patchouli" }],
+      "recipe": {
+        "type": "patchouli:shapeless_book_recipe",
+        "book": "auram:auram",
+        "ingredients": [
+          { "item": "minecraft:book" },
+          { "item": "minecraft:cobblestone" },
+          { "item": "minecraft:purple_dye" }
+        ],
+        "result": { "item": "patchouli:guide_book", "count": 1 }
+      }
+    }
+  ]
+}

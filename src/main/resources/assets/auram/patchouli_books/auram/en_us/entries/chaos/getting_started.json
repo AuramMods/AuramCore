@@ -1,0 +1,23 @@
+{
+  "name": "Chaos Generation",
+  "icon": "minecraft:crafting_table",
+  "category": "auram:chaos",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Before Generating",
+      "text": "Use a test copy when designing a pack. Keep a copy of the world and $(thing)config/ftbquests/quests$() before replacing generated content.$(br2)All $(thing)/auram$() commands require permission level 2. The chaos command takes an explicit integer difficulty from 0 to 100; there is no bare-command default."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "A First Run",
+      "text": "$(thing)/auram chaos gen 50$()$(br2)Auram loads the current supported recipes, applies random modifiers, exports a datapack, then requests $(thing)/reload$(). Wait for the completion message before checking JEI.$(br2)Generation uses a time-based seed. Repeating the command creates a fresh random result."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Starting Fresh",
+      "text": "To generate from the original loaded recipe set, first run:$(br2)$(thing)/auram chaos clear$()$(br2)Wait for the reload, then generate again. Otherwise the previous chaos pack is part of the currently loaded recipes.$(br2)Test important progression routes in JEI before sharing a generated pack."
+    }
+  ]
+}

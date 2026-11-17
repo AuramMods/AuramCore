@@ -84,6 +84,8 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     testImplementation 'junit:junit:4.13.2'
+    compileOnly fg.deobf("curse.maven:patchouli-${patchouli_version}")
+    runtimeOnly fg.deobf("curse.maven:patchouli-${patchouli_version}")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     compileOnly(annotationProcessor('com.github.bawnorton.mixinsquared:mixinsquared-common:0.3.8'))
     implementation(jarJar('com.github.bawnorton.mixinsquared:mixinsquared-forge:0.3.8')) {
@@ -240,6 +242,27 @@ if (providers.gradleProperty('rockClientSmoke').isPresent()) {
             def config = file('build/rock-client-smoke/config')
             config.mkdirs()
             new File(config, 'fml.toml').text = 'earlyWindowControl = false\nversionCheck = false\n'
+        }
+    }
+}
+
+// Render every guide spread in a private flat world, without showing a window.
+if (providers.gradleProperty('bookClientSmoke').isPresent()) {
+    minecraft.runs.client {
+        workingDirectory project.file('build/book-client-smoke')
+        property 'auram.smoke', 'book'
+        property 'auram.smoke.hiddenWindow', 'true'
+        args '--width', '1200', '--height', '800'
+        mods { auram_patch_smoke { source sourceSets.smokeTest } }
+    }
+    tasks.configureEach {
+        if (name == 'runClient') doFirst {
+            def runtime = file('build/book-client-smoke')
+            new File(runtime, 'config').mkdirs()
+            new File(runtime, 'config/fml.toml').text = 'earlyWindowControl = false\nversionCheck = false\n'
+            new File(runtime, 'options.txt').text = 'guiScale:2\nrenderDistance:2\nsimulationDistance:2\nsoundCategory_master:0.0\n'
+            new File(runtime, 'auram-book-pass.txt').delete()
+            new File(runtime, 'auram-book-failed.txt').delete()
         }
     }
 }

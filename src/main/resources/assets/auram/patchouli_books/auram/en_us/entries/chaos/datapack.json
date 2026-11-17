@@ -1,0 +1,18 @@
+{
+  "name": "Chaos Datapack",
+  "icon": "minecraft:paper",
+  "category": "auram:chaos",
+  "sortnum": 30,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Chaos Files",
+      "text": "Generated recipes live in:$(br2)$(thing)<world>/datapacks/auram_chaos_pack$()$(br2)The export writes changed recipes under their existing IDs and adds supporting component recipes. Each export replaces the directory’s previous contents. Supported recipes that were not modified retain their original data."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Clear or Distribute",
+      "text": "$(thing)/auram chaos clear$()$(br2)Deletes that world’s chaos pack and requests a reload. It does not remove generated FTB quests or reset the rock cache.$(br2)To distribute one result, copy the generated datapack with the same mods and pack scripts. Quest files are a separate export; they are not inside the datapack."
+    }
+  ]
+}

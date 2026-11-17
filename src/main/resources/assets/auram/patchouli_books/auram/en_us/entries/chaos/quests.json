@@ -1,0 +1,23 @@
+{
+  "name": "Quest Generation",
+  "icon": "minecraft:writable_book",
+  "category": "auram:chaos",
+  "sortnum": 40,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Recipe Quests",
+      "text": "After recipe generation and its reload finish, run:$(br2)$(thing)/auram chaos gen quests$()$(br2)With FTB Quests installed, Auram builds per-mod recipe chapters, reward tables and a mob-kill quest ladder from the current game data. It requests $(thing)/ftbquests reload$() when finished."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Quest Files",
+      "text": "Files are written under:$(br2)$(thing)config/ftbquests/quests$()$(br2)This includes $(thing)chapters$(), $(thing)reward_tables$() and $(thing)chapter_groups.snbt$(). Generation overwrites matching generated files and the group index; preserve hand-edited quests before rerunning. This config directory is shared by worlds using that installation."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Text Is Optional",
+      "text": "Quest generation works with $(thing)questsUseLLM = false$(), the default. Enabling it asks a configured chat endpoint for titles, subtitles and descriptions.$(br2)Recipe tasks, rewards and layout still come from Auram’s generator. See $(l:auram:configuration/llm)optional quest text$(/l) for setup and $(l:auram:configuration/settings)thread settings$(/l)."
+    }
+  ]
+}

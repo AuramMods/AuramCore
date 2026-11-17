@@ -1,0 +1,23 @@
+{
+  "name": "Configuration",
+  "icon": "minecraft:comparator",
+  "category": "auram:configuration",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Common Configuration",
+      "text": "The common file is $(thing)auram-common.toml$() inside your server or singleplayer $(thing)config$() directory. Stop the server before editing and restart it to apply a complete configuration change.$(br2)Sections:$(br)$(thing)[\"Chaos Generation\"]$()$(br)$(thing)[\"LLM Config\"]$(). Rock appearance is automatic and has no config switch."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Quest Settings",
+      "text": "In $(thing)[\"Chaos Generation\"]$():$(br2)$(thing)questsUseLLM = false$() keeps text generation offline.$(br2)$(thing)questThreads = 0$() uses available processors. Choose 1–64 to set the quest worker count explicitly. This affects quest generation, not the recipe chaos worker pool."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Unused Settings",
+      "text": "The same section declares:$(br)$(thing)defaultDifficulty = 50$()$(br)$(thing)varianceMultiplier = 1.9$()$(br)$(thing)debugMode = false$()$(br2)The current generator does not read these three values. They do not change its difficulty, EMC bounds or logging. Supply difficulty explicitly in the command; modifier bounds are currently defined in code."
+    }
+  ]
+}

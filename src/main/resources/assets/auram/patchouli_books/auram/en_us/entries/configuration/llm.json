@@ -1,0 +1,23 @@
+{
+  "name": "Optional Quest Text",
+  "icon": "minecraft:feather",
+  "category": "auram:configuration",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "title": "Enable an Endpoint",
+      "text": "Start an OpenAI-compatible chat-completions service, such as Ollama, and make sure the selected model is available there.$(br2)Under $(thing)[\"LLM Config\"]$(), the defaults are:$(br)$(thing)llmBaseUrl = \"http://localhost:11434/v1/\"$()$(br)$(thing)llmModel = \"gpt-oss-20b\"$()$(br)$(thing)llmKey = \"ollama\"$()"
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Server-Side Requests",
+      "text": "Set $(thing)questsUseLLM = true$() under $(thing)[\"Chaos Generation\"]$() and restart before generating quests.$(br2)The base URL must be reachable from the server. Auram appends $(thing)chat/completions$() and sends $(thing)llmKey$() as a Bearer token. Change the model string and key to match your service."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Service Availability",
+      "text": "Generation waits for valid JSON quest text and can retry failed or malformed responses. A missing service or unsuitable model can stall text-enabled generation.$(br2)To generate without a service, leave $(thing)questsUseLLM$() false. Quest text requests include mod descriptions and recipe item names, and hosted services may charge for them."
+    }
+  ]
+}

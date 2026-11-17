@@ -1,0 +1,6 @@
+{
+  "name": "Other Game Tweaks",
+  "description": "Automatic movement, world generation, storage and startup compatibility patches.",
+  "icon": "auram:ender_jade",
+  "sortnum": 40
+}
