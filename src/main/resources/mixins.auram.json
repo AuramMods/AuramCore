@@ -25,7 +25,8 @@
     "minecraft.SelectedItemSelectorMixin",
     "tomsstorage.TerminalIdMixin",
     "tomsstorage.StoredQuantityAccess",
-    "nyctophobia.MushroomHeightMixin"
+    "nyctophobia.MushroomHeightMixin",
+    "ftbquests.LootCrateSoundMixin"
   ],
   "injectors": {
     "defaultRequire": 1

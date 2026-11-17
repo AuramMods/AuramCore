@@ -18,6 +18,11 @@
       "type": "patchouli:text",
       "title": "Text Is Optional",
       "text": "Quest generation works with $(thing)questsUseLLM = false$(), the default. Enabling it asks a configured chat endpoint for titles, subtitles and descriptions.$(br2)Recipe tasks, rewards and layout still come from Auram’s generator. See $(l:auram:configuration/llm)optional quest text$(/l) for setup and $(l:auram:configuration/settings)thread settings$(/l)."
+    },
+    {
+      "type": "patchouli:text",
+      "title": "Loot-Box Sound",
+      "text": "When FTB Quests is installed, right-clicking a loot box plays the item-pickup sound at a fixed pitch of 0.5. Sneak-opening a stack uses the same sound.$(br2)Auram keeps the existing opening volume, reward handling and crate consumption."
     }
   ]
 }

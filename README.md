@@ -184,6 +184,12 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - Mushroom placement needs only to know whether first **occupied** height exceeds 64. Query the threshold state first and scan higher states only if needed; do not construct a complete column or conflate occupied and free height.
 - Floating terrain, all heightmap predicates, custom-generator fallback, closed contexts and independent workers are covered by `--mode structureprobes`. Actual piece/RNG fingerprints match the previous jar; see `validation/followup/cycle3-summary.json`.
 
+### 23. FTB Quests Loot-Box Sound
+
+- Right-click opening FTB Quests loot crates uses the item-pickup sound at a fixed pitch of `0.5`, including sneak-opening a stack.
+- The optional FTB Quests 2001.4.17 mixin preserves its existing volume, sound category, reward handling, and crate consumption. Other item-break sounds are unaffected.
+- `tools/performance_smoke.py --mode loot --with-mod ftbquests` (with the Java/libraries arguments described below) exercises the installed crate item on a disposable server and checks the actual sound event, pitch, volume, and consumption for normal/sneak opening plus an unrelated item-break control.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).

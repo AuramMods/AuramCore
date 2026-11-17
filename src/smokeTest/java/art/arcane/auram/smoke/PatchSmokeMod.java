@@ -54,6 +54,11 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (System.getProperty("auram.smoke", "").equals("loot")) {
+                LootCrateSoundSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-loot-pass.txt"), "PASS loot-crate opening sound and pitch\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("structureprobes")) {
                 if(!Boolean.getBoolean("auram.smoke.structureReference")) StructureProbeSmoke.run(event.getServer());
                 else StructureProbeSmoke.benchmarkMushroom(event.getServer());
