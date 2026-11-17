@@ -31,8 +31,7 @@ public final class NoiseMappingScope {
     public static DensityFunction shared(DensityFunction function,DensityFunction.Visitor visitor) {
         // Only the scoped wrapping visitor can memoize vanilla function nodes.
         // NoiseChunk owns every mapped result in this short scope.
-        if(!(visitor instanceof Frame frame) || !frame.active || !function.getClass().getName()
-                .startsWith("net.minecraft.world.level.levelgen.DensityFunctions$")) return function.mapAll(visitor);
+        if(!(visitor instanceof Frame frame) || !frame.active || !VanillaDensity.isBuiltin(function)) return function.mapAll(visitor);
         DensityFunction cached=frame.mapped.get(function);
         if(cached!=null) return cached;
         DensityFunction result=function.mapAll(visitor);
@@ -41,7 +40,7 @@ public final class NoiseMappingScope {
     }
     private static final class Frame implements DensityFunction.Visitor {
         final DensityFunction.Visitor visitor;
-        final IdentityHashMap<DensityFunction,DensityFunction> mapped=new IdentityHashMap<>();
+        final IdentityHashMap<DensityFunction,DensityFunction> mapped=new IdentityHashMap<>(256);
         boolean active=true;
         Frame(DensityFunction.Visitor visitor) { this.visitor=visitor; }
         @Override public DensityFunction apply(DensityFunction function) { return visitor.apply(function); }

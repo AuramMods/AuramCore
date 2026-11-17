@@ -80,6 +80,7 @@ shutil.copy2(artifact, runtime/'mods/Auram.jar')
 shutil.copy2(ROOT/f'build/libs/auram-{version}-smoke-test.jar', runtime/'mods/auram-smoke.jar')
 config = runtime/'config'
 config.mkdir()
+(config/'fml.toml').write_text('versionCheck = false\n')
 source_config = Path(properties['modpack_deploy']).parent/'config/aether_redux_common.toml'
 if 'aether_redux' in wanted:
     shutil.copy2(source_config, config/source_config.name)
@@ -89,7 +90,7 @@ if 'aether_redux' in wanted:
     'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
     'level-seed=104729\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
-if args.mode in {'well', 'terrain', 'density', 'heightcache'}:
+if args.mode in {'well', 'terrain', 'density', 'heightcache', 'mappingperf'}:
     settings = (runtime/'server.properties').read_text().splitlines()
     (runtime/'server.properties').write_text('\n'.join(
         'level-type=minecraft:normal' if s.startswith('level-type=') else

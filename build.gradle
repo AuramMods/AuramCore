@@ -156,6 +156,8 @@ publishing {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
+    // Mixin's processor must see every mixin to emit complete refmaps/Shadow mappings.
+    options.incremental = false
 }
 
 task deployToModpack(type: Copy) {
@@ -210,3 +212,12 @@ tasks.register('smokeTestJar', Jar) {
     finalizedBy 'reobfSmokeTestJar'
 }
 reobf { smokeTestJar {} }
+
+// These processor products live outside javac's classes directory. Declaring
+// them prevents an up-to-date compile from packaging an absent/partial refmap.
+['compileJava', 'compileSmokeTestJava'].each { compileName ->
+    tasks.named(compileName, JavaCompile).configure {
+        outputs.file(layout.buildDirectory.file("tmp/${compileName}/${compileName}-refmap.json"))
+        outputs.file(layout.buildDirectory.file("tmp/${compileName}/${compileName}-mappings.tsrg"))
+    }
+}

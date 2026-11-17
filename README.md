@@ -137,6 +137,13 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - An optional mixin cancels only that updater task before it creates an HTTP client. Script loading, lifecycle events, and reload handling still run normally.
 - The mixin is skipped when KubeJS is absent. Other mods' update checks are disabled through the pack's Forge and individual mod configuration files.
 
+### 16. Terrain Mapping Bookkeeping
+
+- Vanilla density-node eligibility is classified once per class instead of comparing class names for each graph edge.
+- Variable-depth NoiseChunks bypass structural interning for vanilla nodes that `wrapNew` leaves unchanged. Marker caches, holder unwrapping, beardifiers and blending still take the original wrapper path. Constant-depth Nether/End routers retain their original wrapper lookups.
+- Both vanilla's `computeIfAbsent` and ModernFix's `get`/`put` implementation are supported without allocating a cancellable callback per node.
+- `--mode mappingperf` runs eight warmup batches and 25 measured batches of 16 columns per dimension, fingerprints every resulting block state outside the timed interval, and checks mapping-scope bounds/lifetime/concurrency. Results for the four follow-up cycles are recorded in `validation/server3-cycles.json`.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).

@@ -49,6 +49,12 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("mappingperf")) {
+                MappingScopeSmoke.run();
+                MappingPerfSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-mappingperf-pass.txt"), "PASS mapping lifetime checks and warmed terrain workload\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("mappingscope")) {
                 MappingScopeSmoke.run();
                 Files.writeString(Path.of("auram-mappingscope-pass.txt"), "PASS mapping scope lifetime, bound, visitor and concurrency checks\n");
