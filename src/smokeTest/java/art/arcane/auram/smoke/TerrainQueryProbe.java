@@ -13,6 +13,7 @@ public final class TerrainQueryProbe {
     public static void start() { ACTIVE.set(new Trace()); }
     public static void nextAttempt() { ACTIVE.get().within.clear(); }
     public static Trace stop() { Trace trace=ACTIVE.get(); ACTIVE.remove(); return trace; }
+    public static void recordSetup() { Trace trace=ACTIVE.get(); if(trace!=null) trace.noiseChunks++; }
     public static void record(Object generator, int x, int z, LevelHeightAccessor height, RandomState state, Object type) {
         Trace trace=ACTIVE.get();
         if(trace==null) return;
@@ -26,12 +27,12 @@ public final class TerrainQueryProbe {
         if(trace.large.size()>4096) trace.large.remove(trace.large.keySet().iterator().next());
     }
     public static final class Trace {
-        long calls, withinHits, smallHits, largeHits;
+        long calls, withinHits, smallHits, largeHits,noiseChunks;
         final Set<Query> within=new HashSet<>();
         final LinkedHashMap<Query,Boolean> small=new LinkedHashMap<>(1024,0.75f,true);
         final LinkedHashMap<Query,Boolean> large=new LinkedHashMap<>(8192,0.75f,true);
         public String json() {
-            return "{\"queries\":"+calls+",\"within_attempt_duplicates\":"+withinHits
+            return "{\"queries\":"+calls+",\"noise_chunks\":"+noiseChunks+",\"within_attempt_duplicates\":"+withinHits
                     +",\"lru_512_hits\":"+smallHits+",\"lru_4096_hits\":"+largeHits+"}";
         }
     }

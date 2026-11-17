@@ -49,6 +49,13 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         try {
+            if (System.getProperty("auram.smoke", "").equals("terrainbatch")) {
+                TerrainBatchSmoke.run(event.getServer());
+                HeightCacheSmoke.run(event.getServer());
+                ColumnScopeSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-terrainbatch-pass.txt"), "PASS terrain batching, cache ownership and boundaries\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("sparse")) {
                 SparseTerrainSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-sparse-pass.txt"), "PASS sparse/column state equivalence and worker isolation\n");

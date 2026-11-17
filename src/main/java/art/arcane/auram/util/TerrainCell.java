@@ -3,6 +3,7 @@ package art.arcane.auram.util;
 import art.arcane.auram.mixin.minecraft.NoiseChunkAccess;
 import art.arcane.auram.mixin.minecraft.NoiseGeneratorAccess;
 import net.minecraft.world.level.LevelHeightAccessor;
+import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.DensityFunction;
@@ -10,6 +11,7 @@ import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseChunk;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.blending.Blender;
 
 /** One owner, one horizontal noise cell, full original height/aquifer context. */
@@ -21,7 +23,7 @@ public final class TerrainCell implements AutoCloseable {
     };
     private final NoiseChunk noise;
     private final BlockState defaultBlock;
-    private final int minY, maxY, width, cellHeight, baseCellY;
+    private final int minY, maxY, width, cellHeight, baseCellY, originX, originZ;
     private int selectedY = Integer.MIN_VALUE;
     private boolean closed;
 
@@ -43,8 +45,10 @@ public final class TerrainCell implements AutoCloseable {
         minY = settings.minY();
         maxY = minY + settings.height();
         baseCellY = Math.floorDiv(minY,cellHeight);
+        originX = Math.floorDiv(x,width)*width;
+        originZ = Math.floorDiv(z,width)*width;
         defaultBlock = generatorSettings.defaultBlock();
-        noise = new NoiseChunk(1,state,Math.floorDiv(x,width)*width,Math.floorDiv(z,width)*width,
+        noise = new NoiseChunk(1,state,originX,originZ,
                 settings,ZERO,generatorSettings,((NoiseGeneratorAccess)generator).auram$fluidPicker().get(),Blender.empty());
         noise.initializeForFirstCellX();
         noise.advanceCellX(0);
@@ -68,6 +72,36 @@ public final class TerrainCell implements AutoCloseable {
     public int minY() { return minY; }
     public int maxY() { return maxY; }
     public int width() { return width; }
+
+    public int height(int x,int z,Heightmap.Types type,int fallback) {
+        var opaque=type.isOpaque();
+        for(int y=maxY-1;y>=minY;y--) if(opaque.test(state(x,y,z))) return y+1;
+        return fallback;
+    }
+
+    /** Dense callers share each interpolated vertical cell across every X/Z. */
+    public int[] heights(Heightmap.Types type,int fallback) {
+        int[] values=new int[width*width];
+        java.util.Arrays.fill(values,fallback);
+        boolean[] found=new boolean[values.length];
+        int remaining=values.length;
+        var opaque=type.isOpaque();
+        for(int y=maxY-1;y>=minY && remaining>0;y--) {
+            for(int dx=0;dx<width;dx++) for(int dz=0;dz<width;dz++) {
+                int index=dx*width+dz;
+                if(!found[index] && opaque.test(state(originX+dx,y,originZ+dz))) {
+                    found[index]=true;values[index]=y+1;remaining--;
+                }
+            }
+        }
+        return values;
+    }
+
+    public NoiseColumn column(int x,int z) {
+        BlockState[] values=new BlockState[maxY-minY];
+        for(int y=maxY-1;y>=minY;y--) values[y-minY]=state(x,y,z);
+        return new NoiseColumn(minY,values);
+    }
 
     @Override public void close() {
         if (!closed) {

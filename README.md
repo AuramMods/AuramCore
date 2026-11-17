@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.4` |
+| Mod Version | `1.0.5` |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -157,6 +157,13 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - Every sampler is owned and closed by its caller. Custom generator subclasses and unusual partial-cell height accessors retain the original generator path.
 - `--mode sparse --with-mod modernfix --with-mod lithostitched --with-mod tectonic --with-mod bettercaves` compares shuffled-height, negative-coordinate and boundary queries with original full columns across three seeds/dimensions, including parallel ownership checks. The `well` benchmark compares the new sampler against the already-shipped early-out scan, rather than counting that earlier optimization a second time.
 
+### 19. Nearby Structure Terrain Batches
+
+- AE2 meteorites reuse dense height samples for neighboring columns in the same native noise cell. Every original requested height, statistics accumulation and random draw is retained.
+- Malum checks share sparse two-state sampling between neighboring columns. Wroughtnaut searches share setup between their unique columns as well as caching exact duplicates. Lithostitched's assembly-local height cache reuses lazy cell setup between nearby queries.
+- Each batch retains at most 16 cells. Invocation-owned batches close on success/failure; jigsaw batches belong only to their assembly cache, serialize access there, and close when generator/state/accessor context changes. World, accessor bounds and random-state contexts never share mutable interpolation state.
+- `--mode terrainbatch` checks all heightmap types, complete column snapshots, negative coordinates, eviction, mutable snapshot isolation, closed/nested scopes and independent workers. It also runs the existing assembly-cache and column-scope checks. `--mode terrain` records real structure/RNG fingerprints and NoiseChunk construction counts for the installed structure mods.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -204,13 +211,13 @@ gradlew.bat reobfJarJar
 
 Primary output:
 
-- `build/libs/auram-1.0.4-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
+- `build/libs/auram-1.0.5-all.jar` (reobfuscated, includes MixinSquared; release as `Auram.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
 
 ### Headless Chunk Patch Smoke Test
 
-`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.4-smoke-test.jar`. It is never included in the release jar.
+`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.5-smoke-test.jar`. It is never included in the release jar.
 
 Run this test mod alongside the release jar, ProjectE, Aether Redux, Relics, Mekanism and their dependencies in a disposable Forge 47.4.10 dedicated-server directory with Java 17. Use flat terrain and the Highlands quicksoil setting. The test creates remote chunks and a Mekanism tank and stops the server itself.
 

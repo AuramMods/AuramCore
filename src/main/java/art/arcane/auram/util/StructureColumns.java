@@ -24,8 +24,12 @@ public final class StructureColumns {
         try {
             return action.get();
         } finally {
-            frame.columns.clear();
-            if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
+            try {
+                frame.columns.clear();
+                frame.batch.close();
+            } finally {
+                if (previous == null) ACTIVE.remove(); else ACTIVE.set(previous);
+            }
         }
     }
 
@@ -37,7 +41,7 @@ public final class StructureColumns {
         long key = ChunkPos.asLong(x, z);
         NoiseColumn cached = frame.columns.get(key);
         if (cached != null) return cached;
-        NoiseColumn column = generator.getBaseColumn(x, z, height, state);
+        NoiseColumn column = frame.batch.column(x,z);
         if (column != null && frame.columns.size() < LIMIT) frame.columns.put(key, column);
         return column;
     }
@@ -46,11 +50,13 @@ public final class StructureColumns {
         final ChunkGenerator generator;
         final LevelHeightAccessor height;
         final RandomState state;
+        final TerrainBatch batch;
         final Long2ObjectOpenHashMap<NoiseColumn> columns = new Long2ObjectOpenHashMap<>(128);
         Frame(ChunkGenerator generator, LevelHeightAccessor height, RandomState state) {
             this.generator = generator;
             this.height = height;
             this.state = state;
+            this.batch = new TerrainBatch((NoiseBasedChunkGenerator)generator,height,state,false);
         }
     }
 }

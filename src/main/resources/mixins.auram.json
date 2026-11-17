@@ -15,6 +15,7 @@
     "minecraft.SplineCoordinateMappingMixin",
     "lithostitched.StructurePoolGeneratorMixin",
     "malum.WeepingWellMixin",
+    "ae2.MeteoriteTerrainMixin",
     "mowziesmobs.WroughtnautColumnsMixin",
     "kubejs.UpdateCheckMixin",
     "midnight.BogStriderEnchantmentMixin",

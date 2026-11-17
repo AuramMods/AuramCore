@@ -587,6 +587,380 @@
         "Local well-check timings do not establish full-pack chunk throughput.",
         "Custom generators and non-cell-aligned height accessors use original column queries."
       ]
+    },
+    {
+      "cycle": 4,
+      "target": "Owner-local nearby terrain-cell batching for AE2, Malum, Lithostitched and Wroughtnaut searches",
+      "baseline_commit": "59497ef",
+      "artifact_version": "1.0.5",
+      "artifact_sha256": "12fa481f0952cab2bcad00c59f0f8a1e5d334f63a98fbc225e2402df1bc07945",
+      "terrain_comparisons": [
+        {
+          "structure": "ae2:meteorite",
+          "baseline_ms": 8071.332,
+          "candidate_ms": 1105.779,
+          "baseline_noise_chunks": 2499,
+          "candidate_noise_chunks": 252
+        },
+        {
+          "structure": "malum:weeping_well",
+          "baseline_ms": 651.3,
+          "candidate_ms": 98.413,
+          "baseline_noise_chunks": 271,
+          "candidate_noise_chunks": 30
+        },
+        {
+          "structure": "nyctophobia:mushroom_structure",
+          "baseline_ms": 79.181,
+          "candidate_ms": 84.437,
+          "baseline_noise_chunks": 23,
+          "candidate_noise_chunks": 23
+        },
+        {
+          "structure": "minecraft:village_plains",
+          "baseline_ms": 8985.68,
+          "candidate_ms": 6773.231,
+          "baseline_noise_chunks": 2473,
+          "candidate_noise_chunks": 1764
+        },
+        {
+          "structure": "minecraft:nether_fossil",
+          "baseline_ms": 5.337,
+          "candidate_ms": 5.076,
+          "baseline_noise_chunks": 12,
+          "candidate_noise_chunks": 12
+        }
+      ],
+      "wrought_comparison": {
+        "baseline_ms": 3612.450335,
+        "candidate_ms": 1780.10221,
+        "candidate_noise_chunks": 249
+      },
+      "batch_checks": {
+        "height_comparisons": 3600,
+        "state_comparisons": 179200,
+        "parallel_queries": 36,
+        "cell_limit": 16
+      },
+      "results": {
+        "baseline": {
+          "results": [
+            {
+              "structure": "ae2:meteorite",
+              "attempts": 12,
+              "accepted": 5,
+              "pieces": 5,
+              "elapsed_ms": 8071.332,
+              "fingerprint": "8a16190dd31b777ab019815da3f9ff91f94b4d2e7f773fd2674a798067bc3604",
+              "trace": {
+                "queries": 2499,
+                "noise_chunks": 2499,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 162,
+                "lru_4096_hits": 164
+              }
+            },
+            {
+              "structure": "malum:weeping_well",
+              "attempts": 12,
+              "accepted": 0,
+              "pieces": 0,
+              "elapsed_ms": 651.3,
+              "fingerprint": "1eb7e765144b956faedcbf7909a0e9aee1fbde18679cb23f9c283366ecbeada4",
+              "trace": {
+                "queries": 12,
+                "noise_chunks": 271,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            },
+            {
+              "structure": "nyctophobia:mushroom_structure",
+              "attempts": 12,
+              "accepted": 11,
+              "pieces": 11,
+              "elapsed_ms": 79.181,
+              "fingerprint": "fb5273f8a641e72ea79026a26498465c43044faf91b71fc2ea93d7540a6f18a8",
+              "trace": {
+                "queries": 23,
+                "noise_chunks": 23,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            },
+            {
+              "structure": "minecraft:village_plains",
+              "attempts": 12,
+              "accepted": 12,
+              "pieces": 1429,
+              "elapsed_ms": 8985.68,
+              "fingerprint": "73999f15d605f42872bb801bef6e9893adacb4ff1facff571c3f7ba11448deb7",
+              "trace": {
+                "queries": 2473,
+                "noise_chunks": 2473,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 104,
+                "lru_4096_hits": 144
+              }
+            },
+            {
+              "structure": "minecraft:nether_fossil",
+              "attempts": 12,
+              "accepted": 7,
+              "pieces": 7,
+              "elapsed_ms": 5.337,
+              "fingerprint": "9004deb18b4303160f0de56c7e96f56dc58c41317239420437ac40176975d79d",
+              "trace": {
+                "queries": 12,
+                "noise_chunks": 12,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            }
+          ]
+        },
+        "candidate": {
+          "results": [
+            {
+              "structure": "ae2:meteorite",
+              "attempts": 12,
+              "accepted": 5,
+              "pieces": 5,
+              "elapsed_ms": 1105.779,
+              "fingerprint": "8a16190dd31b777ab019815da3f9ff91f94b4d2e7f773fd2674a798067bc3604",
+              "trace": {
+                "queries": 5,
+                "noise_chunks": 252,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            },
+            {
+              "structure": "malum:weeping_well",
+              "attempts": 12,
+              "accepted": 0,
+              "pieces": 0,
+              "elapsed_ms": 98.413,
+              "fingerprint": "1eb7e765144b956faedcbf7909a0e9aee1fbde18679cb23f9c283366ecbeada4",
+              "trace": {
+                "queries": 12,
+                "noise_chunks": 30,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            },
+            {
+              "structure": "nyctophobia:mushroom_structure",
+              "attempts": 12,
+              "accepted": 11,
+              "pieces": 11,
+              "elapsed_ms": 84.437,
+              "fingerprint": "fb5273f8a641e72ea79026a26498465c43044faf91b71fc2ea93d7540a6f18a8",
+              "trace": {
+                "queries": 23,
+                "noise_chunks": 23,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            },
+            {
+              "structure": "minecraft:village_plains",
+              "attempts": 12,
+              "accepted": 12,
+              "pieces": 1429,
+              "elapsed_ms": 6773.231,
+              "fingerprint": "73999f15d605f42872bb801bef6e9893adacb4ff1facff571c3f7ba11448deb7",
+              "trace": {
+                "queries": 12,
+                "noise_chunks": 1764,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            },
+            {
+              "structure": "minecraft:nether_fossil",
+              "attempts": 12,
+              "accepted": 7,
+              "pieces": 7,
+              "elapsed_ms": 5.076,
+              "fingerprint": "9004deb18b4303160f0de56c7e96f56dc58c41317239420437ac40176975d79d",
+              "trace": {
+                "queries": 12,
+                "noise_chunks": 12,
+                "within_attempt_duplicates": 0,
+                "lru_512_hits": 0,
+                "lru_4096_hits": 0
+              }
+            }
+          ]
+        },
+        "wrought": {
+          "attempts": 24,
+          "pieces": 14,
+          "fingerprint": "9866d0ab0b572b8d8d012fc3e3dbe7d9607575abeef2b87a95e4737d48de0915",
+          "trace": {
+            "queries": 24,
+            "noise_chunks": 249,
+            "within_attempt_duplicates": 0,
+            "lru_512_hits": 0,
+            "lru_4096_hits": 0
+          },
+          "attempt_ms": [
+            310.888125,
+            26.224292,
+            13.4025,
+            99.452542,
+            130.262209,
+            85.837959,
+            13.945375,
+            14.252291,
+            24.155708,
+            113.955459,
+            16.297791,
+            31.576458,
+            26.261125,
+            98.715875,
+            26.773084,
+            9.381084,
+            84.577625,
+            107.156834,
+            111.554167,
+            25.155208,
+            101.159708,
+            91.415041,
+            86.661584,
+            131.040166
+          ]
+        },
+        "batchchecks": {
+          "height_comparisons": 3600,
+          "state_comparisons": 179200,
+          "parallel_queries": 36,
+          "cell_limit": 16
+        },
+        "density-baseline": {
+          "results": [
+            {
+              "dimension": "minecraft:overworld",
+              "seeds": 3,
+              "column_cases": 36,
+              "parallel_cases": 24,
+              "noise_chunks": 2,
+              "median_column_ms": 5.028583,
+              "column_height_fingerprint": "1965fcc9df92331d092bc40e7448e2b53b48a748d74f054b4d53aeb7c8aad67f",
+              "noise_chunk_fingerprint": "fb88530c42bf2b706be1e2985ba0f3cb161356986477da7c92c82807c0c6d10c"
+            },
+            {
+              "dimension": "minecraft:the_end",
+              "seeds": 3,
+              "column_cases": 36,
+              "parallel_cases": 24,
+              "noise_chunks": 2,
+              "median_column_ms": 0.198166,
+              "column_height_fingerprint": "63c198955a84ab7cc1de65c03f5fbd275cfee3495b7f23a206fc776173bff3d9",
+              "noise_chunk_fingerprint": "e528372c557b17b9674453c60877191d30b4fff55d59a98495426594423104b2"
+            },
+            {
+              "dimension": "minecraft:the_nether",
+              "seeds": 3,
+              "column_cases": 36,
+              "parallel_cases": 24,
+              "noise_chunks": 2,
+              "median_column_ms": 0.09425,
+              "column_height_fingerprint": "ebed73fe4f16812a561c7d1267f388876d5f5a291e61079497768e1b7feb0f45",
+              "noise_chunk_fingerprint": "afe401db9b30a920aab02094dc39186276e9b1a287246d4e181ba9cfe411c1a2"
+            }
+          ]
+        },
+        "density-candidate": {
+          "results": [
+            {
+              "dimension": "minecraft:overworld",
+              "seeds": 3,
+              "column_cases": 36,
+              "parallel_cases": 24,
+              "noise_chunks": 2,
+              "median_column_ms": 4.190083,
+              "column_height_fingerprint": "1965fcc9df92331d092bc40e7448e2b53b48a748d74f054b4d53aeb7c8aad67f",
+              "noise_chunk_fingerprint": "fb88530c42bf2b706be1e2985ba0f3cb161356986477da7c92c82807c0c6d10c"
+            },
+            {
+              "dimension": "minecraft:the_nether",
+              "seeds": 3,
+              "column_cases": 36,
+              "parallel_cases": 24,
+              "noise_chunks": 2,
+              "median_column_ms": 0.09475,
+              "column_height_fingerprint": "ebed73fe4f16812a561c7d1267f388876d5f5a291e61079497768e1b7feb0f45",
+              "noise_chunk_fingerprint": "afe401db9b30a920aab02094dc39186276e9b1a287246d4e181ba9cfe411c1a2"
+            },
+            {
+              "dimension": "minecraft:the_end",
+              "seeds": 3,
+              "column_cases": 36,
+              "parallel_cases": 24,
+              "noise_chunks": 2,
+              "median_column_ms": 0.196917,
+              "column_height_fingerprint": "63c198955a84ab7cc1de65c03f5fbd275cfee3495b7f23a206fc776173bff3d9",
+              "noise_chunk_fingerprint": "e528372c557b17b9674453c60877191d30b4fff55d59a98495426594423104b2"
+            }
+          ]
+        }
+      },
+      "checks": [
+        "All 60 structure layout/RNG fingerprints match the cycle3 control",
+        "All 24 Wroughtnaut attempts retain the same 14 pieces and output/RNG fingerprint",
+        "3600 height, 179200 block-state and 36 parallel-query comparisons pass; 16-cell bound, closed/nested scopes, snapshot mutation, assembly cache and search cleanup checks pass",
+        "Full columns/heights, mutable-column isolation, 72 parallel cases and six generated NOISE chunks match the cycle0 control across all three vanilla dimensions",
+        "Reobfuscated bundled jar metadata/refmap/dependency contents inspected; no smoke-test classes are packaged"
+      ],
+      "limitations": [
+        "Local fixed-seed fixture timings are not a measurement of full-pack chunks/second on the hosted server.",
+        "Nyctophobia and single-column fossil queries are compatibility controls, not new optimized paths."
+      ],
+      "final_batch_check": {
+        "mode": "terrainbatch",
+        "runtime": "/var/folders/pv/03n81v656wn6x0m7v876mjjc0000gn/T/auram-terrainbatch-gjusoyoc",
+        "passed": true,
+        "exit_codes": [
+          0
+        ],
+        "elapsed_seconds": 16.22657379094744,
+        "artifact_sha256": "12fa481f0952cab2bcad00c59f0f8a1e5d334f63a98fbc225e2402df1bc07945",
+        "fixture": {
+          "bettercaves": {
+            "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/YungsBetterCaves-1.20.1-Forge-2.0.5.jar",
+            "sha256": "bd1e07e03626ad851e7b84e5a8a6ecdd976f7e923a3e56df69c6b6e906e7389e"
+          },
+          "lithostitched": {
+            "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lithostitched-forge-1.20.1-1.4.11.jar",
+            "sha256": "c19a5a36c0e6cb3782cf7ca5b9648fb1bce5fc41fd737bed423a1f4971bccf75"
+          },
+          "modernfix": {
+            "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/modernfix-forge-5.25.2+mc1.20.1.jar",
+            "sha256": "6da98d88031f2f5377c0e66fb7ebfd8da8be64c6e46a2d1b1fcf8c717b040653"
+          },
+          "projecte": {
+            "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+            "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+          },
+          "tectonic": {
+            "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/tectonic-3.0.17-forge-1.20.1.jar",
+            "sha256": "c6de479b27cf090510de3f029918afc9fe17226981bd703e0002f7a25f4d8969"
+          },
+          "yungsapi": {
+            "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/YungsApi-1.20-Forge-4.0.6.jar",
+            "sha256": "101c30d01d0cf9d86190f578eb1e43bd06b64092e95662a00ef52946f472c7b1"
+          }
+        }
+      }
     }
   ]
 }

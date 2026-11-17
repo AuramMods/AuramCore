@@ -25,9 +25,11 @@ public final class HeightCacheSmoke {
                     for(Heightmap.Types type:new Heightmap.Types[]{Heightmap.Types.WORLD_SURFACE_WG,Heightmap.Types.OCEAN_FLOOR_WG}) {
                         int expected=generator.getFirstFreeHeight(-79,131,type,height,state);
                         TerrainQueryProbe.start();
+                        ColumnProbe.start();
                         check(cache.firstFree(generator,-79,131,type,height,state)==expected,"query result matches generator");
                         check(cache.firstFree(generator,-79,131,type,height,state)==expected,"cache hit matches generator");
-                        check(TerrainQueryProbe.stop().calls==1,"one synthesis per complete context key");
+                        ColumnProbe.stop();
+                        check(TerrainQueryProbe.stop().calls+ColumnProbe.lastNoise()<=1,"at most one setup per complete context key");
                         cases++;
                     }
                 }

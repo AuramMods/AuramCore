@@ -14,15 +14,16 @@ public final class WellFlatness {
     }
 
     public static boolean test(Structure.GenerationContext context, BlockPos center, int radius) {
-        return scan(radius, (dx, dz) -> {
-            int x=center.getX()+dx,z=center.getZ()+dz;
-            if (context.chunkGenerator().getClass()==NoiseBasedChunkGenerator.class) {
-                try (TerrainCell cell=TerrainCell.open((NoiseBasedChunkGenerator)context.chunkGenerator(),x,z,
-                        context.heightAccessor(),context.randomState())) {
-                    if (cell!=null) return cell.state(x,center.getY(),z).isAir()
-                            && !cell.state(x,center.getY()+1,z).isAir();
-                }
+        if(context.chunkGenerator().getClass()==NoiseBasedChunkGenerator.class) {
+            try(TerrainBatch batch=new TerrainBatch((NoiseBasedChunkGenerator)context.chunkGenerator(),
+                    context.heightAccessor(),context.randomState(),false)) {
+                return scan(radius,(dx,dz)->{
+                    int x=center.getX()+dx,z=center.getZ()+dz;
+                    return batch.state(x,center.getY(),z).isAir() && !batch.state(x,center.getY()+1,z).isAir();
+                });
             }
+        }
+        return scan(radius, (dx, dz) -> {
             NoiseColumn column = context.chunkGenerator().getBaseColumn(center.getX() + dx, center.getZ() + dz,
                     context.heightAccessor(), context.randomState());
             return column.getBlock(center.getY()).isAir() && !column.getBlock(center.getY() + 1).isAir();

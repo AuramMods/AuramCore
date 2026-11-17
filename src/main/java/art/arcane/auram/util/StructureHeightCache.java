@@ -4,6 +4,7 @@ import net.minecraft.world.level.LevelHeightAccessor;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 
 import java.util.LinkedHashMap;
 
@@ -11,13 +12,23 @@ import java.util.LinkedHashMap;
 public final class StructureHeightCache {
     private static final int LIMIT = 1024;
     private final LinkedHashMap<Key,Integer> values = new LinkedHashMap<>(128,0.75f,true);
+    // The cache belongs to one jigsaw assembly. No terrain session is shared
+    // with another assembly; firstFree serializes access to its mutable cells.
+    private TerrainBatch terrain;
 
     public synchronized int firstFree(ChunkGenerator generator, int x, int z, Heightmap.Types type,
                                       LevelHeightAccessor height, RandomState state) {
         Key key=new Key(generator,state,height,x,z,height.getMinBuildHeight(),height.getHeight(),type);
         Integer cached=values.get(key);
         if(cached!=null) return cached;
-        int value=generator.getFirstFreeHeight(x,z,type,height,state);
+        int value;
+        if(generator.getClass()==NoiseBasedChunkGenerator.class) {
+            if(terrain==null || !terrain.matches(generator,height,state)) {
+                if(terrain!=null) terrain.close();
+                terrain=new TerrainBatch((NoiseBasedChunkGenerator)generator,height,state,false);
+            }
+            value=terrain.height(x,z,type);
+        } else value=generator.getFirstFreeHeight(x,z,type,height,state);
         values.put(key,value);
         if(values.size()>LIMIT) values.remove(values.keySet().iterator().next());
         return value;

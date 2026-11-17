@@ -35,7 +35,8 @@ public final class ColumnScopeSmoke {
             } catch(ReflectiveOperationException error) { throw new AssertionError(error); }
             return null;
         });
-        check(ColumnProbe.stop()==1101,"hits avoid synthesis and misses still query terrain");
+        check(ColumnProbe.stop()==0 && ColumnProbe.lastNoise()>0 && ColumnProbe.lastNoise()<300,
+                "unique columns share noise-cell setup and hits avoid synthesis");
         Field columns=completed[0].getClass().getDeclaredField("columns");columns.setAccessible(true);
         check(((Map<?,?>)columns.get(completed[0])).isEmpty() && local.get()==null,"completed search releases columns and thread state");
         ColumnProbe.start();
@@ -51,7 +52,7 @@ public final class ColumnScopeSmoke {
                     ColumnProbe.start();
                     var a=StructureColumns.column(generator,x,23,level,state);
                     var b=StructureColumns.column(generator,x,23,level,state);
-                    return a==b && ColumnProbe.stop()==1;
+                    return a==b && ColumnProbe.stop()==0 && ColumnProbe.lastNoise()==1;
                 }));
             }
             for(var result:workers.invokeAll(tasks)) check(result.get(),"each worker owns its own search cache");
