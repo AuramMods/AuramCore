@@ -38,6 +38,8 @@
     "defaultRequire": 1
   },
   "client": [
+    "clientmodel.ModelBakeryStagingAccess",
+    "clientmodel.ModelManagerMixin",
     "derenderpatcher.CompatModsMixin",
     "lucent.LightDataFactory",
     "lucent.LightSourceMixin",

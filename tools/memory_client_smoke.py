@@ -11,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import threading
 import time
 
 
@@ -60,12 +61,32 @@ def prepare(args, game, smoke):
         "maxFps": "60", "renderDistance": "5", "simulationDistance": "5", "fullscreen": "false",
     })
     set_options(game / "config/fml.toml", " = ", {"earlyWindowControl": "false", "versionCheck": "false"})
-    set_options(game / "config/oculus.properties", "=", {"shaderPack": "BSL_v10.1.zip", "enableShaders": "false"})
+    set_options(game / "config/oculus.properties", "=", {"shaderPack": "BSL_v10.1.zip", "enableShaders": str(args.shaders).lower()})
     if args.mode == "memory-derender":
         path = game / "config/DistantHorizons.toml"
         # The fixed arena exercises client rendering independently of distant world generation.
         text = path.read_text()
         path.write_text(text.replace("enableDistantGeneration = true", "enableDistantGeneration = false"))
+
+
+def sample_native(process, game, output, bin_dir):
+    if sys.platform != "darwin":
+        return
+    checkpoints = ("startup", "reloaded", "post-full-gc")
+    pending = dict.fromkeys(checkpoints)
+    while process.poll() is None and pending:
+        for name in list(pending):
+            if not (game / f"combined-{name}.txt").exists():
+                continue
+            del pending[name]
+            with (output / f"vmmap-{name}.txt").open("w") as stream:
+                subprocess.run(["vmmap", "-summary", str(process.pid)],
+                               stdout=stream, stderr=subprocess.STDOUT, timeout=20)
+            if name == "post-full-gc":
+                with (output / "jvm-native-memory.txt").open("w") as stream:
+                    subprocess.run([str(bin_dir / "jcmd"), str(process.pid), "VM.native_memory", "summary"],
+                                   stdout=stream, stderr=subprocess.STDOUT, timeout=20)
+        time.sleep(0.2)
 
 
 def main():
@@ -80,6 +101,9 @@ def main():
     parser.add_argument("--xmx", default="12G")
     parser.add_argument("--xms", default="2G")
     parser.add_argument("--property", action="append", default=[])
+    parser.add_argument("--profile-bin", type=Path, help="JDK bin directory for runtime heap and native samples")
+    parser.add_argument("--timeout", type=int, default=720)
+    parser.add_argument("--shaders", action="store_true", help="Enable BSL for the full route")
     args = parser.parse_args()
     output = args.output.resolve()
     game = output / "minecraft"
@@ -93,6 +117,8 @@ def main():
     flags = [f"-Xms{args.xms}", f"-Xmx{args.xmx}", "-XX:+UseG1GC", "-XX:NativeMemoryTracking=summary",
              "-Xlog:gc*:file=gc.log:uptimemillis,tags", "-Dauram.smoke.hiddenWindow=true",
              f"-Dauram.smoke={args.mode}", *["-D" + pair for pair in args.property]]
+    if args.profile_bin:
+        flags.append("-XX:StartFlightRecording=settings=profile,filename=memory-run.jfr,dumponexit=true")
     game_args = ["--username", "AuramQA", "--uuid", "c7dad607797a4dd7b7f41d6d187aa2bc", "--accessToken", "0",
                  "--userType", "mojang", "--version", "1.20.1-forge-47.4.10", "--versionType", "release",
                  "--gameDir", str(game), "--assetsDir", str(args.runtime / "cache/minecraft/assets"),
@@ -105,8 +131,15 @@ def main():
     with (output / "console.log").open("w") as log:
         process = subprocess.Popen([str(args.java), "@" + str(argfile)], cwd=game, stdout=log, stderr=subprocess.STDOUT)
         print(f"Hidden Minecraft PID {process.pid}. Logs in {output}", flush=True)
+        jstat = native = None
+        if args.profile_bin:
+            with (output / "jstat-gc.txt").open("w") as stream:
+                jstat = subprocess.Popen([str(args.profile_bin / "jstat"), "-gc", "-t",
+                                          str(process.pid), "250"], stdout=stream, stderr=subprocess.STDOUT)
+            native = threading.Thread(target=sample_native, args=(process, game, output, args.profile_bin), daemon=True)
+            native.start()
         try:
-            exit_code = process.wait(timeout=720)
+            exit_code = process.wait(timeout=args.timeout)
         except subprocess.TimeoutExpired:
             process.terminate()
             try:
@@ -115,6 +148,12 @@ def main():
                 process.kill()
                 process.wait()
             raise SystemExit(f"Client timed out. See {output / 'console.log'}")
+        finally:
+            if jstat and jstat.poll() is None:
+                jstat.terminate()
+                jstat.wait(timeout=10)
+            if native:
+                native.join(timeout=5)
     passed = exit_code == 0 and (game / f"{args.mode}-pass.txt").is_file()
     summary = {"passed": passed, "exit_code": exit_code, "elapsed_seconds": time.monotonic() - start,
                "core_sha256": hashlib.sha256(args.jar.read_bytes()).hexdigest(),

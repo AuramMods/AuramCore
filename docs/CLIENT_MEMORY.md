@@ -35,3 +35,27 @@ Allocation dropped 13.7%. JFR still observed the list and backing storage that h
 The Forge runtime bytecode consumes its single `Direction.values()` result with `arraylength` and `aaload` inside `addLights`. The replacement returns a private cached array in enum declaration order to that loop alone. Its elements and the propagation positions, lookups, and callbacks are unchanged.
 
 The two direction-cache runs matched every lighting fingerprint, dirty-section set, and work checksum from the constructor-only control. Median and p95 allocation dropped from 932.96 KiB to 833.20 KiB per call, a 10.7% reduction. JFR sampled 60 direction arrays in each constructor-only run and zero in both direction-cache runs. The new runs measured 0.819 / 2.099 ms and 0.687 / 1.755 ms per call (median / p95). Timing varied while other fixtures ran. These runs support the allocation reduction. They leave the CPU effect uncertain.
+
+## Forge ModelBakery staging map
+
+Forge 47.4.10 uses `ModelBakery.topLevelModels` to select models for parent resolution and baking. The installed Forbidden Arcanus mixin inserts magnetized boot variants during construction. The installed Fabric Model Loading mixin inserts extra model IDs during the same reload. The staging-field references in the installed mod bytecode are those two integrations and ModernFix Dynamic Resources. During gameplay Mekanism builds transmitter content through Forge's public bakery and its model sources.
+
+The client mixin replaces only the staging map at the return of `ModelManager.apply`, after Forge has dispatched its model event and installed the baked model cache. It uses the production mappings `f_119214_` and `m_247616_`. The bakery remains available to late callers. The cleanup checks the bakery's actual interfaces and skips the Dynamic Resources implementation.
+
+Matched title-screen heap dumps used HotSpot's live-object dump and Eclipse Memory Analyzer dominators.
+
+| Measurement | Baseline | Cleared staging map |
+| --- | ---: | ---: |
+| Staging entries | 1,072,788 | 0 |
+| Bytes exclusively retained by staging map | 42,717,920 | 48 |
+| Bytes retained by whole bakery | 587,948,504 | 545,230,632 |
+| Baked registry entries | 1,072,789 | 1,072,789 |
+| Missing-model entries | 1 | 1 |
+
+The map accounted for **40.74 MiB** of the retained bakery. Its only incoming references were the bakery and the map's own key and value views. Both heap runs matched the full baked registry fingerprint and all 560 checked model variants. The raw heap dumps and analysis reports stay local under `/tmp/auram-client-memory/models-title-*`.
+
+The smoke and production jars each carry their own refmap. Separate mapping files keep a test jar from shadowing the bundled production mappings during startup.
+
+The in-world model runs completed their first rendered scene, two ordinary resource reloads, and an override pack being enabled and removed. Each stage matched the registry fingerprint and missing-model count. Mekanism produced eight identical late-baked quads at each stage. The patched client rendered the overridden diamond sword and restored the original model. The held-item regions of the baseline and patched screenshots were effectively pixel-identical. Fine-grained item quad UV hashes were sensitive to placement in Auram's 16,384-pixel atlas, so the harness quantizes sprite-relative UVs to 1/256 while retaining exact position values. The model captures are local under `/tmp/auram-client-memory/models-render-v2-*`.
+
+The production-mapped combined jar also started and reloaded its resource packs without Lucent or Derender in a smaller client fixture. The dedicated Forge 47.4.10 instance loaded 477 mods and reached `Done` with the combined patch classes.

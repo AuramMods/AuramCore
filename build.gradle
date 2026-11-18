@@ -119,6 +119,7 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    exclude 'auram-smoke.refmap.json'
     manifest {
         attributes([
                 'Specification-Title'     : mod_id,
@@ -136,6 +137,7 @@ tasks.named('jar', Jar).configure {
 }
 
 tasks.named('jarJar').configure {
+    exclude 'auram-smoke.refmap.json'
     archiveClassifier = 'all'
     manifest.from(tasks.jar.manifest)
     finalizedBy 'reobfJarJar'
@@ -224,6 +226,7 @@ sourceSets {
 configurations.smokeTestAnnotationProcessor.extendsFrom(configurations.annotationProcessor)
 mixin.add(sourceSets.smokeTest, "auram-smoke.refmap.json")
 tasks.register('smokeTestJar', Jar) {
+    exclude 'auram.refmap.json'
     from sourceSets.smokeTest.output
     archiveClassifier = 'smoke-test'
     manifest.attributes('MixinConfigs': 'mixins.auram.smoke.json')
