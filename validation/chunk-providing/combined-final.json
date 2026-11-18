@@ -1,0 +1,207 @@
+{
+  "mode": "chunkproviding",
+  "runtime": "/tmp/auram-chunk-providing-validation/auram-chunkproviding-fp9ceezc",
+  "passed": true,
+  "exit_codes": [
+    0
+  ],
+  "elapsed_seconds": 17.726202959020156,
+  "artifact_sha256": "ff8917128d8401cc612d809c3daa893e43fe772192307682b1438c5e7787743e",
+  "fixture": {
+    "aether_redux": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/aether-redux-2.0.19-1.20.1-neoforge.jar",
+      "sha256": "cd5103e67618d3876be3afe08e6ef101ddbffe9d4ec6e4df5f6c5987fd48d59e"
+    },
+    "aeroblender": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/deep_aether-1.20.1-1.1.7.jar!META-INF/jarjar/aeroblender-1.20.1-1.0.2-rc1-neoforge.jar",
+      "sha256": "a6cc6b2dbf831ca403ef6312669afd0c91b55aae3f75eb6686447f5631a00d45"
+    },
+    "aether": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/aether-1.20.1-1.5.2-neoforge.jar",
+      "sha256": "5cb64ab1f27e78e8338fe67f9c766578904aad9bc1f8bcc90f306ea52aea3fc5"
+    },
+    "curios": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f"
+    },
+    "geckolib": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/geckolib-forge-1.20.1-4.8.3.jar",
+      "sha256": "8b90e11871a58b63816e99c529e6c932bc88e6beb3fec97ad618e22217df3250"
+    },
+    "lithostitched": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lithostitched-forge-1.20.1-1.4.11.jar",
+      "sha256": "c19a5a36c0e6cb3782cf7ca5b9648fb1bce5fc41fd737bed423a1f4971bccf75"
+    },
+    "malum": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/malum-1.20.1-1.6.7.jar",
+      "sha256": "ceda6ce4cc19de21ff6c21a732d8f9270ecc83cdae69027b13aaa24b536307f8"
+    },
+    "lodestone": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lodestone-1.20.1-1.6.4.1.jar",
+      "sha256": "e9f8b7bc70ba99d97005f2acee2061b149785fbae3c1e37db08c79197bcc7c2d"
+    },
+    "mekanism": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Mekanism-1.20.1-10.4.16.80.jar",
+      "sha256": "3b0d191fa4a45e662f9725991d76a30192f30186abb2ba694b873b5f7b9358d2"
+    },
+    "midnight": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/midnight-1.20.1-0.6.7.jar",
+      "sha256": "252ad68dac3dbc8b1f7885edccb563becb26ce2fe4abf4f2713a3869b9bff820"
+    },
+    "cryptic_registry": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/midnight-1.20.1-0.6.7.jar!META-INF/jarjar/registry-1.20.1-2.0.0-beta.11.jar",
+      "sha256": "93279c663090ba1d648ed8b848f6bc8bd6841a75b9d544cacc1cd6bb4b146de0"
+    },
+    "modernfix": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/modernfix-forge-5.25.2+mc1.20.1.jar",
+      "sha256": "6da98d88031f2f5377c0e66fb7ebfd8da8be64c6e46a2d1b1fcf8c717b040653"
+    },
+    "pehkui": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Pehkui-3.7.12+1.20.1-forge.jar",
+      "sha256": "3c7b14d8efc797a8c848bef1c1bdd1ef69172b8877a5c954f5e27e0a703f57f4"
+    },
+    "projecte": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+      "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+    },
+    "relics": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/relics-1.20.1-0.8.0.11.jar",
+      "sha256": "eb67ef6da9631cac1ccacb542dce3e03f3f5f3594acb5f88647efc2cd8f8b15a"
+    },
+    "octolib": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/OctoLib-FORGE-0.5.0.1+1.20.1.jar",
+      "sha256": "5bb146c691f2c5054752f006a61aab6335ecb1cd9718a9643733de5367971047"
+    },
+    "architectury": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/architectury-9.2.14-forge.jar",
+      "sha256": "218b471d0b8a1f6cda14cfc1beb9eeb0df54304500acc6c5613d9b88ec65d9af"
+    },
+    "smartbrainlib": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/SmartBrainLib-forge-1.20.1-1.15.jar",
+      "sha256": "dc1f5497e1a175397fa10ea84170d8311c71b592976128700fb008139dde55d4"
+    },
+    "terrablender": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/TerraBlender-forge-1.20.1-3.0.1.10.jar",
+      "sha256": "c77a13e3879f9f991cf592abac60ad0c6d2ed17f5ff697ec2db3872b22902d4a"
+    }
+  },
+  "jvm_command": [
+    "/Users/cyberpwn/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java",
+    "-Xms1G",
+    "-Xmx4G",
+    "-XX:ActiveProcessorCount=4",
+    "-Dmixin.debug.export=true",
+    "-Dauram.smoke=chunkproviding",
+    "-Dauram.smoke.identityCandidate=false",
+    "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+    "nogui"
+  ],
+  "server_template": null,
+  "fixture_overrides": {},
+  "mod_jar_count": 21,
+  "datapacks": [],
+  "well_checks": {
+    "loaded_comparisons": 3072,
+    "positive_comparisons": 722,
+    "completed_chunk_retry_checked": true,
+    "removed_block_entity_checked": true,
+    "missing_and_pending_states": 4,
+    "negative_comparisons": 2350,
+    "boundary_chunks_remain_unloaded": true,
+    "periodic_mixin_checked": true,
+    "pending_block_entity_tag_checked": true
+  },
+  "fluid_checks": {
+    "dimensions": 3,
+    "loaded_states": 12096,
+    "fluids": [
+      "minecraft:empty",
+      "minecraft:water",
+      "minecraft:lava",
+      "mekanism:brine",
+      "mekanism:chlorine",
+      "mekanism:ethene",
+      "mekanism:heavy_water",
+      "mekanism:hydrofluoric_acid",
+      "mekanism:hydrogen",
+      "mekanism:hydrogen_chloride",
+      "mekanism:lithium",
+      "mekanism:nutritional_paste",
+      "mekanism:oxygen",
+      "mekanism:sodium",
+      "mekanism:steam",
+      "mekanism:sulfur_dioxide",
+      "mekanism:sulfur_trioxide",
+      "mekanism:sulfuric_acid",
+      "mekanism:superheated_sodium",
+      "mekanism:uranium_hexafluoride",
+      "mekanism:uranium_oxide"
+    ],
+    "pending_full_ticket_checked": true,
+    "completed_chunk_retry_checked": true
+  },
+  "fluid_comparison": {
+    "loaded_states_equal": 12096,
+    "state_sha256": "f5c1b24ab42560e205c37b176733607ca677641d630fa22149cb77c320cb6eb4",
+    "reference": "/tmp/auram-chunk-providing-validation/auram-fluidsreference-6f0753fw",
+    "candidate": "/tmp/auram-chunk-providing-validation/auram-chunkproviding-fp9ceezc"
+  },
+  "biome_command_cases": 138,
+  "block_entity_negative_control": {
+    "mode": "wellproximity",
+    "runtime": "/tmp/auram-chunk-providing-validation/auram-wellproximity-_r96g0ol",
+    "passed": false,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 7.277422291983385,
+    "artifact_sha256": "25f88ce9b43e92bc3c3efd9a0b7d6fab2470b6d364751ef702bddaa32363f282",
+    "fixture": {
+      "malum": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/malum-1.20.1-1.6.7.jar",
+        "sha256": "ceda6ce4cc19de21ff6c21a732d8f9270ecc83cdae69027b13aaa24b536307f8"
+      },
+      "curios": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/curios-forge-5.14.1+1.20.1.jar",
+        "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f"
+      },
+      "lodestone": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lodestone-1.20.1-1.6.4.1.jar",
+        "sha256": "e9f8b7bc70ba99d97005f2acee2061b149785fbae3c1e37db08c79197bcc7c2d"
+      },
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=wellproximity",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "server_template": null,
+    "fixture_overrides": {},
+    "mod_jar_count": 6,
+    "datapacks": [],
+    "expected_failure": "java.lang.AssertionError: candidate recreates removed conduit without loading lookup"
+  },
+  "shipped_biome_reference_semantics": {
+    "identical_cases": 138,
+    "semantic_sha256": "8b52f119d7e8b6720f157e4bb63d75971aa3554ccdc60dcfe8ee2763d2a6eb8f",
+    "reference_runtime": "/tmp/auram-chunk-providing-validation/auram-biomesreference-j7ly_ur5"
+  },
+  "unit_suites": [
+    {
+      "name": "art.arcane.auram.util.RockAppearanceTest",
+      "tests": "5",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ]
+}

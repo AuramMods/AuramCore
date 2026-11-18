@@ -8,6 +8,8 @@
   "mixins": [
     "minecraft.EntitySupportMixin",
     "minecraft.FluidReadinessMixin",
+    "minecraft.FillBiomeCommandMixin",
+    "minecraft.ChunkBiomeRangeMixin",
     "minecraft.NetherFossilMixin",
     "minecraft.NoiseChunkMappingMixin",
     "minecraft.NoiseGeneratorAccess",

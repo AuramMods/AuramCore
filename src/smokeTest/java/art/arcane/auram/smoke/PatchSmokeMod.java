@@ -54,6 +54,19 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (System.getProperty("auram.smoke", "").equals("chunkproviding")) {
+                WellProximitySmoke.run(event.getServer());
+                FluidReadinessSmoke.run(event.getServer(), false);
+                BiomeFillSmoke.run(event.getServer(), false);
+                Files.writeString(Path.of("auram-chunkproviding-pass.txt"), "PASS combined proximity, fluid readiness and biome command regressions\n");
+                return;
+            }
+            if (System.getProperty("auram.smoke", "").startsWith("biomes")) {
+                String mode = System.getProperty("auram.smoke");
+                BiomeFillSmoke.run(event.getServer(), mode.equals("biomesreference"));
+                Files.writeString(Path.of("auram-" + mode + "-pass.txt"), "PASS fillbiome commands, decoded refreshes, bounds lifetime and benchmark\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").startsWith("fluids")) {
                 String mode = System.getProperty("auram.smoke");
                 FluidReadinessSmoke.run(event.getServer(), mode.equals("fluidsreference"));

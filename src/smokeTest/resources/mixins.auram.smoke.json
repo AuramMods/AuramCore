@@ -8,6 +8,8 @@
     "ChunkCacheMixin",
     "EntitySupportProbeMixin",
     "EntityFluidProbeMixin",
+    "BiomeFillProbeMixin",
+    "BiomeSyncProbeMixin",
     "NoiseColumnProbeMixin",
     "NoiseSetupProbeMixin",
     "CapabilityComparisonProbeMixin",
