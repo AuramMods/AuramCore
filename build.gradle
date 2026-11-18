@@ -227,7 +227,11 @@ tasks.register('smokeTestJar', Jar) {
     manifest.attributes('MixinConfigs': 'mixins.auram.smoke.json')
     finalizedBy 'reobfSmokeTestJar'
 }
-reobf { smokeTestJar {} }
+reobf {
+    smokeTestJar {
+        extraMappings.from layout.buildDirectory.file('tmp/compileSmokeTestJava/compileSmokeTestJava-mappings.tsrg')
+    }
+}
 
 // These processor products live outside javac's classes directory. Declaring
 // them prevents an up-to-date compile from packaging an absent/partial refmap.
