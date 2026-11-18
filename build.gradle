@@ -84,6 +84,9 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     testImplementation 'junit:junit:4.13.2'
+    // Optional runtime targets; compile against the pack's actual Malum/Lodestone APIs.
+    compileOnly fg.deobf('curse.maven:malum-484064:6646111')
+    compileOnly fg.deobf('curse.maven:lodestone-616457:6213794')
     compileOnly fg.deobf("curse.maven:patchouli-${patchouli_version}")
     runtimeOnly fg.deobf("curse.maven:patchouli-${patchouli_version}")
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

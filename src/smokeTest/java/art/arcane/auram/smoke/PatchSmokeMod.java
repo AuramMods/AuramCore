@@ -54,6 +54,11 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (System.getProperty("auram.smoke", "").equals("wellproximity")) {
+                WellProximitySmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-wellproximity-pass.txt"), "PASS loaded well proximity, absent/pending chunks and retry\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("loot")) {
                 LootCrateSoundSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-loot-pass.txt"), "PASS loot-crate opening sound and pitch\n");

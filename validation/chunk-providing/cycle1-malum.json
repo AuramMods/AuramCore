@@ -1,0 +1,51 @@
+{
+  "mode": "wellproximity",
+  "runtime": "/tmp/auram-chunk-providing-validation/auram-wellproximity-8juv_qsq",
+  "passed": true,
+  "exit_codes": [
+    0
+  ],
+  "elapsed_seconds": 7.196025166020263,
+  "artifact_sha256": "f7ba00cf080c137e5b5229dff097522f68e3301b830d6972c3de0d2a6c70279c",
+  "fixture": {
+    "malum": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/malum-1.20.1-1.6.7.jar",
+      "sha256": "ceda6ce4cc19de21ff6c21a732d8f9270ecc83cdae69027b13aaa24b536307f8"
+    },
+    "curios": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f"
+    },
+    "lodestone": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lodestone-1.20.1-1.6.4.1.jar",
+      "sha256": "e9f8b7bc70ba99d97005f2acee2061b149785fbae3c1e37db08c79197bcc7c2d"
+    },
+    "projecte": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+      "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+    }
+  },
+  "jvm_command": [
+    "/Users/cyberpwn/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java",
+    "-Xms1G",
+    "-Xmx4G",
+    "-Dmixin.debug.export=true",
+    "-Dauram.smoke=wellproximity",
+    "-Dauram.smoke.identityCandidate=false",
+    "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+    "nogui"
+  ],
+  "server_template": null,
+  "fixture_overrides": {},
+  "mod_jar_count": 6,
+  "datapacks": [],
+  "checks": {
+    "boundary_chunks_remain_unloaded": true,
+    "negative_comparisons": 2350,
+    "periodic_mixin_checked": true,
+    "loaded_comparisons": 3072,
+    "positive_comparisons": 722,
+    "completed_chunk_retry_checked": true,
+    "missing_and_pending_states": 4
+  }
+}
