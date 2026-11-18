@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.7` |
+| Mod Version | `1.0.8` |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -190,6 +190,22 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - The optional FTB Quests 2001.4.17 mixin preserves its existing volume, sound category, reward handling, and crate consumption. Other item-break sounds are unaffected.
 - `tools/performance_smoke.py --mode loot --with-mod ftbquests` (with the Java/libraries arguments described below) exercises the installed crate item on a disposable server and checks the actual sound event, pitch, volume, and consumption for normal/sneak opening plus an unrelated item-break control.
 
+### 24. Malum Periodic Well Detection
+
+- The periodic player proximity scan visits only relevant, immediately available chunks. Missing or pending chunks retain the previous proximity state until the next scan; the shared rejection/teleport lookup is unchanged.
+- Loaded detection preserves Malum/Lodestone's search box and vanilla block-entity creation policy, including removed entries and pending saved tags.
+
+### 25. Fluid Chunk Readiness
+
+- The server-side fluid scan strengthens its existing unloaded-chunk guard with immediate FULL-chunk availability. A pending ticket defers the scan instead of blocking the server thread.
+- Loaded fluid calculations remain unchanged. Validation compares 12,096 states across water, lava, 18 Mekanism fluids, boats and all three vanilla dimensions.
+
+### 26. Bounded Biome Commands
+
+- `/fillbiome` rewrites only vertical sections intersecting the command range. Original replacement predicates, results, dirty marking and biome refreshes are preserved; ordinary world generation remains unbounded.
+- Resolver-local scopes restore after nested calls and exceptions. Validation matches 138 command cases and decoded refresh payloads; partial fills are about seven times faster in the isolated four-CPU fixtures. These timings are not whole-server or chunk-generation speedups.
+- Reproduction instructions and detailed evidence for all three patches are in [validation/chunk-providing/README.md](validation/chunk-providing/README.md).
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).
@@ -237,7 +253,7 @@ gradlew.bat reobfJarJar
 
 Primary output:
 
-- `build/libs/auram-1.0.7-all.jar` (reobfuscated, includes MixinSquared; install as `AuramCore-1.0.7.jar`)
+- `build/libs/auram-1.0.8-all.jar` (reobfuscated, includes MixinSquared; install as `AuramCore-1.0.8.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
 
@@ -253,7 +269,7 @@ The plain `jar`/`reobfJar` output does not include the bundled dependency. Use t
 
 ### Headless Chunk Patch Smoke Test
 
-`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.7-smoke-test.jar`. It is never included in the release jar.
+`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.8-smoke-test.jar`. It is never included in the release jar.
 
 Run this test mod alongside the release jar, ProjectE, Aether Redux, Relics, Mekanism and their dependencies in a disposable Forge 47.4.10 dedicated-server directory with Java 17. Use flat terrain and the Highlands quicksoil setting. The test creates remote chunks and a Mekanism tank and stops the server itself.
 
