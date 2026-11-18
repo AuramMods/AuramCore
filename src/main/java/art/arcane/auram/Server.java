@@ -6,8 +6,10 @@ import art.arcane.auram.util.RecipeCache;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TagsUpdatedEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -18,6 +20,18 @@ import java.util.Map;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class Server {
+    private static final ResourceLocation LOGICRAFT_GUIDE = ResourceLocation.tryParse("ggunz:recipe/recipe");
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player
+                && player.server.getFunctions().get(LOGICRAFT_GUIDE).isPresent()) {
+            // Skip the automatic tick grant. The recipe advancement uses the
+            // same function directly and still gives the guide when crafted.
+            player.addTag("recipeggiven");
+        }
+    }
+
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
         refreshRecipeCache(event.getServer());

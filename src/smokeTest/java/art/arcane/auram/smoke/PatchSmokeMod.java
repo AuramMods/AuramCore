@@ -54,6 +54,11 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (System.getProperty("auram.smoke", "").equals("starterbooks")) {
+                StarterBooksSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-starterbooks-pass.txt"), "PASS starter guides, advancement recipe rewards and manual Logicraft crafting\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("zetamap")) {
                 ZetaMapSmoke.run();
                 Files.writeString(Path.of("auram-zetamap-pass.txt"), "PASS concurrent Zeta handler map and real event subscriptions\n");
