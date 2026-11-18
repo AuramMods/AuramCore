@@ -29,3 +29,9 @@ The focused comparison used the installed Lucent, ProjectE, and Patchouli jars i
 | Patched 2 | 932.96 / 932.96 | 0.614 / 5.129 | 0 / 0 / 0 |
 
 Allocation dropped 13.7%. JFR still observed the list and backing storage that hold the lights. Timing ran alongside other validation and varied across runs. Use `tools/memory_client_smoke.py --mode memory-lucent --xmx 6G` with the focused pack input. Raw captures are local under `/tmp/auram-client-memory/lucent-v4-*`.
+
+## Lucent 1.5.5 propagation directions
+
+The Forge runtime bytecode consumes its single `Direction.values()` result with `arraylength` and `aaload` inside `addLights`. The replacement returns a private cached array in enum declaration order to that loop alone. Its elements and the propagation positions, lookups, and callbacks are unchanged.
+
+The two direction-cache runs matched every lighting fingerprint, dirty-section set, and work checksum from the constructor-only control. Median and p95 allocation dropped from 932.96 KiB to 833.20 KiB per call, a 10.7% reduction. JFR sampled 60 direction arrays in each constructor-only run and zero in both direction-cache runs. The new runs measured 0.819 / 2.099 ms and 0.687 / 1.755 ms per call (median / p95). Timing varied while other fixtures ran. These runs support the allocation reduction. They leave the CPU effect uncertain.

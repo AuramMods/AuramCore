@@ -41,6 +41,7 @@
     "derenderpatcher.CompatModsMixin",
     "lucent.LightDataFactory",
     "lucent.LightSourceMixin",
+    "lucent.LightPropagationMixin",
     "arsmagicalegacy.ManaHudMixin",
     "arsmagicalegacy.MagicXpHudMixin",
     "minecraft.ApplicationTitleMixin",
