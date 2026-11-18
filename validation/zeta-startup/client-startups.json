@@ -1,0 +1,192 @@
+{
+  "instance": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram-Zeta-QA-2f8d5c71",
+  "artifact_sha256": "0b363b54bfad23ea2cbba1973baa54b83532d2058303fba438d6681ffb3515aa",
+  "mod_jars": 536,
+  "runs": [
+    {
+      "run": 1,
+      "passed": true,
+      "elapsed_seconds": 94.61029650003184,
+      "reason": null,
+      "checks": [
+        {
+          "packs": [
+            "mod_resources",
+            "vanilla",
+            "Runtime Resource Packebe:base_resources",
+            "Moonlight Mods Dynamic Assets",
+            "fabric",
+            "builtin/client/golden_swet_ball/DAGoldenSwetBallFixClient",
+            "resource/overrides_pack",
+            "eatinganimations_compat",
+            "cullleaves:smartleaves",
+            "KubeJS Resource Pack [assets]",
+            "file/Auram_Blackstone_Menus.zip",
+            "loadmyresources.hiddenpack"
+          ],
+          "sprites_present": true,
+          "map_class": "java.util.Collections$SynchronizedMap",
+          "phase": 0,
+          "mods": 630,
+          "textures": [
+            "iceandfire:textures/gui/main_menu/table.png",
+            "distanthorizons:textures/gui/button.png",
+            "quark:textures/block/limestone.png",
+            "supplementaries:textures/block/blackstone_tiles.png"
+          ]
+        },
+        {
+          "packs": [
+            "mod_resources",
+            "vanilla",
+            "Runtime Resource Packebe:base_resources",
+            "Moonlight Mods Dynamic Assets",
+            "fabric",
+            "builtin/client/golden_swet_ball/DAGoldenSwetBallFixClient",
+            "resource/overrides_pack",
+            "eatinganimations_compat",
+            "cullleaves:smartleaves",
+            "KubeJS Resource Pack [assets]",
+            "file/Auram_Blackstone_Menus.zip",
+            "loadmyresources.hiddenpack"
+          ],
+          "sprites_present": true,
+          "map_class": "java.util.Collections$SynchronizedMap",
+          "phase": 2,
+          "mods": 630,
+          "textures": [
+            "iceandfire:textures/gui/main_menu/table.png",
+            "distanthorizons:textures/gui/button.png",
+            "quark:textures/block/limestone.png",
+            "supplementaries:textures/block/blackstone_tiles.png"
+          ]
+        }
+      ]
+    },
+    {
+      "run": 2,
+      "passed": true,
+      "elapsed_seconds": 74.50408229097957,
+      "reason": null,
+      "checks": [
+        {
+          "phase": 0,
+          "mods": 630,
+          "textures": [
+            "iceandfire:textures/gui/main_menu/table.png",
+            "distanthorizons:textures/gui/button.png",
+            "quark:textures/block/limestone.png",
+            "supplementaries:textures/block/blackstone_tiles.png"
+          ],
+          "packs": [
+            "mod_resources",
+            "vanilla",
+            "Runtime Resource Packebe:base_resources",
+            "Moonlight Mods Dynamic Assets",
+            "fabric",
+            "builtin/client/golden_swet_ball/DAGoldenSwetBallFixClient",
+            "resource/overrides_pack",
+            "eatinganimations_compat",
+            "cullleaves:smartleaves",
+            "KubeJS Resource Pack [assets]",
+            "file/Auram_Blackstone_Menus.zip",
+            "loadmyresources.hiddenpack"
+          ],
+          "sprites_present": true,
+          "map_class": "java.util.Collections$SynchronizedMap"
+        },
+        {
+          "phase": 2,
+          "mods": 630,
+          "textures": [
+            "iceandfire:textures/gui/main_menu/table.png",
+            "distanthorizons:textures/gui/button.png",
+            "quark:textures/block/limestone.png",
+            "supplementaries:textures/block/blackstone_tiles.png"
+          ],
+          "packs": [
+            "mod_resources",
+            "vanilla",
+            "Runtime Resource Packebe:base_resources",
+            "Moonlight Mods Dynamic Assets",
+            "fabric",
+            "builtin/client/golden_swet_ball/DAGoldenSwetBallFixClient",
+            "resource/overrides_pack",
+            "eatinganimations_compat",
+            "cullleaves:smartleaves",
+            "KubeJS Resource Pack [assets]",
+            "file/Auram_Blackstone_Menus.zip",
+            "loadmyresources.hiddenpack"
+          ],
+          "sprites_present": true,
+          "map_class": "java.util.Collections$SynchronizedMap"
+        }
+      ]
+    },
+    {
+      "run": 3,
+      "passed": true,
+      "elapsed_seconds": 82.5288849589997,
+      "reason": null,
+      "checks": [
+        {
+          "map_class": "java.util.Collections$SynchronizedMap",
+          "sprites_present": true,
+          "packs": [
+            "mod_resources",
+            "vanilla",
+            "Runtime Resource Packebe:base_resources",
+            "Moonlight Mods Dynamic Assets",
+            "fabric",
+            "builtin/client/golden_swet_ball/DAGoldenSwetBallFixClient",
+            "resource/overrides_pack",
+            "eatinganimations_compat",
+            "cullleaves:smartleaves",
+            "KubeJS Resource Pack [assets]",
+            "file/Auram_Blackstone_Menus.zip",
+            "loadmyresources.hiddenpack"
+          ],
+          "textures": [
+            "iceandfire:textures/gui/main_menu/table.png",
+            "distanthorizons:textures/gui/button.png",
+            "quark:textures/block/limestone.png",
+            "supplementaries:textures/block/blackstone_tiles.png"
+          ],
+          "mods": 630,
+          "phase": 0
+        },
+        {
+          "map_class": "java.util.Collections$SynchronizedMap",
+          "sprites_present": true,
+          "packs": [
+            "mod_resources",
+            "vanilla",
+            "Runtime Resource Packebe:base_resources",
+            "Moonlight Mods Dynamic Assets",
+            "fabric",
+            "builtin/client/golden_swet_ball/DAGoldenSwetBallFixClient",
+            "resource/overrides_pack",
+            "eatinganimations_compat",
+            "cullleaves:smartleaves",
+            "KubeJS Resource Pack [assets]",
+            "file/Auram_Blackstone_Menus.zip",
+            "loadmyresources.hiddenpack"
+          ],
+          "textures": [
+            "iceandfire:textures/gui/main_menu/table.png",
+            "distanthorizons:textures/gui/button.png",
+            "quark:textures/block/limestone.png",
+            "supplementaries:textures/block/blackstone_tiles.png"
+          ],
+          "mods": 630,
+          "phase": 2
+        }
+      ]
+    }
+  ],
+  "log_checks": {
+    "construction_failures": 0,
+    "resource_recovery_fallbacks": 0,
+    "broken_mod_state_events": 0
+  }
+}

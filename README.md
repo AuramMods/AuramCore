@@ -206,6 +206,12 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - Resolver-local scopes restore after nested calls and exceptions. Validation matches 138 command cases and decoded refresh payloads; partial fills are about seven times faster in the isolated four-CPU fixtures. These timings are not whole-server or chunk-generation speedups.
 - Reproduction instructions and detailed evidence for all three patches are in [validation/chunk-providing/README.md](validation/chunk-providing/README.md).
 
+### 27. Zeta Startup Handler Registration
+
+- Zeta 1.0-31's Forge event-handler map is synchronized before the bus is published. Parallel Quark/Supplementaries registration no longer corrupts its fastutil map during resize.
+- The existing map, null handling and listener registration/removal behavior are retained. Locks are confined to map operations rather than Forge callbacks.
+- See [validation/zeta-startup/README.md](validation/zeta-startup/README.md) for the reproduced failure, concurrent-map checks and repeated full-pack client/resource reload validation.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).

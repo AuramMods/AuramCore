@@ -19,6 +19,7 @@
     "lithostitched.StructurePoolGeneratorMixin",
     "malum.WeepingWellMixin",
     "malum.WellProximityMixin",
+    "zeta.EventHandlerMapMixin",
     "ae2.MeteoriteTerrainMixin",
     "mowziesmobs.WroughtnautColumnsMixin",
     "kubejs.UpdateCheckMixin",

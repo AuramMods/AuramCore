@@ -1,0 +1,16 @@
+{
+  "restored_bindings": 362,
+  "resource_packs": [
+    "mod_resources",
+    "vanilla",
+    "Moonlight Mods Dynamic Assets",
+    "fabric",
+    "builtin/client/golden_swet_ball/DAGoldenSwetBallFixClient",
+    "builtin/resource/overrides_pack",
+    "eatinganimations_compat",
+    "cullleaves:smartleaves",
+    "file/Auram_Blackstone_Menus.zip"
+  ],
+  "sha256": "4af8c6d5489b0a8ecf9aa6aa60f4de404232f3570dcb35d7367c463c37f1bfe5",
+  "matches_last_committed_options": true
+}

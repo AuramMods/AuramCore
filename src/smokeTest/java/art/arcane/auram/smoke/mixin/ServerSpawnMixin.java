@@ -12,7 +12,7 @@ public abstract class ServerSpawnMixin {
     @Inject(method="prepareLevels",at=@At("HEAD"),cancellable=true)
     private void auramSmoke$skipSpawn(CallbackInfo ci) {
         String mode=System.getProperty("auram.smoke","");
-        if (mode.equals("book") || mode.equals("wellproximity") || mode.equals("chunkproviding")
+        if (mode.equals("book") || mode.equals("wellproximity") || mode.equals("chunkproviding") || mode.equals("zetamap")
                 || mode.startsWith("fluids") || mode.startsWith("biomes")) { ci.cancel(); return; }
         if(mode.equals("tuning") || mode.equals("structureprobes") || mode.equals("terrain") || mode.equals("density") || mode.equals("heightcache") || mode.equals("mappingperf") || mode.equals("wrought") || mode.equals("sparse") || mode.equals("terrainbatch")) ci.cancel();
     }

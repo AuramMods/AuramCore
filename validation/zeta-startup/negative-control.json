@@ -1,0 +1,48 @@
+{
+  "mode": "zetamap",
+  "runtime": "/tmp/auram-zeta-validation/auram-zetamap-u8mrd4pj",
+  "passed": false,
+  "exit_codes": [
+    0
+  ],
+  "elapsed_seconds": 70.05101391597418,
+  "artifact_sha256": "bbdb3fad03e9212eba9bfbc910da8bf68afdd2dadff583192d6d0950890d9462",
+  "fixture": {
+    "projecte": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+      "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+    },
+    "quark": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Quark-4.0-462.jar",
+      "sha256": "c90b96f049d92825c4a103721988c80d72e5ad380d17be46a0f53e114874c478"
+    },
+    "supplementaries": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/supplementaries-1.20-3.1.42-forge.jar",
+      "sha256": "f58c2a725336f263e94870347df116e0198d7a8c36a6f7bdf065c566b0248811"
+    },
+    "moonlight": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/moonlight-1.20-2.16.22-forge.jar",
+      "sha256": "de6feed4f1eacf35c1deea9d4f8689f9f59228f44d560ff8e6da8a6f78358da6"
+    },
+    "zeta": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Zeta-1.0-31.jar",
+      "sha256": "cd1786902a79434f8fd762d741019d9c8a79725fef7e30a89c153c934e1e6a9e"
+    }
+  },
+  "jvm_command": [
+    "/Users/cyberpwn/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java",
+    "-Xms1G",
+    "-Xmx4G",
+    "-Dmixin.debug.export=true",
+    "-Dauram.smoke=zetamap",
+    "-Dauram.smoke.identityCandidate=false",
+    "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+    "nogui"
+  ],
+  "server_template": null,
+  "fixture_overrides": {},
+  "mod_jar_count": 7,
+  "datapacks": [],
+  "failure": "java.util.concurrent.ExecutionException: java.lang.ArrayIndexOutOfBoundsException: Index 128 out of bounds for length 65",
+  "expected_failure": true
+}
