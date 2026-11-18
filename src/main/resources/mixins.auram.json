@@ -38,6 +38,8 @@
     "defaultRequire": 1
   },
   "client": [
+    "arsmagicalegacy.ManaHudMixin",
+    "arsmagicalegacy.MagicXpHudMixin",
     "minecraft.ApplicationTitleMixin",
     "minecraft.ApplicationIconMixin"
   ]
