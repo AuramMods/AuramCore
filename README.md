@@ -24,7 +24,7 @@ Source of truth: `gradle.properties` and `build.gradle`.
 
 - Scans all registered ore blocks and generates matching `auram:*rock*` items at runtime.
 - Replaces ore block loot with generated rock items through a global loot modifier.
-- Uses higher rock counts for deepslate ores.
+- Breaking recognized ore blocks gives 1–4 rocks for regular ores, 3–6 for deepslate and Nether ores, and 4–6 for End ores. Mining uses ore IDs and Nether or End host tags to select the range.
 - Applies dynamic names/colors so generated rocks match their source ore.
 - Nether/netherrack, End/end-stone, and deepslate ore variants use matching host-stone surfaces while retaining a separately tinted ore interior. Host selection uses whole words in the source block ID, then its particle texture path; material names such as `enderium` do not imply an End host.
 - The client generates these surfaces from the existing rock silhouette and the active vanilla host textures during atlas loading. Resource reloads rebuild the surfaces and clear cached ore/component colors. Ore tint sampling excludes pixels close to the host texture, so pale quartz is not overwhelmed by red netherrack.

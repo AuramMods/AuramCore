@@ -23,7 +23,7 @@ public enum RockHost {
         return explicit != STONE ? explicit : fromPath(texturePath);
     }
 
-    private static RockHost fromPath(String path) {
+    public static RockHost fromPath(String path) {
         Set<String> words = Set.copyOf(java.util.Arrays.asList(path.toLowerCase(Locale.ROOT).split("[^a-z0-9]+")));
         if (words.contains("deepslate") || words.contains("deep") && words.contains("slate")) return DEEPSLATE;
         if (words.contains("netherrack") || words.contains("nether")) return NETHERRACK;
