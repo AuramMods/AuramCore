@@ -95,6 +95,8 @@ dependencies {
         jarJar.ranged(it, '[0.3.8,)')
     }
     implementation fg.deobf("curse.maven:projecte-226410:4901949")
+    // Lucent stays optional at runtime. These mixins only use its own Java types.
+    compileOnly "curse.maven:lucent-493280:4951434"
     
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"))
     compileOnly(fg.deobf("mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"))

@@ -39,6 +39,8 @@
   },
   "client": [
     "derenderpatcher.CompatModsMixin",
+    "lucent.LightDataFactory",
+    "lucent.LightSourceMixin",
     "arsmagicalegacy.ManaHudMixin",
     "arsmagicalegacy.MagicXpHudMixin",
     "minecraft.ApplicationTitleMixin",

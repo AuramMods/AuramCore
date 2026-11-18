@@ -19,7 +19,12 @@
     "TerminalPacketProbeMixin",
     "TerminalWriteProbeMixin"
   ],
-  "client": ["HiddenWindowMixin", "DraconicCoreRenderProbeMixin", "DraconicReactorRenderProbeMixin"],
+  "client": [
+    "HiddenWindowMixin",
+    "DraconicCoreRenderProbeMixin",
+    "DraconicReactorRenderProbeMixin",
+    "LucentWorkerSmokeMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }

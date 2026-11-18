@@ -14,3 +14,18 @@ The optional client mixin uses Forge's indexed mod lookup and retains Derender's
 Each run matched Forge's results on three installed mod IDs and two absent IDs. The patched runs averaged 6.20 and 2.92 bytes per call across all measured batches, with zero in the later batches after JIT warmup. Each run captured 28 scenes across BSL 10.1 off, on, off, and on. The Draconic pickaxe, sword, and bow rendered in first and third person. Both core renderers ran in every shader stage. The energy core's client-side animation state varied in one baseline run due to block-entity synchronization. The other baseline and both candidates showed the active core. Render frame times overlapped between the baseline and patched runs.
 
 Use `tools/memory_client_smoke.py --mode memory-derender` with the same frozen pack input, smoke jar, and client JVM for both builds. Raw captures are local under `/tmp/auram-client-memory/cycle1-*`.
+
+## Lucent 1.5.5 single-source lighting
+
+The installed Lucent jar matched CurseForge file 4951434. The redirect matches both allocations in `addLightSource`. It adds the existing source to a fresh mutable list and calls Lucent's list constructor. The public jar and the installed jar had identical SHA-256 digests.
+
+The focused comparison used the installed Lucent, ProjectE, and Patchouli jars in hidden Forge clients with Java 17, G1, 2–6 GiB heap, and the same smoke jar. Each run drove Lucent's real engine against a private client level. It used five warmup batches and twenty measured batches of 60 calls. Paired cases compared block positions, light levels, ordered source positions, and exact dirty-section sets. Both runs per build agreed across all eight tick checkpoints and four propagation scenes, including 1,099 positions with overlapping sources in the smooth scene. The route included an occluding wall, a block edit, and Overworld → Nether → Overworld travel.
+
+| Run | Median / p95 KiB allocated per propagation call | Median / p95 ms per call | JFR single-source temporary arrays / wrappers / copy arrays |
+| --- | ---: | ---: | ---: |
+| Baseline 1 | 1,081.32 / 1,081.32 | 0.596 / 1.479 | 24 / 51 / 70 |
+| Baseline 2 | 1,081.32 / 1,081.32 | 0.574 / 1.020 | 22 / 67 / 61 |
+| Patched 1 | 932.96 / 932.96 | 0.541 / 5.005 | 0 / 0 / 0 |
+| Patched 2 | 932.96 / 932.96 | 0.614 / 5.129 | 0 / 0 / 0 |
+
+Allocation dropped 13.7%. JFR still observed the list and backing storage that hold the lights. Timing ran alongside other validation and varied across runs. Use `tools/memory_client_smoke.py --mode memory-lucent --xmx 6G` with the focused pack input. Raw captures are local under `/tmp/auram-client-memory/lucent-v4-*`.
