@@ -1,0 +1,140 @@
+{
+  "comparison": {
+    "loaded_states_equal": 12096,
+    "state_sha256": "f5c1b24ab42560e205c37b176733607ca677641d630fa22149cb77c320cb6eb4",
+    "reference": "/tmp/auram-chunk-providing-validation/auram-fluidsreference-6f0753fw",
+    "candidate": "/tmp/auram-chunk-providing-validation/auram-fluids-kwzryy2_"
+  },
+  "reference": {
+    "mode": "fluidsreference",
+    "runtime": "/tmp/auram-chunk-providing-validation/auram-fluidsreference-6f0753fw",
+    "passed": true,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 11.934768709004857,
+    "artifact_sha256": "c75082fad71c29f17cee7ee81c452f492f0b3e97a979c14c3ec120423ba3b4d8",
+    "fixture": {
+      "mekanism": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Mekanism-1.20.1-10.4.16.80.jar",
+        "sha256": "3b0d191fa4a45e662f9725991d76a30192f30186abb2ba694b873b5f7b9358d2"
+      },
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=fluidsreference",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "server_template": null,
+    "fixture_overrides": {},
+    "mod_jar_count": 4,
+    "datapacks": []
+  },
+  "candidate": {
+    "mode": "fluids",
+    "runtime": "/tmp/auram-chunk-providing-validation/auram-fluids-kwzryy2_",
+    "passed": true,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 9.462320957973134,
+    "artifact_sha256": "eaf1097f9964b77800994f3b200b73fde87fee85ed6f7d439bcd4503eccc1e6d",
+    "fixture": {
+      "mekanism": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Mekanism-1.20.1-10.4.16.80.jar",
+        "sha256": "3b0d191fa4a45e662f9725991d76a30192f30186abb2ba694b873b5f7b9358d2"
+      },
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=fluids",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "server_template": null,
+    "fixture_overrides": {},
+    "mod_jar_count": 4,
+    "datapacks": []
+  },
+  "checks": {
+    "loaded_states": 12096,
+    "dimensions": 3,
+    "completed_chunk_retry_checked": true,
+    "pending_full_ticket_checked": true,
+    "fluids": [
+      "minecraft:empty",
+      "minecraft:water",
+      "minecraft:lava",
+      "mekanism:brine",
+      "mekanism:chlorine",
+      "mekanism:ethene",
+      "mekanism:heavy_water",
+      "mekanism:hydrofluoric_acid",
+      "mekanism:hydrogen",
+      "mekanism:hydrogen_chloride",
+      "mekanism:lithium",
+      "mekanism:nutritional_paste",
+      "mekanism:oxygen",
+      "mekanism:sodium",
+      "mekanism:steam",
+      "mekanism:sulfur_dioxide",
+      "mekanism:sulfur_trioxide",
+      "mekanism:sulfuric_acid",
+      "mekanism:superheated_sodium",
+      "mekanism:uranium_hexafluoride",
+      "mekanism:uranium_oxide"
+    ]
+  },
+  "negative_control": {
+    "mode": "fluids",
+    "runtime": "/tmp/auram-chunk-providing-validation/auram-fluids-kgzxjevq",
+    "passed": false,
+    "exit_codes": [
+      0
+    ],
+    "elapsed_seconds": 12.522814416966867,
+    "artifact_sha256": "c75082fad71c29f17cee7ee81c452f492f0b3e97a979c14c3ec120423ba3b4d8",
+    "fixture": {
+      "mekanism": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/Mekanism-1.20.1-10.4.16.80.jar",
+        "sha256": "3b0d191fa4a45e662f9725991d76a30192f30186abb2ba694b873b5f7b9358d2"
+      },
+      "projecte": {
+        "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+        "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+      }
+    },
+    "jvm_command": [
+      "/Users/cyberpwn/.gradle/jdks/eclipse_adoptium-17-aarch64-os_x.2/jdk-17.0.17+10/Contents/Home/bin/java",
+      "-Xms1G",
+      "-Xmx4G",
+      "-Dmixin.debug.export=true",
+      "-Dauram.smoke=fluids",
+      "-Dauram.smoke.identityCandidate=false",
+      "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+      "nogui"
+    ],
+    "server_template": null,
+    "fixture_overrides": {},
+    "mod_jar_count": 4,
+    "datapacks": [],
+    "expected_failure": "java.lang.AssertionError: Patched hook requested a blocking chunk lookup at -999,1000"
+  }
+}

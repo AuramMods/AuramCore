@@ -54,6 +54,12 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (System.getProperty("auram.smoke", "").startsWith("fluids")) {
+                String mode = System.getProperty("auram.smoke");
+                FluidReadinessSmoke.run(event.getServer(), mode.equals("fluidsreference"));
+                Files.writeString(Path.of("auram-" + mode + "-pass.txt"), "PASS fluid behavior and chunk readiness checks\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("wellproximity")) {
                 WellProximitySmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-wellproximity-pass.txt"), "PASS loaded well proximity, absent/pending chunks and retry\n");

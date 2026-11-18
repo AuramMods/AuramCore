@@ -7,6 +7,7 @@
   "refmap": "auram.refmap.json",
   "mixins": [
     "minecraft.EntitySupportMixin",
+    "minecraft.FluidReadinessMixin",
     "minecraft.NetherFossilMixin",
     "minecraft.NoiseChunkMappingMixin",
     "minecraft.NoiseGeneratorAccess",
