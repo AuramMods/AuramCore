@@ -8,7 +8,7 @@ AuramCore is a Minecraft Forge mod for dynamically generated ore-rock gameplay, 
 | --- | --- |
 | Mod ID | `auram` |
 | Mod Name | `Auram` |
-| Mod Version | `1.0.9` |
+| Mod Version | `1.0.10` |
 | Minecraft Version | `1.20.1` |
 | Forge Version | `47.4.10` |
 | Forge Loader Range | `[47,)` |
@@ -265,7 +265,7 @@ gradlew.bat reobfJarJar
 
 Primary output:
 
-- `build/libs/auram-1.0.9-all.jar` (reobfuscated, includes MixinSquared; install as `AuramCore-1.0.9.jar`)
+- `build/libs/auram-1.0.10-all.jar` (reobfuscated, includes MixinSquared; install as `AuramCore-1.0.10.jar`)
 
 The plain `jar`/`reobfJar` output does not include the bundled dependency. Use the `-all.jar` for installation and releases. `deployToModpack` uses this bundled artifact.
 
@@ -281,7 +281,7 @@ The plain `jar`/`reobfJar` output does not include the bundled dependency. Use t
 
 ### Headless Chunk Patch Smoke Test
 
-`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.9-smoke-test.jar`. It is never included in the release jar.
+`./gradlew reobfSmokeTestJar` builds a separate test mod at `build/libs/auram-1.0.10-smoke-test.jar`. It is never included in the release jar.
 
 Run this test mod alongside the release jar, ProjectE, Aether Redux, Relics, Mekanism and their dependencies in a disposable Forge 47.4.10 dedicated-server directory with Java 17. Use flat terrain and the Highlands quicksoil setting. The test creates remote chunks and a Mekanism tank and stops the server itself.
 
