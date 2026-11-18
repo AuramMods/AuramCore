@@ -35,5 +35,9 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "client": [
+    "minecraft.ApplicationTitleMixin",
+    "minecraft.ApplicationIconMixin"
+  ]
 }

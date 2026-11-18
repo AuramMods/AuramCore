@@ -1,0 +1,22 @@
+plugins {
+    id 'java'
+    id 'com.gradleup.shadow' version '8.3.6'
+}
+
+version = rootProject.version
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+repositories { mavenCentral() }
+dependencies {
+    implementation 'org.ow2.asm:asm:9.8'
+    // Constants are inlined by javac; LWJGL is not bundled or loaded by premain.
+    compileOnly 'org.lwjgl:lwjgl-glfw:3.3.1'
+    testImplementation 'junit:junit:4.13.2'
+}
+tasks.named('shadowJar') {
+    archiveFileName = 'auram-bootstrap.jar'
+    exclude 'module-info.class'
+    relocate 'org.objectweb.asm', 'art.arcane.auram.bootstrap.internal.asm'
+    manifest.attributes('Premain-Class': 'art.arcane.auram.bootstrap.AuramBootstrap',
+            'Implementation-Version': project.version)
+}
+tasks.named('assemble') { dependsOn 'shadowJar' }

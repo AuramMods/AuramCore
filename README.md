@@ -212,6 +212,12 @@ These measure local workloads, not full-pack throughput or the hosted server. De
 - The existing map, null handling and listener registration/removal behavior are retained. Locks are confined to map operations rather than Forge callbacks.
 - See [validation/zeta-startup/README.md](validation/zeta-startup/README.md) for the reproduced failure, concurrent-map checks and repeated full-pack client/resource reload validation.
 
+### 28. Application Branding
+
+- The client window title is `Auram`; its application/window icon uses the pack's purple unicorn, including the macOS Dock icon.
+- A separate startup agent brands Forge's earliest loading window. The launcher supplies the native macOS application name/bundle and passes the branding flags.
+- See [docs/BRANDING.md](docs/BRANDING.md) for the launcher contract, build artifacts and direct Java validation.
+
 ## Commands
 
 All Auram commands require permission level 2 (`/op` or equivalent).

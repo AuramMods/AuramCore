@@ -1,0 +1,5 @@
+{
+  "name": "Auram",
+  "icon": "icon.png",
+  "javaAgent": "auram-bootstrap.jar"
+}
