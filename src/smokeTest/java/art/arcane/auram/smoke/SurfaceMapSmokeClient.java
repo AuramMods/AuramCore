@@ -22,9 +22,11 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.multiplayer.resolver.ServerAddress;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -32,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-@Mod.EventBusSubscriber(modid = "auram_patch_smoke", value = Dist.CLIENT)
 public final class SurfaceMapSmokeClient {
     public static final boolean ENABLED = "surfacemap-client".equals(System.getProperty("auram.smoke"));
     private static final Path COMMAND = Path.of("surface-map-command.txt");
@@ -43,6 +44,16 @@ public final class SurfaceMapSmokeClient {
     private static String lastCommand = "";
 
     private SurfaceMapSmokeClient() {}
+
+    @Mod.EventBusSubscriber(modid = "auram_patch_smoke", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+    public static final class Bootstrap {
+        @SubscribeEvent
+        public static void configure(FMLClientSetupEvent event) {
+            if ("surfacemap-client".equals(System.getProperty("auram.smoke"))) {
+                event.enqueueWork(() -> MinecraftForge.EVENT_BUS.register(SurfaceMapSmokeClient.class));
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onTick(TickEvent.ClientTickEvent event) throws IOException {

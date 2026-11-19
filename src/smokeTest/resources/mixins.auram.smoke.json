@@ -6,6 +6,7 @@
   "refmap": "auram-smoke.refmap.json",
   "mixins": [
     "ChunkCacheMixin",
+    "SurfaceMapCaptureProbeMixin",
     "MovementWaitProbeMixin",
     "MovementChunkDelayMixin",
     "DimDoorsCollisionProbeMixin",

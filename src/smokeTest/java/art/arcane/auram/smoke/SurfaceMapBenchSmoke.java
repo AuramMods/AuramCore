@@ -2,6 +2,7 @@ package art.arcane.auram.smoke;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
@@ -12,15 +13,26 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.LongAccumulator;
+import java.util.concurrent.atomic.LongAdder;
 
 /** Requests matching cold chunks through the vanilla ticket pipeline in two disposable worlds. */
 @Mod.EventBusSubscriber(modid = "auram_patch_smoke")
 public final class SurfaceMapBenchSmoke {
-    private static final boolean ENABLED = "surfacemap-bench".equals(System.getProperty("auram.smoke"));
-    private static final int REQUESTS = 64;
+    public static final boolean ENABLED = "surfacemap-bench".equals(System.getProperty("auram.smoke"));
+    private static final int REQUESTS = 48;
     private static final int MAX_PENDING = 12;
+    private static final TicketType<ChunkPos> BENCH_TICKET = TicketType.create("auram_surface_bench",
+            Comparator.comparingLong(ChunkPos::toLong));
+    private static final LongAdder mainCaptures = new LongAdder();
+    private static final LongAdder mainCaptureNs = new LongAdder();
+    private static final LongAccumulator maxMainCaptureNs = new LongAccumulator(Long::max, 0L);
+    private static final LongAdder workerCaptures = new LongAdder();
+    private static final LongAdder workerCaptureNs = new LongAdder();
+    private static final LongAccumulator maxWorkerCaptureNs = new LongAccumulator(Long::max, 0L);
     private static final List<ChunkPos> pending = new ArrayList<>();
     private static final List<String> samples = new ArrayList<>();
     private static ServerLevel level;
@@ -62,27 +74,45 @@ public final class SurfaceMapBenchSmoke {
         while (jobs.hasNext()) {
             ChunkPos pos = jobs.next();
             if (level.getChunkSource().getChunkNow(pos.x, pos.z) != null) {
-                level.setChunkForced(pos.x, pos.z, false);
+                level.getChunkSource().removeRegionTicket(BENCH_TICKET, pos, 0, pos);
                 jobs.remove();
                 completed++;
             }
         }
         if (issued < REQUESTS && pending.size() < MAX_PENDING) {
             var pos = new ChunkPos(88 + issued % 8, 88 + issued / 8);
-            level.setChunkForced(pos.x, pos.z, true);
+            level.getChunkSource().addRegionTicket(BENCH_TICKET, pos, 0, pos);
             pending.add(pos);
             issued++;
         }
         long now = System.nanoTime();
         samples.add((now - start) + "," + (now - tickStart) + "," + issued + "," + completed);
+        if (samples.size() % 200 == 0) {
+            System.out.println("Surface-map benchmark ready " + completed + "/" + REQUESTS);
+        }
         if (completed == REQUESTS) {
             finish(event.getServer());
+        }
+    }
+
+    public static void capture(long nanos, boolean mainThread) {
+        if (mainThread) {
+            mainCaptures.increment();
+            mainCaptureNs.add(nanos);
+            maxMainCaptureNs.accumulate(nanos);
+        } else {
+            workerCaptures.increment();
+            workerCaptureNs.add(nanos);
+            maxWorkerCaptureNs.accumulate(nanos);
         }
     }
 
     private static void finish(MinecraftServer server) throws IOException {
         samples.add(0, "elapsed_ns,tick_ns,requested,ready");
         Files.write(Path.of("surface-map-bench.csv"), samples);
+        Files.writeString(Path.of("surface-map-capture.csv"), "thread,calls,total_ns,max_ns\n"
+                + "main," + mainCaptures.sum() + "," + mainCaptureNs.sum() + "," + maxMainCaptureNs.get() + "\n"
+                + "worker," + workerCaptures.sum() + "," + workerCaptureNs.sum() + "," + maxWorkerCaptureNs.get() + "\n");
         level = null;
         server.halt(false);
     }
