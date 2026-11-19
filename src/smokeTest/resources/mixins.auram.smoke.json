@@ -25,14 +25,18 @@
     "SelectorProbeMixin",
     "PlayerListAccess",
     "TerminalPacketProbeMixin",
-    "TerminalWriteProbeMixin"
+    "TerminalWriteProbeMixin",
+    "DhQueueProbeMixin",
+    "DhTicketProbeMixin",
+    "DhDeliveryProbeMixin"
   ],
   "client": [
     "HiddenWindowMixin",
     "TomeCopyProbeMixin",
     "DraconicCoreRenderProbeMixin",
     "DraconicReactorRenderProbeMixin",
-    "LucentWorkerSmokeMixin"
+    "LucentWorkerSmokeMixin",
+    "DhVisibleBufferProbeMixin"
   ],
   "injectors": {
     "defaultRequire": 1
