@@ -15,6 +15,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         String optionalTarget = switch (mixinClassName) {
             case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";
             case "art.arcane.auram.mixin.dimdoors.PlayerCollisionMixin" -> "org.dimdev.dimdoors.mixin.ServerPlayNetworkHandlerMixin";
+            case "art.arcane.auram.mixin.distanthorizons.ChunkMapDemandMixin" ->
+                    "com.seibel.distanthorizons.core.generation.WorldGenerationQueue";
             case "art.arcane.auram.mixin.lithostitched.StructureStartTerrainMixin" ->
                     "dev.worldgen.lithostitched.worldgen.structure.AlternateJigsawGenerator";
             default -> null;

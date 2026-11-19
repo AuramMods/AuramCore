@@ -51,8 +51,12 @@ public final class DistantHorizonsSmoke {
 
     public static boolean deferBackgroundBatch() {
         if (!SERVER || !DEFER_DH || !foregroundPending) return false;
-        DEFERRED.incrementAndGet();
+        recordDeferral();
         return true;
+    }
+
+    public static void recordDeferral() {
+        DEFERRED.incrementAndGet();
     }
 
     public static void addTicket(ChunkPos pos) {

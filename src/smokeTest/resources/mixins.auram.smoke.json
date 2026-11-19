@@ -27,6 +27,7 @@
     "TerminalPacketProbeMixin",
     "TerminalWriteProbeMixin",
     "DhQueueProbeMixin",
+    "DhPriorityPolicyProbeMixin",
     "DhTicketProbeMixin",
     "DhDeliveryProbeMixin"
   ],
