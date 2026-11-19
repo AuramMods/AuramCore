@@ -28,6 +28,9 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.journeymap.")) {
             return "journeymap.client.JourneymapClient";
         }
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.ftbchunks.")) {
+            return "dev.ftb.mods.ftbchunks.client.FTBChunksClient";
+        }
         // These mixins target vanilla classes, so @Pseudo cannot make them optional.
         return switch (mixinClassName) {
             case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";

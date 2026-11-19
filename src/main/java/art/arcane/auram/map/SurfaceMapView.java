@@ -20,6 +20,15 @@ public record SurfaceMapView(ResourceLocation dimension, int centerX, int center
                 && key.z() >= minZ && key.z() <= maxZ;
     }
 
+    /** Both HUD maps are centered on the same player. Keep their visible extent under one rate limit. */
+    public SurfaceMapView union(SurfaceMapView other) {
+        return new SurfaceMapView(dimension, centerX, centerZ,
+                Math.max(centerX - MAX_RADIUS, Math.min(minX, other.minX)),
+                Math.max(centerZ - MAX_RADIUS, Math.min(minZ, other.minZ)),
+                Math.min(centerX + MAX_RADIUS, Math.max(maxX, other.maxX)),
+                Math.min(centerZ + MAX_RADIUS, Math.max(maxZ, other.maxZ)));
+    }
+
     public long distanceSquared(SurfaceTile.Key key) {
         return distanceSquared(key, centerX, centerZ);
     }

@@ -59,6 +59,11 @@
   },
   "client": [
     "akashictome.HudPreviewMixin",
+    "ftbchunks.ChunkUpdateSurfaceMixin",
+    "ftbchunks.LargeMapSurfaceAccess",
+    "ftbchunks.MapRegionSurfaceMixin",
+    "ftbchunks.RegionMapSurfaceMixin",
+    "ftbchunks.RenderMapSurfaceMixin",
     "journeymap.ImageHolderAccess",
     "journeymap.FullscreenGridAccess",
     "journeymap.MiniMapGridAccess",

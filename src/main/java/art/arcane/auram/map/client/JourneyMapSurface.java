@@ -22,14 +22,19 @@ import net.minecraft.world.level.ChunkPos;
 
 import java.io.File;
 
-final class JourneyMapSurface {
-    private static final int TILE_BLOCKS = 16 * SurfaceTile.CHUNKS;
+final class JourneyMapSurface implements SurfaceMapRenderer {
+    @Override
+    public Kind kind() {
+        return Kind.JOURNEYMAP;
+    }
 
-    private JourneyMapSurface() {}
-
-    static SurfaceMapView view(Minecraft minecraft, LocalPlayer player) {
+    @Override
+    public SurfaceMapView view(Minecraft minecraft, LocalPlayer player) {
         var dimension = player.level().dimension();
         boolean fullscreen = minecraft.screen instanceof Fullscreen;
+        if (!fullscreen && minecraft.screen != null) {
+            return null;
+        }
         var grid = fullscreen ? FullscreenGridAccess.auram$grid() : MiniMapGridAccess.auram$grid();
         UIState state = grid.getUIState();
         var box = grid.getBlockBounds();
@@ -37,28 +42,17 @@ final class JourneyMapSurface {
             int radius = Math.max(16, minecraft.options.getEffectiveRenderDistance() * 16);
             int x = player.getBlockX();
             int z = player.getBlockZ();
-            return bounds(dimension.location(), x, z, x - radius, z - radius, x + radius, z + radius);
+            return SurfaceMapRenderer.blocks(dimension.location(), x, z, x - radius, z - radius, x + radius, z + radius);
         }
         // UIState equality excludes movement. Use the live grid to follow panning at the same zoom.
-        return bounds(dimension.location(), (int) Math.floor(grid.getCenterBlockX()),
+        return SurfaceMapRenderer.blocks(dimension.location(), (int) Math.floor(grid.getCenterBlockX()),
                 (int) Math.floor(grid.getCenterBlockZ()),
                 (int) Math.floor(box.minX), (int) Math.floor(box.minZ),
                 (int) Math.ceil(box.maxX) - 1, (int) Math.ceil(box.maxZ) - 1);
     }
 
-    private static SurfaceMapView bounds(net.minecraft.resources.ResourceLocation dimension, int x, int z,
-                                         int minX, int minZ, int maxX, int maxZ) {
-        int centerX = Math.floorDiv(x, TILE_BLOCKS);
-        int centerZ = Math.floorDiv(z, TILE_BLOCKS);
-        int radius = SurfaceMapView.MAX_RADIUS;
-        return new SurfaceMapView(dimension, centerX, centerZ,
-                Math.max(centerX - radius, Math.min(centerX, Math.floorDiv(minX, TILE_BLOCKS))),
-                Math.max(centerZ - radius, Math.min(centerZ, Math.floorDiv(minZ, TILE_BLOCKS))),
-                Math.min(centerX + radius, Math.max(centerX, Math.floorDiv(maxX, TILE_BLOCKS))),
-                Math.min(centerZ + radius, Math.max(centerZ, Math.floorDiv(maxZ, TILE_BLOCKS))));
-    }
-
-    static boolean apply(SurfaceTile.Key key, SurfaceTile tile) {
+    @Override
+    public boolean apply(SurfaceTile.Key key, SurfaceTile tile) {
         var dimension = ResourceKey.create(Registries.DIMENSION, key.dimension());
         MapState map = MiniMap.state();
         File worldDir = map.getWorldDir();

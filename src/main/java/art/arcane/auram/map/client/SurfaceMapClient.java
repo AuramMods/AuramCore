@@ -15,6 +15,8 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -40,14 +42,15 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
                 worker.setDaemon(true);
                 return worker;
             });
-    private final Map<SurfaceTile.Key, SurfaceTile.Version> imported = new ConcurrentHashMap<>();
+    private List<RendererState> renderers = List.of();
     private volatile SurfaceMapNetwork.Hello server;
     // Accessed only on the client thread. Replaced when the active dimension changes.
     private DimensionSession dimension;
 
     private SurfaceMapClient() {}
 
-    public static void register() {
+    static void register(List<SurfaceMapRenderer> renderers) {
+        INSTANCE.renderers = renderers.stream().map(RendererState::new).toList();
         SurfaceMapNetwork.setReceiver(INSTANCE);
         MinecraftForge.EVENT_BUS.register(INSTANCE);
     }
@@ -57,17 +60,46 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
     }
 
     public static boolean covered(ResourceLocation dimension, int chunkX, int chunkZ) {
-        if (!active()) {
-            return false;
+        return covered(SurfaceMapRenderer.Kind.JOURNEYMAP, dimension, chunkX, chunkZ);
+    }
+
+    static boolean covered(SurfaceMapRenderer.Kind kind, ResourceLocation dimension, int chunkX, int chunkZ) {
+        if (active()) {
+            var key = SurfaceTile.Key.atChunk(dimension, chunkX, chunkZ);
+            for (var state : INSTANCE.renderers) {
+                if (state.renderer.kind() == kind) {
+                    var tile = state.imported.get(key);
+                    return tile != null && tile.contains(SurfaceTile.slot(chunkX, chunkZ));
+                }
+            }
         }
-        var key = SurfaceTile.Key.atChunk(dimension, chunkX, chunkZ);
-        var tile = INSTANCE.imported.get(key);
-        return tile != null && tile.contains(SurfaceTile.slot(chunkX, chunkZ));
+        return false;
+    }
+
+    public static void ftbImageReleased(SurfaceTile.Key key) {
+        Minecraft.getInstance().execute(() -> {
+            for (var state : INSTANCE.renderers) {
+                if (state.renderer.kind() == SurfaceMapRenderer.Kind.FTB_CHUNKS) {
+                    state.imported.remove(key);
+                }
+            }
+            var current = INSTANCE.dimension;
+            if (current != null && current.id.equals(key.dimension())) {
+                current.needsImport = true;
+            }
+        });
+    }
+
+    private void clearImports() {
+        for (var state : renderers) {
+            state.imported.clear();
+            state.view = null;
+        }
     }
 
     @Override
     public void hello(SurfaceMapNetwork.Hello hello) {
-        imported.clear();
+        clearImports();
         dimension = null;
         server = hello;
     }
@@ -76,7 +108,7 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
     public void loggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
         server = null;
         dimension = null;
-        imported.clear();
+        clearImports();
     }
 
     @Override
@@ -129,7 +161,7 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
                     current.cached.put(key, tile.version());
                     current.candidates.computeIfPresent(key, (ignored, revision) ->
                             revision > tile.version().revision() ? revision : null);
-                    if (current.view.contains(key) && !apply(key, tile)) {
+                    if (!apply(key, tile)) {
                         current.needsImport = true;
                         current.importRetry = System.nanoTime() + SECOND / 4;
                     }
@@ -148,23 +180,41 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
         if (event.phase != TickEvent.Phase.END || player == null || server == null) {
             return;
         }
-        var view = JourneyMapSurface.view(minecraft, player);
-        if (!view.valid()) {
-            return;
-        }
-        if (dimension == null || !dimension.id.equals(view.dimension())) {
-            switchDimension(view);
+        var dimensionId = player.level().dimension().location();
+        if (dimension == null || !dimension.id.equals(dimensionId)) {
+            switchDimension(dimensionId);
         }
         DimensionSession current = dimension;
-        if (!current.indexLoaded) {
-            return;
+        SurfaceMapView view = null;
+        for (var state : renderers) {
+            var next = state.renderer.view(minecraft, player);
+            if (next != null && (!next.dimension().equals(dimensionId) || !next.valid())) {
+                next = null;
+            }
+            if (!Objects.equals(state.view, next)) {
+                state.view = next;
+                current.needsImport = true;
+            }
+            if (next != null) {
+                view = view == null ? next : view.union(next);
+            }
+        }
+        if (view == null) {
+            int x = player.getBlockX();
+            int z = player.getBlockZ();
+            view = SurfaceMapRenderer.blocks(dimensionId, x, z, x, z, x, z);
         }
         if (!view.equals(current.view)) {
             SurfaceMapView previous = current.view;
-            current.inFlight.keySet().removeIf(key -> previous.contains(key) && !view.contains(key));
+            if (previous != null) {
+                SurfaceMapView updated = view;
+                current.inFlight.keySet().removeIf(key -> previous.contains(key) && !updated.contains(key));
+            }
             current.view = view;
-            current.needsImport = true;
             SurfaceMapNetwork.sendView(view);
+        }
+        if (!current.indexLoaded) {
+            return;
         }
         long now = System.nanoTime();
         warmVisible(current, now);
@@ -175,13 +225,12 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
         }
     }
 
-    private void switchDimension(SurfaceMapView view) {
-        imported.clear();
+    private void switchDimension(ResourceLocation id) {
+        clearImports();
         Path root = Minecraft.getInstance().gameDirectory.toPath().resolve("auram-surface-cache")
                 .resolve(server.world().toString());
-        var session = new DimensionSession(view, new SurfaceTileCache(root));
+        var session = new DimensionSession(id, new SurfaceTileCache(root));
         dimension = session;
-        SurfaceMapNetwork.sendView(view);
         try {
             io.execute(() -> loadIndex(session));
         } catch (RejectedExecutionException pressure) {
@@ -216,8 +265,8 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
         }
         var center = current.view;
         var closest = current.cached.entrySet().stream()
-                .filter(entry -> center.contains(entry.getKey()) && !current.reading.containsKey(entry.getKey()))
-                .filter(entry -> !entry.getValue().equals(imported.get(entry.getKey())))
+                .filter(entry -> !current.reading.containsKey(entry.getKey()))
+                .filter(entry -> renderers.stream().anyMatch(state -> state.needs(entry.getKey(), entry.getValue())))
                 .min(Comparator.comparingLong(entry -> center.distanceSquared(entry.getKey())))
                 .orElse(null);
         if (closest == null) {
@@ -249,7 +298,7 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
             if (dimension == current) {
                 if (loaded == null) {
                     current.cached.remove(key);
-                } else if (current.view.contains(key) && !apply(key, loaded)) {
+                } else if (!apply(key, loaded)) {
                     current.importRetry = System.nanoTime() + SECOND / 4;
                 }
             }
@@ -257,11 +306,32 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
     }
 
     private boolean apply(SurfaceTile.Key key, SurfaceTile tile) {
-        if (!JourneyMapSurface.apply(key, tile)) {
-            return false;
+        boolean applied = true;
+        var version = tile.version();
+        for (var state : renderers) {
+            if (state.needs(key, version)) {
+                if (state.renderer.apply(key, tile)) {
+                    state.imported.put(key, version);
+                } else {
+                    applied = false;
+                }
+            }
         }
-        imported.put(key, tile.version());
-        return true;
+        return applied;
+    }
+
+    private static final class RendererState {
+        private final SurfaceMapRenderer renderer;
+        private final Map<SurfaceTile.Key, SurfaceTile.Version> imported = new ConcurrentHashMap<>();
+        private SurfaceMapView view;
+
+        RendererState(SurfaceMapRenderer renderer) {
+            this.renderer = renderer;
+        }
+
+        boolean needs(SurfaceTile.Key key, SurfaceTile.Version version) {
+            return view != null && view.contains(key) && !version.equals(imported.get(key));
+        }
     }
 
     private void requestTiles(DimensionSession current, long now) {
@@ -318,9 +388,8 @@ public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver 
         private long discoveryDue = System.nanoTime();
         private int importReads;
 
-        DimensionSession(SurfaceMapView view, SurfaceTileCache cache) {
-            this.id = view.dimension();
-            this.view = view;
+        DimensionSession(ResourceLocation id, SurfaceTileCache cache) {
+            this.id = id;
             this.cache = cache;
         }
     }
