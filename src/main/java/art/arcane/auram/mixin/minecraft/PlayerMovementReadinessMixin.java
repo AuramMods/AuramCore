@@ -2,10 +2,12 @@ package art.arcane.auram.mixin.minecraft;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.util.Mth;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,6 +29,8 @@ public abstract class PlayerMovementReadinessMixin {
     @Shadow private int tickCount;
     @Shadow private int receivedMovePacketCount;
     @Shadow private Vec3 awaitingPositionFromClient;
+    @Shadow private double lastGoodX;
+    @Shadow private double lastGoodZ;
     @Shadow public abstract void handleMovePlayer(ServerboundMovePlayerPacket packet);
     @Shadow public abstract void teleport(double x, double y, double z, float yaw, float pitch);
     @Shadow private static double clampHorizontal(double value) { throw new AssertionError(); }
@@ -43,7 +47,7 @@ public abstract class PlayerMovementReadinessMixin {
     private void auram$waitForWatchedDestination(ServerboundMovePlayerPacket packet, CallbackInfo ci) {
         // This point follows vanilla's packet, teleport, passenger, and speed checks.
         // Forge's position and collision handling still runs on replay.
-        boolean pending = auram$destinationPending(packet);
+        boolean pending = auram$movementChunksPending(packet);
         if (!pending && (auram$replaying || auram$movement == null)) return;
         if (auram$movement == null) {
             auram$movement = new ArrayDeque<>();
@@ -84,7 +88,7 @@ public abstract class PlayerMovementReadinessMixin {
                 auram$clearMovement();
                 return;
             }
-            if (auram$destinationPending(next)) return;
+            if (auram$movementChunksPending(next)) return;
             buffered.removeFirst();
             auram$replaying = true;
             try {
@@ -112,15 +116,39 @@ public abstract class PlayerMovementReadinessMixin {
     }
 
     @Unique
-    private boolean auram$destinationPending(ServerboundMovePlayerPacket packet) {
+    private boolean auram$movementChunksPending(ServerboundMovePlayerPacket packet) {
         if (!player.isAddedToWorld() || !packet.hasPosition()) return false;
-        int x = Mth.floor(clampHorizontal(packet.getX(player.getX()))) >> 4;
-        int z = Mth.floor(clampHorizontal(packet.getZ(player.getZ()))) >> 4;
+        double x = clampHorizontal(packet.getX(player.getX()));
+        double z = clampHorizontal(packet.getZ(player.getZ()));
         var current = player.chunkPosition();
-        if (current.x == x && current.z == z) return false;
         var chunks = player.serverLevel().getChunkSource();
-        // Only defer an existing FULL ticket. The ordinary handler remains the fallback elsewhere.
-        return chunks.hasChunk(x, z) && chunks.getChunkNow(x, z) == null;
+        if (auram$pendingChunk(chunks, current, Mth.floor(x) >> 4, Mth.floor(z) >> 4)) return true;
+        if (player.noPhysics) return false;
+
+        // BlockCollisions reads one block beyond the swept box, even before the center crosses a border.
+        // Include both Entity.move's last-good delta and the requested final bounding box.
+        var box = player.getBoundingBox();
+        double minX = Math.min(0, Math.min(x - lastGoodX, x - player.getX()));
+        double maxX = Math.max(0, Math.max(x - lastGoodX, x - player.getX()));
+        double minZ = Math.min(0, Math.min(z - lastGoodZ, z - player.getZ()));
+        double maxZ = Math.max(0, Math.max(z - lastGoodZ, z - player.getZ()));
+        int firstX = Mth.floor(box.minX + minX - 1.0000001) >> 4;
+        int lastX = Mth.floor(box.maxX + maxX + 1.0000001) >> 4;
+        int firstZ = Mth.floor(box.minZ + minZ - 1.0000001) >> 4;
+        int lastZ = Mth.floor(box.maxZ + maxZ + 1.0000001) >> 4;
+        if (lastX - firstX > 2 || lastZ - firstZ > 2) return false;
+        for (int chunkX = firstX; chunkX <= lastX; chunkX++) {
+            for (int chunkZ = firstZ; chunkZ <= lastZ; chunkZ++) {
+                if (auram$pendingChunk(chunks, current, chunkX, chunkZ)) return true;
+            }
+        }
+        return false;
+    }
+
+    @Unique
+    private static boolean auram$pendingChunk(ServerChunkCache chunks, ChunkPos current, int x, int z) {
+        // Defer on an existing FULL ticket and leave absent chunks to the ordinary handler.
+        return (current.x != x || current.z != z) && chunks.hasChunk(x, z) && chunks.getChunkNow(x, z) == null;
     }
 
     @Unique
