@@ -4,8 +4,11 @@ import art.arcane.auram.smoke.mixin.PlayerListAccess;
 import com.google.gson.GsonBuilder;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -13,6 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
@@ -35,6 +39,8 @@ public final class PacketMovementReplaySmoke {
     private static final boolean CANDIDATE = Boolean.getBoolean("auram.smoke.movementCandidate");
     private static final boolean WALKING = Boolean.getBoolean("auram.smoke.movementWalking");
     private static final int PACKET_COUNT = Integer.getInteger("auram.smoke.movementPackets", 2);
+    private static final boolean TRANSITIONS = Boolean.getBoolean("auram.smoke.movementTransitions");
+    private static final int TRIAL_COUNT = 5;
     private static PacketMovementReplaySmoke active;
 
     private final MinecraftServer server;
@@ -42,11 +48,13 @@ public final class PacketMovementReplaySmoke {
     private final ProbePlayer player;
     private final ProbePlayer observer;
     private final List<Map<String, Object>> trials = new ArrayList<>();
+    private final List<String> transitions = new ArrayList<>();
     private ChunkPos east;
     private Vec3 from;
     private int startedTick;
     private int observerAtSend;
     private long duration;
+    private int readyTick;
 
     private PacketMovementReplaySmoke(MinecraftServer server) {
         this.server = server;
@@ -66,24 +74,13 @@ public final class PacketMovementReplaySmoke {
     }
 
     private void step() throws Exception {
+        if (TRANSITIONS && trials.size() == TRIAL_COUNT) {
+            checkTransition();
+            return;
+        }
         var source = level.getChunkSource();
         if (east == null) {
-            var home = new ChunkPos(24 + trials.size() * 32, 24);
-            east = new ChunkPos(home.x + 1, home.z);
-            level.getChunk(home.x, home.z);
-            var floor = level.getHeight(Heightmap.Types.MOTION_BLOCKING, home.getMinBlockX() + 15,
-                    home.getMinBlockZ() + 8);
-            from = new Vec3(home.getMinBlockX() + 15.5, WALKING ? floor : 90, home.getMinBlockZ() + 8.5);
-            player.setPos(from.x, from.y, from.z);
-            source.move(player);
-            player.connection.resetPosition();
-            player.setOnGround(WALKING);
-            player.applied.clear();
-            source.addRegionTicket(TicketType.FORCED, east, 0, east);
-            ((ChunkCacheProbe) source).auramSmoke$runDistanceManagerUpdates();
-            check(source.hasChunk(east.x, east.z) && source.getChunkNow(east.x, east.z) == null,
-                    "pending FULL before movement");
-            startedTick = server.getTickCount();
+            prepareBorder(trials.size());
             observerAtSend = observer.tickCount;
             long started = System.nanoTime();
             player.connection.handleMovePlayer(new ServerboundMovePlayerPacket.Pos(from.x + 1, from.y, from.z, WALKING));
@@ -110,21 +107,104 @@ public final class PacketMovementReplaySmoke {
                     "walking", WALKING, "arrivals", arrivals));
             source.removeRegionTicket(TicketType.FORCED, east, 0, east);
             east = null;
-            if (trials.size() == 5) {
-                Files.writeString(Path.of("movement-packet-replay-results.json"),
-                        new GsonBuilder().setPrettyPrinting().create().toJson(trials));
-                Files.writeString(Path.of("auram-" + MODE + "-pass.txt"), "PASS ordered movement and ready destination\n");
-                server.halt(false);
-            }
+            if (trials.size() == TRIAL_COUNT && !TRANSITIONS) finish();
         } else {
             check(server.getTickCount() - startedTick < 60, "the position queue completes before its timeout");
         }
     }
 
+    private void prepareBorder(int trial) {
+        var source = level.getChunkSource();
+        var home = new ChunkPos(24 + trial * 32, 24);
+        east = new ChunkPos(home.x + 1, home.z);
+        level.getChunk(home.x, home.z);
+        var floor = level.getHeight(Heightmap.Types.MOTION_BLOCKING, home.getMinBlockX() + 15,
+                home.getMinBlockZ() + 8);
+        from = new Vec3(home.getMinBlockX() + 15.5, WALKING ? floor : 90, home.getMinBlockZ() + 8.5);
+        player.setPos(from.x, from.y, from.z);
+        source.move(player);
+        player.connection.resetPosition();
+        player.setOnGround(WALKING);
+        player.applied.clear();
+        player.correction = null;
+        source.addRegionTicket(TicketType.FORCED, east, 0, east);
+        ((ChunkCacheProbe) source).auramSmoke$runDistanceManagerUpdates();
+        check(source.hasChunk(east.x, east.z) && source.getChunkNow(east.x, east.z) == null,
+                "pending FULL before movement");
+        startedTick = server.getTickCount();
+    }
+
+    private void checkTransition() throws Exception {
+        int stage = transitions.size();
+        if (east == null) {
+            prepareBorder(TRIAL_COUNT + stage);
+            player.connection.handleMovePlayer(new ServerboundMovePlayerPacket.Pos(from.x + 1, from.y, from.z, WALKING));
+            check(player.applied.isEmpty(), "transition starts with a queued packet");
+            switch (stage) {
+                case 0 -> {
+                    player.connection.teleport(from.x - 2, from.y, from.z, 10, 20);
+                    acknowledgeCorrection();
+                }
+                case 1 -> {
+                    player.connection.handleMovePlayer(new ServerboundMovePlayerPacket.Pos(from.x + 200, from.y, from.z, false));
+                    acknowledgeCorrection();
+                    check(player.position().equals(from), "vanilla rejects too-fast movement during a pending packet");
+                }
+                case 2 -> {
+                    player.setPos(from.x - 2, from.y, from.z);
+                    player.connection.tick();
+                    acknowledgeCorrection();
+                    check(player.getX() == from.x - 2, "server-driven movement is authoritative");
+                }
+                case 3 -> {
+                    var boat = new Boat(level, from.x - 2, from.y, from.z);
+                    level.addFreshEntity(boat);
+                    check(player.startRiding(boat, true), "player mounts a live vehicle");
+                    player.connection.tick();
+                    player.stopRiding();
+                    boat.discard();
+                }
+                case 4 -> {
+                    player.connection.onDisconnect(Component.literal("Smoke fixture finished"));
+                    check(server.getPlayerList().getPlayer(player.getUUID()) == null, "native disconnect removes the player");
+                }
+                default -> throw new IllegalStateException("Unexpected test stage " + stage);
+            }
+            readyTick = 0;
+            return;
+        }
+        if (stage != 4) player.connection.tick();
+        if (level.getChunkSource().getChunkNow(east.x, east.z) != null && readyTick == 0) readyTick = server.getTickCount();
+        if (readyTick != 0 && server.getTickCount() - readyTick >= 3) {
+            check(player.applied.isEmpty(), "the stale packet never applies after the original chunk becomes FULL");
+            transitions.add(List.of("teleport acknowledgement", "native speed correction", "server-driven displacement",
+                    "mount and dismount", "disconnect").get(stage));
+            level.getChunkSource().removeRegionTicket(TicketType.FORCED, east, 0, east);
+            east = null;
+            if (stage == 4) finish();
+        } else {
+            check(server.getTickCount() - startedTick < 80, "the transition fixture's target reaches FULL");
+        }
+    }
+
+    private void acknowledgeCorrection() {
+        check(player.correction != null, "server emitted the normal position correction packet");
+        player.connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(player.correction.getId()));
+    }
+
+    private void finish() throws Exception {
+        Files.writeString(Path.of("movement-packet-replay-results.json"), new GsonBuilder().setPrettyPrinting().create().toJson(trials));
+        if (TRANSITIONS) Files.write(Path.of("movement-packet-transitions.txt"), transitions);
+        Files.writeString(Path.of("auram-" + MODE + "-pass.txt"), "PASS ordered movement and ready destination\n");
+        server.halt(false);
+    }
+
     private ProbePlayer join(String name, long id) {
         var probe = new ProbePlayer(server, level, new GameProfile(new UUID(0, id), name));
         probe.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), probe) {
-            @Override public void send(Packet<?> packet) { }
+            @Override public void send(Packet<?> packet) {
+                if (packet instanceof ClientboundPlayerPositionPacket correction) probe.correction = correction;
+            }
         };
         probe.getAbilities().mayfly = !WALKING;
         probe.getAbilities().flying = !WALKING;
@@ -143,6 +223,7 @@ public final class PacketMovementReplaySmoke {
 
     private static final class ProbePlayer extends ServerPlayer {
         private final List<Double> applied = new ArrayList<>();
+        private ClientboundPlayerPositionPacket correction;
 
         private ProbePlayer(MinecraftServer server, ServerLevel level, GameProfile profile) {
             super(server, level, profile);
