@@ -30,6 +30,7 @@
     "dimdoors.PlayerCollisionMixin",
     "mekanism.WorldUtilsMixin",
     "minecraft.SelectedItemSelectorMixin",
+    "minecraft.DroppedItemTagSelectorMixin",
     "tomsstorage.TerminalIdMixin",
     "tomsstorage.StoredQuantityAccess",
     "nyctophobia.MushroomHeightMixin",

@@ -59,6 +59,8 @@ public final class SelectorSmoke {
             stand.addTag("auram_selector_fixture");
             server.overworld().addFreshEntity(stand);
         }
+        boolean droppedItems = Boolean.getBoolean("auram.smoke.gunsDroppedItems");
+        int dropComparisons = droppedItems ? GunsDroppedItemSmoke.prepare(player, source) : 0;
         List<Map<String,Object>> functions=new ArrayList<>();
         for(String id : new String[]{"ggunz:loop","ggunz:utilities/player_tick","ggunz:utilities/scopes",
                 "ggunz:reload/timer","scorched:tick","incendium:clocks/main"}) {
@@ -94,6 +96,10 @@ public final class SelectorSmoke {
         Map<String,Object> result=new LinkedHashMap<>();
         result.put("semantic_comparisons",comparisons);result.put("functions",functions);
         result.put("scope","Installed datapacks, one live server player with tagged inventory and 32 armor stands; not a hosted-server speedup estimate.");
+        if (droppedItems) {
+            result.put("dropped_item_comparisons", dropComparisons);
+            result.put("guns_dropped_items", GunsDroppedItemSmoke.exercise(player, source));
+        }
         if (Boolean.getBoolean("auram.smoke.gunsOffhand")) {
             result.put("guns_offhand", GunsOffhandSmoke.run(player, source, actionBars));
         }
