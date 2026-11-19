@@ -9,6 +9,10 @@ import org.slf4j.Logger;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -36,6 +40,7 @@ final class SurfaceTileStore implements AutoCloseable {
     private final Map<SurfaceTile.Key, SurfaceTile> recent = new LinkedHashMap<>(32, 0.75f, true);
     private final Thread worker;
     private volatile boolean stopping;
+    private volatile UUID worldId;
     private final AtomicBoolean captureWarning = new AtomicBoolean();
 
     private record Work(SurfaceTile.Key key, int slot, SurfaceSnapshot snapshot, boolean refresh) {}
@@ -75,6 +80,7 @@ final class SurfaceTileStore implements AutoCloseable {
     }
 
     private void run() {
+        loadWorldId();
         loadIndex();
         long flushAt = System.nanoTime() + FLUSH_INTERVAL;
         while (!stopping || !snapshots.isEmpty()) {
@@ -135,6 +141,76 @@ final class SurfaceTileStore implements AutoCloseable {
             }
         }
         dirty.clear();
+    }
+
+    private void loadWorldId() {
+        Path file = root.resolve("world-id");
+        try {
+            Files.createDirectories(root);
+            if (Files.isRegularFile(file)) {
+                worldId = UUID.fromString(Files.readString(file).trim());
+            } else {
+                UUID newId = UUID.randomUUID();
+                Path temp = file.resolveSibling("world-id.tmp");
+                Files.writeString(temp, newId.toString());
+                Files.move(temp, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+                worldId = newId;
+            }
+        } catch (IOException | IllegalArgumentException ex) {
+            LOGGER.error("Could not load the surface tile cache identity in {}", root, ex);
+        }
+    }
+
+    UUID worldId() {
+        return worldId;
+    }
+
+    SurfaceTile.Version version(SurfaceTile.Key key) {
+        return published.get(key);
+    }
+
+    byte[] encodedTile(SurfaceTile.Key key) throws IOException {
+        try (var input = Files.newInputStream(path(key))) {
+            byte[] encoded = input.readNBytes(SurfaceTile.MAX_ENCODED_BYTES + 1);
+            if (encoded.length > SurfaceTile.MAX_ENCODED_BYTES) {
+                throw new IOException("Oversized surface tile");
+            }
+            return encoded;
+        }
+    }
+
+    record Entry(SurfaceTile.Key key, SurfaceTile.Version version) {}
+
+    List<Entry> nearby(SurfaceMapView view) {
+        List<Entry> entries = new ArrayList<>();
+        for (int x = view.minX(); x <= view.maxX(); x++) {
+            for (int z = view.minZ(); z <= view.maxZ(); z++) {
+                var key = new SurfaceTile.Key(view.dimension(), x, z);
+                var version = published.get(key);
+                if (version != null) {
+                    entries.add(new Entry(key, version));
+                }
+            }
+        }
+        entries.sort(orderFrom(view.centerX(), view.centerZ()));
+        return entries;
+    }
+
+    List<Entry> available(ResourceLocation dimension, int centerX, int centerZ) {
+        List<Entry> entries = new ArrayList<>();
+        published.forEach((key, version) -> {
+            if (key.dimension().equals(dimension)) {
+                entries.add(new Entry(key, version));
+            }
+        });
+        entries.sort(orderFrom(centerX, centerZ));
+        return entries;
+    }
+
+    private static Comparator<Entry> orderFrom(int x, int z) {
+        return Comparator.<Entry>comparingLong(entry -> SurfaceMapView.distanceSquared(entry.key(), x, z))
+                .thenComparingInt(entry -> entry.key().x())
+                .thenComparingInt(entry -> entry.key().z());
     }
 
     private SurfaceTile read(SurfaceTile.Key key) throws IOException {

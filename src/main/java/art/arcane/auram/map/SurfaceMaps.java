@@ -6,12 +6,14 @@ import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
@@ -29,6 +31,7 @@ public final class SurfaceMaps {
     // Only the server thread accesses dirty. World generation threads only submit snapshots.
     private static final Map<ServerLevel, Long2LongMap> dirty = new IdentityHashMap<>();
     private static volatile SurfaceTileStore store;
+    private static SurfaceMapStreaming streaming;
 
     private SurfaceMaps() {}
 
@@ -36,17 +39,55 @@ public final class SurfaceMaps {
     public static void onStarting(ServerAboutToStartEvent event) {
         if (AuramConfig.SERVER.surfaceMapEnabled.get()) {
             store = new SurfaceTileStore(event.getServer().getWorldPath(LevelResource.ROOT).resolve("auram-surface-map"));
+            streaming = new SurfaceMapStreaming(store);
         }
     }
 
     @SubscribeEvent
     public static void onStopped(ServerStoppedEvent event) {
+        if (streaming != null) {
+            streaming.close();
+            streaming = null;
+        }
         SurfaceTileStore previous = store;
         store = null;
         dirty.clear();
         if (previous != null) {
             previous.close();
         }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (streaming != null && event.phase == TickEvent.Phase.END) {
+            streaming.tick(event.getServer());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (streaming != null && event.getEntity() instanceof ServerPlayer player) {
+            streaming.joined(player);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (streaming != null && event.getEntity() instanceof ServerPlayer player) {
+            streaming.left(player);
+        }
+    }
+
+    static void view(ServerPlayer player, SurfaceMapView view) {
+        if (streaming != null) streaming.view(player, view);
+    }
+
+    static void discover(ServerPlayer player) {
+        if (streaming != null) streaming.discover(player);
+    }
+
+    static void fetch(ServerPlayer player, SurfaceMapNetwork.Fetch request) {
+        if (streaming != null) streaming.fetch(player, request);
     }
 
     public static void generated(ServerLevel level, ChunkAccess chunk) {

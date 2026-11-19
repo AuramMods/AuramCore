@@ -4,6 +4,7 @@ import art.arcane.auram.commands.AuramCommands;
 import art.arcane.auram.enchantment.ChiselEnchantment;
 import art.arcane.auram.item.*;
 import art.arcane.auram.loot.RockLootModifier;
+import art.arcane.auram.map.SurfaceMapNetwork;
 import art.arcane.auram.util.RecipeCache;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
@@ -89,6 +90,7 @@ public class Auram {
         modEventBus.register(this);
         context.registerConfig(ModConfig.Type.COMMON, AuramConfig.COMMON_SPEC);
         context.registerConfig(ModConfig.Type.SERVER, AuramConfig.SERVER_SPEC);
+        SurfaceMapNetwork.register();
         MinecraftForge.EVENT_BUS.register(new AuramCommands());
     } 
 
