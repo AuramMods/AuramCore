@@ -12,6 +12,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -111,6 +113,10 @@ public final class FtbRtpSmoke {
             var accepted = attempts.get(2);
             check(requester.getBlockX() == accepted.x() && requester.getBlockZ() == accepted.z(),
                     "the command landed on the accepted candidate");
+            BlockPos height = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    new BlockPos(accepted.x(), 256, accepted.z()));
+            check(requester.teleport.equals(new Vec3(accepted.x() + 0.5, height.above().getY() + 0.1, accepted.z() + 0.5)),
+                    "FTB applies its exact centering and heightmap offset");
             check(history(requester) == 1, "successful RTP saves one position for /back");
             int eventsBeforeCooldown = attempts.size();
             runRtp(requester);
@@ -131,7 +137,7 @@ public final class FtbRtpSmoke {
                     "observer_ticks_in_command", observerAtReturn - observerAtStart,
                     "observer_ticks_to_completion", observerAtCompletion - observerAtStart,
                     "observer_ticks_since_command", observer.tickCount - observerAtStart,
-                    "destination", requester.blockPosition().toShortString(),
+                    "destination", requester.teleport.toString(),
                     "attempts", attempts, "tick_nanos", tickNanos,
                     "requester_messages", requester.messages, "veto_messages", observer.messages);
             Files.writeString(Path.of("ftb-rtp-results.json"), new GsonBuilder().setPrettyPrinting().create().toJson(report));
@@ -179,6 +185,7 @@ public final class FtbRtpSmoke {
 
     private static final class ProbePlayer extends ServerPlayer {
         private final List<String> messages = new ArrayList<>();
+        private Vec3 teleport;
 
         private ProbePlayer(MinecraftServer server, ServerLevel level, GameProfile profile) {
             super(server, level, profile);
@@ -186,6 +193,12 @@ public final class FtbRtpSmoke {
 
         @Override public void displayClientMessage(Component message, boolean overlay) {
             messages.add(message.getString());
+        }
+
+        @Override
+        public void teleportTo(ServerLevel level, double x, double y, double z, float yaw, float pitch) {
+            teleport = new Vec3(x, y, z);
+            super.teleportTo(level, x, y, z, yaw, pitch);
         }
     }
 }
