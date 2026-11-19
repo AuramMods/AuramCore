@@ -25,6 +25,7 @@ parser.add_argument('--baseline-jar', type=Path, help='Use another Auram jar as 
 parser.add_argument('--no-build', action='store_true')
 parser.add_argument('--datapack', type=Path, action='append', default=[], help='Installed datapack zip/jar to load in the fixture')
 parser.add_argument('--java-arg', action='append', default=[], help='Additional JVM argument (use --java-arg=VALUE)')
+parser.add_argument('--seed', type=int, default=104729, help='World seed for the disposable server')
 parser.add_argument('--xms', default='1G', help='Initial JVM heap')
 parser.add_argument('--xmx', default='4G', help='Maximum JVM heap')
 parser.add_argument('--runtime-parent', type=Path, help='Directory for disposable fixture servers')
@@ -139,8 +140,8 @@ if 'aether_redux' in wanted:
     'server-ip=127.0.0.1\nserver-port=0\nonline-mode=false\nlevel-type=minecraft:flat\n'
     'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
-    'level-seed=104729\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
-if args.mode in {'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'twigs', 'lithostarts'}:
+    f'level-seed={args.seed}\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
+if args.mode in {'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'twigs', 'lithostarts', 'surfacejitter', 'surfaceterrain'}:
     settings = (runtime/'server.properties').read_text().splitlines()
     (runtime/'server.properties').write_text('\n'.join(
         'level-type=minecraft:normal' if s.startswith('level-type=') else

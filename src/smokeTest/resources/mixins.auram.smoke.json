@@ -17,6 +17,8 @@
     "LithoStartProjectionProbeMixin",
     "StructureStartParityProbeMixin",
     "BlueprintBiomeOrderSmokeMixin",
+    "SurfaceWorkProbeMixin",
+    "SurfaceContextProbeMixin",
     "CapabilityComparisonProbeMixin",
     "ServerSpawnMixin",
     "SelectorProbeMixin",

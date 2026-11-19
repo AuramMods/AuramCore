@@ -166,6 +166,16 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-terrain-pass.txt"), "PASS structure terrain query trace\n");
                 return;
             }
+            if (smokeMode.equals("surfaceterrain")) {
+                SurfaceTerrainSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-surfaceterrain-pass.txt"), "PASS four-dimension surface and FULL chunk fixture");
+                return;
+            }
+            if (smokeMode.equals("surfacejitter")) {
+                SurfaceJitterSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-surfacejitter-pass.txt"), "PASS raw biome corners, parallel cache isolation and chunk generation");
+                return;
+            }
             if (smokeMode.equals("lithostarts")) {
                 LithoStartParitySmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-lithostarts-pass.txt"), "PASS seeded Lithostitched start positions, pieces and RNG");
