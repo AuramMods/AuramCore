@@ -172,6 +172,15 @@ public final class LucentClientSmoke {
             for (BlockPos pos : BlockPos.betweenClosed(origin.offset(0, -1, -4), origin.offset(1, 2, 4))) {
                 client.level.setBlock(pos, Blocks.AIR.defaultBlockState(), 3);
             }
+            BlockPos seam = origin.offset(7, 0, 0);
+            BlockPos other = seam.east(2);
+            BlockPos obstacle = seam.east();
+            client.level.setBlock(obstacle, Blocks.OAK_STAIRS.defaultBlockState(), 3);
+            Map<BlockPos, Object> shaped = light.propagate(seam, other, light.source(seam), light.source(other));
+            propagation.add(Map.of("smooth", smooth, "scene", "stairs-at-chunk-seam",
+                    "positions", shaped.size(), "fingerprint", light.fingerprint(shaped)));
+            client.level.setBlock(obstacle, Blocks.AIR.defaultBlockState(), 3);
+            captureRemovedLight(client, smooth);
         }
         benchmark = timePropagation(origin, second, firstSource, secondSource);
     }
@@ -188,6 +197,18 @@ public final class LucentClientSmoke {
         states.add(Map.of("scene", name, "dimension", client.level.dimension().location().toString(),
                 "lights", lights.size(), "fingerprint", light.fingerprint(lights),
                 "dirty_sections", sections.stream().map(Object::toString).sorted().toList()));
+    }
+
+    private static void captureRemovedLight(Minecraft client, boolean smooth) throws Throwable {
+        client.player.getInventory().setItem(0, ItemStack.EMPTY);
+        light.tick.invokeExact();
+        Set<?> sections = (Set<?>) light.dirty.get(null);
+        if (!light.current().isEmpty() || sections.isEmpty()) {
+            throw new AssertionError("Removing the torch must clear lighting and invalidate its sections");
+        }
+        states.add(Map.of("scene", smooth ? "smooth-source-removed" : "source-removed",
+                "dimension", client.level.dimension().location().toString(),
+                "lights", 0, "dirty_sections", sections.stream().map(Object::toString).sorted().toList()));
     }
 
     private static Map<String, Object> timePropagation(BlockPos first, BlockPos second, Object a, Object b) throws Throwable {
