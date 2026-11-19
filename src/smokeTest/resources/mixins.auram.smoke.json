@@ -33,6 +33,7 @@
   ],
   "client": [
     "HiddenWindowMixin",
+    "DhClientKeepAliveMixin",
     "TomeCopyProbeMixin",
     "DraconicCoreRenderProbeMixin",
     "DraconicReactorRenderProbeMixin",
