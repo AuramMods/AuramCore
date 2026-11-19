@@ -49,7 +49,7 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         String smokeMode = System.getProperty("auram.smoke", "");
-        if (smokeMode.equals("book") || smokeMode.equals("ftbrtp") || smokeMode.equals("movementpacketreplay") || smokeMode.startsWith("memory-") || smokeMode.equals("tomehud")
+        if ((smokeMode.equals("surfacemap-server") || smokeMode.equals("surfacemap-bench")) || smokeMode.equals("book") || smokeMode.equals("ftbrtp") || smokeMode.equals("movementpacketreplay") || smokeMode.startsWith("memory-") || smokeMode.equals("tomehud")
                 || DistantHorizonsSmoke.SERVER) return;
         if(System.getProperty("auram.smoke", "").equals("tuning")) {
             TuningSmoke.start(event.getServer());

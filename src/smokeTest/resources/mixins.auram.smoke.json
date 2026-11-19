@@ -35,6 +35,8 @@
   ],
   "client": [
     "HiddenWindowMixin",
+    "SurfaceMapWireProbeMixin",
+    "SurfaceMapReceptionProbeMixin",
     "DhClientKeepAliveMixin",
     "DhJeiIndexingMixin",
     "TomeCopyProbeMixin",

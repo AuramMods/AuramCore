@@ -56,6 +56,11 @@
   },
   "client": [
     "akashictome.HudPreviewMixin",
+    "journeymap.ImageHolderAccess",
+    "journeymap.BaseMapTaskMixin",
+    "journeymap.MapPlayerTaskMixin",
+    "journeymap.MapStateMixin",
+    "journeymap.FeatureManagerMixin",
     "clientmodel.ModelBakeryStagingAccess",
     "clientmodel.ModelManagerMixin",
     "derenderpatcher.CompatModsMixin",

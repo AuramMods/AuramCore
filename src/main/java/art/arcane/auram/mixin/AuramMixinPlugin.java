@@ -12,7 +12,24 @@ import java.util.Set;
 public final class AuramMixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        String optionalTarget = switch (mixinClassName) {
+        String optionalTarget = optionalTarget(mixinClassName);
+        if (optionalTarget == null) return true;
+        try {
+            MixinService.getService().getBytecodeProvider().getClassNode(optionalTarget);
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot read " + optionalTarget, e);
+        }
+    }
+
+    private static String optionalTarget(String mixinClassName) {
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.journeymap.")) {
+            return "journeymap.client.JourneymapClient";
+        }
+        // These mixins target vanilla classes, so @Pseudo cannot make them optional.
+        return switch (mixinClassName) {
             case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";
             case "art.arcane.auram.mixin.dimdoors.PlayerCollisionMixin" -> "org.dimdev.dimdoors.mixin.ServerPlayNetworkHandlerMixin";
             case "art.arcane.auram.mixin.distanthorizons.ChunkMapDemandMixin" ->
@@ -22,18 +39,6 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
                     "dev.worldgen.lithostitched.worldgen.structure.AlternateJigsawGenerator";
             default -> null;
         };
-        if (optionalTarget == null) return true;
-        // These mixins target vanilla classes, so @Pseudo cannot make them optional.
-        // Check for the owning mixin without loading its class.
-        try {
-            MixinService.getService().getBytecodeProvider()
-                    .getClassNode(optionalTarget);
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        } catch (IOException e) {
-            throw new IllegalStateException("Cannot read " + optionalTarget, e);
-        }
     }
 
     @Override public void onLoad(String mixinPackage) { }

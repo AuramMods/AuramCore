@@ -54,6 +54,9 @@ final class SurfaceMapStreaming implements AutoCloseable {
             if (!view.equals(session.view)) {
                 if (session.view == null || !session.view.dimension().equals(view.dimension())) {
                     session.clearCoverage();
+                } else {
+                    SurfaceMapView previous = session.view;
+                    session.queued.keySet().removeIf(key -> previous.contains(key) && !view.contains(key));
                 }
                 session.view = view;
                 session.nearCatalog = null;
@@ -169,7 +172,9 @@ final class SurfaceMapStreaming implements AutoCloseable {
         if (session.read != null && session.read.isDone()) {
             var message = session.read.getNow(null);
             boolean nearby = view.contains(message.key());
-            if (message.encoded().length == 0 || session.ready(now, nearby, message.encoded().length)) {
+            if (!session.queued.containsKey(message.key())) {
+                session.read = null;
+            } else if (message.encoded().length == 0 || session.ready(now, nearby, message.encoded().length)) {
                 session.read = null;
                 session.queued.remove(message.key());
                 SurfaceMapNetwork.send(player, message);
