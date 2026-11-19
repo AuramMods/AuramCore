@@ -17,10 +17,10 @@ public abstract class MagicXpHudMixin {
     @Inject(method = "draw", at = @At(value = "INVOKE", target =
             "Lcom/github/minecraftschurlimods/arsmagicalegacy/client/hud/XpHUD;renderBar(Lnet/minecraft/client/gui/GuiGraphics;IIIIDDI)V"),
             cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, remap = false)
-    private void auram$hideEmptyMagicXp(ForgeGui gui, GuiGraphics graphics, float partialTick, CallbackInfo ci,
-                                        @Coerce Player player, @Coerce Object api, int level, double xp) {
-        // A player who just reached a magic level still has progress to show.
-        if (level == 0 && xp == 0.0) {
+    private void auram$hideInactiveMagicXp(ForgeGui gui, GuiGraphics graphics, float partialTick, CallbackInfo ci,
+                                          @Coerce Player player, @Coerce Object api, int level,
+                                          double xp, double xpForNextLevel) {
+        if (!(xp > 0.0 && xp < xpForNextLevel)) {
             ci.cancel();
         }
     }

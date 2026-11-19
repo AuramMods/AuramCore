@@ -12,14 +12,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Pseudo
-@Mixin(targets = "com.github.minecraftschurlimods.arsmagicalegacy.client.hud.ManaHUD", remap = false)
-public abstract class ManaHudMixin {
+@Mixin(targets = {
+        "com.github.minecraftschurlimods.arsmagicalegacy.client.hud.ManaHUD",
+        "com.github.minecraftschurlimods.arsmagicalegacy.client.hud.BurnoutHUD"
+}, remap = false)
+public abstract class ResourceHudMixin {
     @Inject(method = "draw", at = @At(value = "INVOKE", target =
-            "Lcom/github/minecraftschurlimods/arsmagicalegacy/client/hud/ManaHUD;renderBar(Lnet/minecraft/client/gui/GuiGraphics;IIIIDDI)V"),
+            "renderBar(Lnet/minecraft/client/gui/GuiGraphics;IIIIDDI)V"),
             cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD, remap = false)
-    private void auram$hideEmptyMana(ForgeGui gui, GuiGraphics graphics, float partialTick, CallbackInfo ci,
-                                     @Coerce Player player, @Coerce Object api, double mana) {
-        if (mana == 0.0) {
+    private void auram$hideInactiveResource(ForgeGui gui, GuiGraphics graphics, float partialTick, CallbackInfo ci,
+                                           @Coerce Player player, @Coerce Object api, double value, double maximum) {
+        if (!(value > 0.0 && value < maximum)) {
             ci.cancel();
         }
     }

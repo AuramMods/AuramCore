@@ -44,7 +44,7 @@
     "lucent.LightDataFactory",
     "lucent.LightSourceMixin",
     "lucent.LightPropagationMixin",
-    "arsmagicalegacy.ManaHudMixin",
+    "arsmagicalegacy.ResourceHudMixin",
     "arsmagicalegacy.MagicXpHudMixin",
     "minecraft.ApplicationTitleMixin",
     "minecraft.ApplicationIconMixin"
