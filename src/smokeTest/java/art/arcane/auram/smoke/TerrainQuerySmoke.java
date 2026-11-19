@@ -64,7 +64,7 @@ public final class TerrainQuerySmoke {
         }
         Files.writeString(Path.of("terrain-query-trace.json"),"{\"results\":["+String.join(",",results)+"]}\n");
     }
-    private static String canonical(Tag tag) {
+    static String canonical(Tag tag) {
         if(tag instanceof CompoundTag compound) {
             StringBuilder result=new StringBuilder("{");
             compound.getAllKeys().stream().sorted().forEach(key->result.append(key.length()).append(':').append(key).append(canonical(compound.get(key))));

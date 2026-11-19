@@ -34,6 +34,7 @@
     "tomsstorage.TerminalIdMixin",
     "tomsstorage.StoredQuantityAccess",
     "nyctophobia.MushroomHeightMixin",
+    "twigs.ObeliskSearchMixin",
     "ftbquests.LootCrateSoundMixin"
   ],
   "injectors": {
