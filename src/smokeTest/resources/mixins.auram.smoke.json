@@ -13,6 +13,8 @@
     "BiomeSyncProbeMixin",
     "NoiseColumnProbeMixin",
     "NoiseSetupProbeMixin",
+    "StructureStartScopeProbeMixin",
+    "LithoStartProjectionProbeMixin",
     "CapabilityComparisonProbeMixin",
     "ServerSpawnMixin",
     "SelectorProbeMixin",

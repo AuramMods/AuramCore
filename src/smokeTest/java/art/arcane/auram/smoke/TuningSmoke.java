@@ -155,6 +155,7 @@ public final class TuningSmoke {
                 recording.enable("jdk.GCPhasePause").withThreshold(Duration.ZERO);
                 recording.enable("jdk.ObjectAllocationSample").with("throttle","100/s").withStackTrace();
                 recording.setMaxSize(64L*1024*1024);recording.start();
+                LithoStartProbe.start();
                 cpuStart=os.getProcessCpuTime();allocatedStart=allocatedBytes();
                 mainCpuStart=threads.getCurrentThreadCpuTime();start=lastBatch=System.nanoTime();
                 Files.writeString(Path.of("auram-tuning-started.txt"),"Measured workload started\n");
@@ -167,6 +168,7 @@ public final class TuningSmoke {
         }
         void finish() throws Exception {
             long finish=System.nanoTime();double seconds=(finish-start)/1e9;
+            Map<String, Object> lithoStarts = LithoStartProbe.snapshot();
             long allocated=allocatedBytes()-allocatedStart,cpu=os.getProcessCpuTime()-cpuStart,mainCpu=threads.getCurrentThreadCpuTime()-mainCpuStart;
             recording.stop();recording.dump(Path.of("tuning.jfr"));recording.close();
             Map<String,Object> result=new LinkedHashMap<>();
@@ -187,6 +189,7 @@ public final class TuningSmoke {
             result.put("core_version",ModList.get().getModContainerById("auram").orElseThrow().getModInfo().getVersion().toString());
             result.put("loaded_mod_count",ModList.get().getMods().size());
             result.put("jfr",summarizeRecording());
+            if (!lithoStarts.isEmpty()) result.put("lithostitched_starts", lithoStarts);
             // Fingerprinting is outside the timed/allocation measurement window.
             MessageDigest digest=MessageDigest.getInstance("SHA-256");ByteBuffer integer=ByteBuffer.allocate(4);
             for(var entry:generated.entrySet()) {
