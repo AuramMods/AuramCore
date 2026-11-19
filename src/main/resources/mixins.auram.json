@@ -39,6 +39,7 @@
     "defaultRequire": 1
   },
   "client": [
+    "akashictome.HudPreviewMixin",
     "clientmodel.ModelBakeryStagingAccess",
     "clientmodel.ModelManagerMixin",
     "derenderpatcher.CompatModsMixin",

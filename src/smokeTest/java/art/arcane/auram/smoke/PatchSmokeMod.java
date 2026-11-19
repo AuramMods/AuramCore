@@ -49,7 +49,7 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         String smokeMode = System.getProperty("auram.smoke", "");
-        if (smokeMode.equals("book") || smokeMode.startsWith("memory-")) return;
+        if (smokeMode.equals("book") || smokeMode.startsWith("memory-") || smokeMode.equals("tomehud")) return;
         if(System.getProperty("auram.smoke", "").equals("tuning")) {
             TuningSmoke.start(event.getServer());
             return;
