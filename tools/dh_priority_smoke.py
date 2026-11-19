@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument("--server-template", type=Path)
     parser.add_argument("--server-core", type=Path, help="Override the test server's AuramCore jar for A/B comparison")
     parser.add_argument("--full-client", action="store_true")
+    parser.add_argument("--client-timeout", type=int, default=540, help="Seconds allowed for client startup and replay")
     parser.add_argument("--rate", required=True, type=int)
     parser.add_argument("--seed", type=int, default=104729)
     parser.add_argument("--view-distance", type=int, default=4)
@@ -241,7 +242,7 @@ def run(args, server, client, port, arm):
             player = start_client(args, client, client_output, endpoint)
             wait_ready(server_log, dedicated)
             (client / "dh-connect-ready").touch()
-            client_exit = player.wait(timeout=540)
+            client_exit = player.wait(timeout=args.client_timeout)
             if client_exit != 0 or not (client / "dh-client-pass.txt").exists():
                 raise RuntimeError(f"Client did not finish route, exit {client_exit}")
             server_exit = dedicated.wait(timeout=180)
