@@ -1,5 +1,6 @@
 package art.arcane.auram.mixin.ftbchunks;
 
+import art.arcane.auram.map.client.MapRegionSurfaceAccess;
 import art.arcane.auram.map.SurfaceTile;
 import art.arcane.auram.map.client.FtbChunksSurface;
 import art.arcane.auram.map.client.SurfaceMapClient;

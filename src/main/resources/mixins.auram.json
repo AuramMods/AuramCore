@@ -62,6 +62,7 @@
     "ftbchunks.ChunkUpdateSurfaceMixin",
     "ftbchunks.LargeMapSurfaceAccess",
     "ftbchunks.MapRegionSurfaceMixin",
+    "ftbchunks.MapDimensionSurfaceMixin",
     "ftbchunks.RegionMapSurfaceMixin",
     "ftbchunks.RenderMapSurfaceMixin",
     "journeymap.ImageHolderAccess",

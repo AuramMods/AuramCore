@@ -1,5 +1,6 @@
 package art.arcane.auram.mixin.ftbchunks;
 
+import art.arcane.auram.map.client.RegionMapSurfaceAccess;
 import art.arcane.auram.map.SurfaceMapView;
 import art.arcane.auram.map.client.FtbChunksSurface;
 import dev.ftb.mods.ftbchunks.client.gui.LargeMapScreen;
@@ -20,9 +21,13 @@ abstract class RegionMapSurfaceMixin implements RegionMapSurfaceAccess {
     @Shadow private int regionMinX;
     @Shadow private int regionMinZ;
     @Unique private boolean auram$regionsChanged;
+    @Unique private boolean auram$hasDrawn;
 
     @Override
     public SurfaceMapView auram$view() {
+        if (!auram$hasDrawn) {
+            return null;
+        }
         RegionMapPanel panel = (RegionMapPanel) (Object) this;
         int size = largeMap.getRegionTileSize();
         double minX = (double) regionMinX * 512 + panel.getScrollX() * 512 / size;
@@ -48,5 +53,11 @@ abstract class RegionMapSurfaceMixin implements RegionMapSurfaceAccess {
         double centerZ = regionMinZ + (panel.getScrollY() + panel.height / 2.0) / size;
         panel.refreshWidgets();
         panel.scrollTo(centerX, centerZ);
+    }
+
+    @Inject(method = "draw", at = @At("TAIL"))
+    private void auram$recordInitialLayout(GuiGraphics graphics, Theme theme, int x, int y, int w, int h,
+                                           CallbackInfo ci) {
+        auram$hasDrawn = true;
     }
 }

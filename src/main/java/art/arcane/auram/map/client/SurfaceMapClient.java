@@ -13,20 +13,20 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.slf4j.Logger;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
-import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.RejectedExecutionException;
 
 public final class SurfaceMapClient implements SurfaceMapNetwork.ClientReceiver {
     private static final Logger LOGGER = LogUtils.getLogger();

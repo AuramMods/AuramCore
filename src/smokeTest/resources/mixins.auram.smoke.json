@@ -36,6 +36,8 @@
   ],
   "client": [
     "HiddenWindowMixin",
+    "FtbSurfaceClaimProbeMixin",
+    "FtbSurfaceClaimShiftMixin",
     "SurfaceMapWireProbeMixin",
     "SurfaceMapReceptionProbeMixin",
     "SurfaceMapRenderProbeMixin",

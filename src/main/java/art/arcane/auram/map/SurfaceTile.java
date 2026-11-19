@@ -47,6 +47,10 @@ public final class SurfaceTile {
         return new Version(revision, coverage);
     }
 
+    public boolean contains(int slot) {
+        return (coverage & (1L << slot)) != 0;
+    }
+
     public int pixel(int slot, int x, int z) {
         return pixels[slot * CHUNK_PIXELS + z * 16 + x];
     }

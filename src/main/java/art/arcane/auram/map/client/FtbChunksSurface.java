@@ -3,8 +3,6 @@ package art.arcane.auram.map.client;
 import art.arcane.auram.map.SurfaceMapView;
 import art.arcane.auram.map.SurfaceTile;
 import art.arcane.auram.mixin.ftbchunks.LargeMapSurfaceAccess;
-import art.arcane.auram.mixin.ftbchunks.MapRegionSurfaceAccess;
-import art.arcane.auram.mixin.ftbchunks.RegionMapSurfaceAccess;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.ftb.mods.ftbchunks.FTBChunksWorldConfig;
 import dev.ftb.mods.ftbchunks.client.FTBChunksClient;
@@ -72,11 +70,19 @@ public final class FtbChunksSurface implements SurfaceMapRenderer {
             return false;
         }
         var position = XZ.of(Math.floorDiv(key.x(), REGION_TILES), Math.floorDiv(key.z(), REGION_TILES));
-        boolean newRegion = !dimension.getRegions().containsKey(position);
-        MapRegion region = dimension.getRegion(position);
-        int slot = Math.floorMod(key.x(), REGION_TILES) + Math.floorMod(key.z(), REGION_TILES) * REGION_TILES;
-        ((MapRegionSurfaceAccess) region).auram$install(slot, tile);
-        if (newRegion && Minecraft.getInstance().screen instanceof ScreenWrapper screen
+        boolean firstSharedTile;
+        synchronized (dimension.getManager().lock) {
+            var regions = dimension.getRegions();
+            MapRegion region = regions.get(position);
+            if (region == null) {
+                region = new MapRegion(dimension, position);
+                ((MapRegionSurfaceAccess) region).auram$markStreamOnly();
+                regions.put(position, region);
+            }
+            int slot = Math.floorMod(key.x(), REGION_TILES) + Math.floorMod(key.z(), REGION_TILES) * REGION_TILES;
+            firstSharedTile = ((MapRegionSurfaceAccess) region).auram$install(slot, tile);
+        }
+        if (firstSharedTile && Minecraft.getInstance().screen instanceof ScreenWrapper screen
                 && screen.getGui() instanceof LargeMapScreen large && large.currentDimension().equals(dimension.dimension)) {
             ((RegionMapSurfaceAccess) ((LargeMapSurfaceAccess) (Object) large).auram$regionPanel()).auram$addedRegion();
         }
@@ -89,7 +95,7 @@ public final class FtbChunksSurface implements SurfaceMapRenderer {
 
     public static boolean hasChunk(SurfaceTile[] tiles, int x, int z) {
         var tile = tiles[x / SurfaceTile.CHUNKS + z / SurfaceTile.CHUNKS * REGION_TILES];
-        return tile != null && tile.version().contains(SurfaceTile.slot(x, z));
+        return tile != null && tile.contains(SurfaceTile.slot(x, z));
     }
 
     public static void paint(MapRegion region, SurfaceTile[] tiles, boolean showAllClaims) {

@@ -6,6 +6,7 @@ import art.arcane.auram.mixin.journeymap.FullscreenGridAccess;
 import art.arcane.auram.mixin.journeymap.ImageHolderAccess;
 import art.arcane.auram.mixin.journeymap.MiniMapGridAccess;
 import com.mojang.blaze3d.platform.NativeImage;
+import journeymap.client.JourneymapClient;
 import journeymap.client.api.util.UIState;
 import journeymap.client.model.MapState;
 import journeymap.client.model.MapType;
@@ -32,7 +33,8 @@ final class JourneyMapSurface implements SurfaceMapRenderer {
     public SurfaceMapView view(Minecraft minecraft, LocalPlayer player) {
         var dimension = player.level().dimension();
         boolean fullscreen = minecraft.screen instanceof Fullscreen;
-        if (!fullscreen && minecraft.screen != null) {
+        if (!fullscreen && (minecraft.screen != null || minecraft.options.hideGui
+                || !JourneymapClient.getInstance().getActiveMiniMapProperties().enabled.get())) {
             return null;
         }
         var grid = fullscreen ? FullscreenGridAccess.auram$grid() : MiniMapGridAccess.auram$grid();

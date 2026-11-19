@@ -1,4 +1,4 @@
-package art.arcane.auram.mixin.ftbchunks;
+package art.arcane.auram.map.client;
 
 import art.arcane.auram.map.SurfaceMapView;
 
