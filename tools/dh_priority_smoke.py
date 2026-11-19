@@ -111,12 +111,13 @@ def prepare(args, server, client, port):
         "onboardAccessibility:false\npauseOnLostFocus:false\ntutorialStep:none\nsoundCategory_master:0.0\n")
 
 
-def start_client(args, game, log, endpoint):
+def start_client(args, game, log, endpoint, route_ack):
     base = shlex.split((args.launcher_cache / "state/launch-jvm.args").read_text())
     base = [arg for arg in base if not arg.startswith(("-Xm", "-XX:", "-javaagent:", "-Dauram."))]
     flags = ["-Xms1G", "-Xmx8G" if args.full_client else "-Xmx4G", "-XX:ActiveProcessorCount=4",
              "-Dauram.smoke=dhpriority-client", "-Dauram.smoke.hiddenWindow=true",
              "-Dauram.dh.waitForServer=true", f"-Dauram.dh.endpoint={endpoint}",
+             f"-Dauram.dh.routeAcknowledgement={route_ack}",
              f"-Dauram.dh.stationaryTicks={args.stationary_ticks}",
              f"-Dauram.dh.flightBlocks={args.flight_blocks}"]
     if args.start_idle_ticks is not None:
@@ -223,12 +224,12 @@ def lod_sections(databases):
 def run(args, server, client, port, arm):
     result = args.work / arm
     result.mkdir()
-    for directory, names in [(server, ["dh-server-ticks.csv", "dh-server-chunks.csv"]),
+    for directory, names in [(server, ["dh-server-ticks.csv", "dh-server-chunks.csv", "dh-route-reached"]),
                              (client, ["dh-client.csv", "dh-client-pass.txt", "dh-connect-ready"])]:
         for name in names:
             (directory / name).unlink(missing_ok=True)
     command = [args.server_java or args.java, "-Xms1G", "-Xmx8G" if args.server_template else "-Xmx4G",
-               "-XX:ActiveProcessorCount=4", "-Dauram.smoke=dhpriority-server"]
+               "-XX:ActiveProcessorCount=4", "-Dauram.smoke=dhpriority-server", f"-Dauram.dh.flightBlocks={args.flight_blocks}"]
     if args.defer_dh:
         command.append("-Dauram.dh.defer=true")
     if args.wire_log:
@@ -242,11 +243,11 @@ def run(args, server, client, port, arm):
         player = None
         try:
             endpoint = args.endpoint or f"127.0.0.1:{port}"
-            player = start_client(args, client, client_output, endpoint)
+            player = start_client(args, client, client_output, endpoint, server / "dh-route-reached")
             wait_ready(server_log, dedicated)
             (client / "dh-connect-ready").touch()
             client_exit = player.wait(timeout=args.client_timeout)
-            if client_exit != 0 or not (client / "dh-client-pass.txt").exists():
+            if not (client / "dh-client-pass.txt").exists():
                 raise RuntimeError(f"Client did not finish route, exit {client_exit}")
             server_exit = dedicated.wait(timeout=180)
             if server_exit != 0:
@@ -266,7 +267,7 @@ def run(args, server, client, port, arm):
     with client_log.open(errors="replace") as log:
         metrics["client_lod_update_errors"] = sum("Error while updating full data source" in line for line in log)
     metrics.update(seed=args.seed, configured_rate=args.rate, view_distance=args.view_distance,
-        flight_blocks=args.flight_blocks,
+        flight_blocks=args.flight_blocks, client_exit_code=client_exit,
         server_core_sha256=hashlib.sha256((server / "mods/AuramCore.jar").read_bytes()).hexdigest(),
         client_core_sha256=hashlib.sha256((client / "mods/AuramCore.jar").read_bytes()).hexdigest(),
         smoke_jar_sha256=hashlib.sha256((server / "mods/AuramSmoke.jar").read_bytes()).hexdigest(),
@@ -276,6 +277,8 @@ def run(args, server, client, port, arm):
     print(arm, json.dumps(metrics), flush=True)
     if metrics["player_chunk_route"][-1] != metrics["client_destination"]:
         raise RuntimeError("Client and server did not finish in the same chunk")
+    if client_exit != 0:
+        raise RuntimeError(f"Client exited with code {client_exit} after the route completed. Measurements are in {result}")
 
 
 def main():

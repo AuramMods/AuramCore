@@ -28,6 +28,7 @@ public final class DistantHorizonsSmoke {
     public static final boolean CLIENT = "dhpriority-client".equals(System.getProperty("auram.smoke"));
     private static final boolean DEFER_DH = Boolean.getBoolean("auram.dh.defer");
     static final int FLIGHT_CLEARANCE = 16;
+    private static final int FLIGHT_BLOCKS = Integer.getInteger("auram.dh.flightBlocks", -1);
     private static final Set<Queue> QUEUES = ConcurrentHashMap.newKeySet();
     private static final LongOpenHashSet ACTIVE = new LongOpenHashSet();
     private static final Long2ObjectOpenHashMap<Foreground> FOREGROUND = new Long2ObjectOpenHashMap<>();
@@ -37,6 +38,8 @@ public final class DistantHorizonsSmoke {
     private static long tickStart;
     private static long previousTick;
     private static long started;
+    private static double destinationX;
+    private static boolean wroteArrival;
     private static long ticketAdds;
     private static long ticketRemovals;
 
@@ -114,7 +117,10 @@ public final class DistantHorizonsSmoke {
         }
         var player = players.get(0);
         var center = player.chunkPosition();
-        if (started == 0) started = now;
+        if (started == 0) {
+            started = now;
+            destinationX = player.getX() + FLIGHT_BLOCKS;
+        }
         var level = player.serverLevel();
         var cache = level.getChunkSource();
         long elapsed = now - started;
@@ -139,6 +145,14 @@ public final class DistantHorizonsSmoke {
                 center.x, center.z, missing, ticketAdds, ticketRemovals,
                 ACTIVE.size(), waiting, running, DEFERRED.get()));
         previousTick = now;
+        if (FLIGHT_BLOCKS >= 0 && !wroteArrival && player.getX() >= destinationX - 1.0E-6) {
+            try {
+                Files.writeString(Path.of("dh-route-reached"), player.getX() + "," + player.getZ() + "\n");
+                wroteArrival = true;
+            } catch (IOException error) {
+                throw new IllegalStateException(error);
+            }
+        }
     }
 
     private static void save() {

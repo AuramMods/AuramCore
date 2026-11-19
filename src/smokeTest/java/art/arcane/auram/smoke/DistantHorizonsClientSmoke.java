@@ -27,8 +27,11 @@ public final class DistantHorizonsClientSmoke {
     private static final int FLIGHT_BLOCKS = Integer.getInteger("auram.dh.flightBlocks", 800);
     private static final boolean WAIT_FOR_SERVER = Boolean.getBoolean("auram.dh.waitForServer");
     private static final Path SERVER_READY = Path.of("dh-connect-ready");
+    private static final String ROUTE_ACK_PROPERTY = System.getProperty("auram.dh.routeAcknowledgement", "");
+    private static final Path ROUTE_ACK = ROUTE_ACK_PROPERTY.isEmpty() ? null : Path.of(ROUTE_ACK_PROPERTY);
     private static final List<String> SAMPLES = new ArrayList<>();
     private static boolean connecting, finished;
+    private static boolean serverArrived = ROUTE_ACK == null;
     private static double startX, startZ;
     private static int ticks, phase, endTicks;
     private static long started;
@@ -70,7 +73,8 @@ public final class DistantHorizonsClientSmoke {
         player.setPos(nextX, flightY, startZ);
         if (phase != 0) {
             phase = nextX == destinationX ? 2 : 1;
-            endTicks = phase == 2 ? endTicks + 1 : 0;
+            if (phase == 2 && !serverArrived && ticks % 10 == 0) serverArrived = Files.isRegularFile(ROUTE_ACK);
+            endTicks = phase == 2 && serverArrived ? endTicks + 1 : 0;
         }
         if (endTicks == STATIONARY_TICKS) {
             SAMPLES.add(0, "elapsed_ns,client_tick,phase,center_x,center_z,loaded,visible_buffers");
