@@ -12,19 +12,22 @@ import java.util.Set;
 public final class AuramMixinPlugin implements IMixinConfigPlugin {
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (!mixinClassName.equals("art.arcane.auram.mixin.relics.FluidCollisionMixin")) {
-            return true;
-        }
-        // This mixin targets vanilla Entity, so @Pseudo cannot make it optional.
-        // Read the Relics class bytes without loading its mixin class.
+        String optionalTarget = switch (mixinClassName) {
+            case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";
+            case "art.arcane.auram.mixin.dimdoors.PlayerCollisionMixin" -> "org.dimdev.dimdoors.mixin.ServerPlayNetworkHandlerMixin";
+            default -> null;
+        };
+        if (optionalTarget == null) return true;
+        // These mixins target vanilla classes, so @Pseudo cannot make them optional.
+        // Check for the owning mixin without loading its class.
         try {
             MixinService.getService().getBytecodeProvider()
-                    .getClassNode("it.hurts.sskirillss.relics.mixin.EntityMixin");
+                    .getClassNode(optionalTarget);
             return true;
         } catch (ClassNotFoundException e) {
             return false;
         } catch (IOException e) {
-            throw new IllegalStateException("Cannot read Relics fluid collision mixin", e);
+            throw new IllegalStateException("Cannot read " + optionalTarget, e);
         }
     }
 

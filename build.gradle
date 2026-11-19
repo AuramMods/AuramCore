@@ -94,6 +94,10 @@ dependencies {
     implementation(jarJar('com.github.bawnorton.mixinsquared:mixinsquared-forge:0.3.8')) {
         jarJar.ranged(it, '[0.3.8,)')
     }
+    compileOnly 'io.github.llamalad7:mixinextras-common:0.5.0'
+    implementation(jarJar('io.github.llamalad7:mixinextras-forge:0.5.0')) {
+        jarJar.ranged(it, '[0.5.0,)')
+    }
     implementation fg.deobf("curse.maven:projecte-226410:4901949")
     // Lucent stays optional at runtime. These mixins only use its own Java types.
     compileOnly "curse.maven:lucent-493280:4951434"

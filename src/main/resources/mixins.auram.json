@@ -27,6 +27,7 @@
     "midnight.BogStriderEnchantmentMixin",
     "aether.QuicksoilMovementMixin",
     "relics.FluidCollisionMixin",
+    "dimdoors.PlayerCollisionMixin",
     "mekanism.WorldUtilsMixin",
     "minecraft.SelectedItemSelectorMixin",
     "tomsstorage.TerminalIdMixin",

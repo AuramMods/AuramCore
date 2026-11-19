@@ -84,6 +84,12 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-" + mode + "-pass.txt"), "PASS fluid behavior and chunk readiness checks\n");
                 return;
             }
+            if (smokeMode.equals("dimdoors") || smokeMode.equals("dimdoorsreference")) {
+                DimDoorsCollisionSmoke.run(event.getServer(), smokeMode.equals("dimdoorsreference"));
+                Files.writeString(Path.of("auram-" + smokeMode + "-pass.txt"),
+                        "PASS DimDoors callback order and pending FULL chunk fixture\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("wellproximity")) {
                 WellProximitySmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-wellproximity-pass.txt"), "PASS loaded well proximity, absent/pending chunks and retry\n");
