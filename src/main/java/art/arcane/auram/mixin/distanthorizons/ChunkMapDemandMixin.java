@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -50,7 +51,11 @@ public abstract class ChunkMapDemandMixin implements ForegroundChunkDemand {
             for (int x = center.x() - NEARBY_CHUNK_RADIUS; x <= center.x() + NEARBY_CHUNK_RADIUS; x++) {
                 for (int z = center.z() - NEARBY_CHUNK_RADIUS; z <= center.z() + NEARBY_CHUNK_RADIUS; z++) {
                     ChunkHolder holder = getVisibleChunkIfPresent(ChunkPos.asLong(x, z));
-                    if (holder == null || holder.getTickingChunk() == null) return true;
+                    if (holder == null || holder.getTickingChunk() != null) continue;
+                    // Saved FULL chunks first appear as ImposterProtoChunk and retain FULL status.
+                    // Reserve workers only when a nearby input is genuinely progressing through generation.
+                    var available = holder.getLastAvailable();
+                    if (available != null && available.getStatus() != ChunkStatus.FULL) return true;
                 }
             }
         }
