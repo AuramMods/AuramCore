@@ -10,6 +10,7 @@ import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseChunk;
+import net.minecraft.world.level.levelgen.NoiseSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.blending.Blender;
@@ -27,18 +28,25 @@ public final class TerrainCell implements AutoCloseable {
     private int selectedY = Integer.MIN_VALUE;
     private boolean closed;
 
+    public static boolean supports(NoiseBasedChunkGenerator generator, LevelHeightAccessor height) {
+        return hasCompleteCells(generator.generatorSettings().value().noiseSettings().clampToHeightAccessor(height));
+    }
+
     public static TerrainCell open(NoiseBasedChunkGenerator generator, int x, int z,
                                    LevelHeightAccessor height, RandomState state) {
         var settings = generator.generatorSettings().value().noiseSettings().clampToHeightAccessor(height);
+        return hasCompleteCells(settings) ? new TerrainCell(generator,x,z,state,settings) : null;
+    }
+
+    private static boolean hasCompleteCells(NoiseSettings settings) {
         // Vanilla's partial-cell column-array behavior is not a complete state
         // sampler. Keep that unusual accessor on the original generator path.
-        if (settings.height() <= 0 || Math.floorMod(settings.minY(), settings.getCellHeight()) != 0
-                || settings.height() % settings.getCellHeight() != 0) return null;
-        return new TerrainCell(generator,x,z,state,settings);
+        return settings.height() > 0 && Math.floorMod(settings.minY(), settings.getCellHeight()) == 0
+                && settings.height() % settings.getCellHeight() == 0;
     }
 
     private TerrainCell(NoiseBasedChunkGenerator generator,int x,int z,RandomState state,
-                        net.minecraft.world.level.levelgen.NoiseSettings settings) {
+                        NoiseSettings settings) {
         var generatorSettings = generator.generatorSettings().value();
         width = settings.getCellWidth();
         cellHeight = settings.getCellHeight();
