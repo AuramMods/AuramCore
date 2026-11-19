@@ -18,6 +18,8 @@
     "minecraft.DensityHolderMappingMixin",
     "minecraft.SplineCoordinateMappingMixin",
     "lithostitched.StructurePoolGeneratorMixin",
+    "lithostitched.StructureStartTerrainMixin",
+    "lithostitched.StartProjectionMixin",
     "malum.WeepingWellMixin",
     "malum.WellProximityMixin",
     "zeta.EventHandlerMapMixin",

@@ -166,6 +166,11 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-terrain-pass.txt"), "PASS structure terrain query trace\n");
                 return;
             }
+            if (smokeMode.equals("lithostarts")) {
+                LithoStartParitySmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-lithostarts-pass.txt"), "PASS seeded Lithostitched start positions, pieces and RNG");
+                return;
+            }
             if (smokeMode.equals("twigs")) {
                 TwigsObeliskSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-twigs-pass.txt"), "PASS Twigs search and FULL chunk replay");

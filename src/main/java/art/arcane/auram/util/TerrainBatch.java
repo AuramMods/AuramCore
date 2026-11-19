@@ -24,7 +24,8 @@ public final class TerrainBatch implements AutoCloseable {
     private final int width;
     private final int minBuildHeight,buildHeight;
     private boolean closed;
-    private final Long2ObjectLinkedOpenHashMap<Cell> cells=new Long2ObjectLinkedOpenHashMap<>();
+    // Most structure-start passes never project a jigsaw onto terrain.
+    private Long2ObjectLinkedOpenHashMap<Cell> cells;
 
     public TerrainBatch(NoiseBasedChunkGenerator generator,LevelHeightAccessor height,RandomState state,boolean dense) {
         this.generator=generator;this.height=height;this.state=state;this.dense=dense;
@@ -48,15 +49,20 @@ public final class TerrainBatch implements AutoCloseable {
     }
 
     public static int queryHeight(ChunkGenerator generator,int x,int z,Heightmap.Types type,LevelHeightAccessor height,RandomState state) {
+        TerrainBatch batch=current(generator,height,state);
+        return batch!=null ? batch.height(x,z,type) : generator.getBaseHeight(x,z,type,height,state);
+    }
+
+    public static TerrainBatch current(ChunkGenerator generator,LevelHeightAccessor height,RandomState state) {
         TerrainBatch batch=ACTIVE.get();
-        return batch!=null && batch.matches(generator,height,state)
-                ? batch.height(x,z,type) : generator.getBaseHeight(x,z,type,height,state);
+        return batch!=null && batch.matches(generator,height,state) ? batch : null;
     }
 
     private Cell cell(int x,int z) {
         if(closed) throw new IllegalStateException("Terrain batch is closed");
         if(height.getMinBuildHeight()!=minBuildHeight || height.getHeight()!=buildHeight) return null;
         long key=ChunkPos.asLong(Math.floorDiv(x,width),Math.floorDiv(z,width));
+        if(cells==null) cells=new Long2ObjectLinkedOpenHashMap<>();
         Cell cached=cells.getAndMoveToLast(key);
         if(cached!=null) return cached;
         if(cells.size()==LIMIT) cells.removeFirst().terrain.close();
@@ -88,8 +94,10 @@ public final class TerrainBatch implements AutoCloseable {
     @Override public void close() {
         if(closed) return;
         closed=true;
-        for(Cell cell:cells.values()) cell.terrain.close();
-        cells.clear();
+        if(cells!=null) {
+            for(Cell cell:cells.values()) cell.terrain.close();
+            cells.clear();
+        }
     }
 
     private static final class Cell {
