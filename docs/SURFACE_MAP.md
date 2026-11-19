@@ -8,7 +8,7 @@ On a participating server, the minimap and fullscreen map show the same surface 
 
 ## Server settings
 
-Edit `world/serverconfig/auram-server.toml`, using the actual world directory if it has a different name.
+Before starting the server, edit `world/serverconfig/auram-server.toml`, using the actual world directory if it has a different name.
 
 ```toml
 [surfaceMap]
@@ -44,3 +44,10 @@ Both arms loaded copies of the same saved world with Java 17, four processors re
 | Mapping enabled | 156.10 s | 0.307 | 4.69 ms | 20.60 ms |
 
 The enabled run persisted all 48 requested chunks. Four ticks in that run took more than a second. The first comparison measures the effect on the entire workload, including the base pack and JVM, so a second run records GC pauses and times the map capture itself.
+
+| Instrumented repeat | Elapsed | Chunks/sec | p95 tick | p99 tick |
+| --- | ---: | ---: | ---: | ---: |
+| Mapping enabled | 158.00 s | 0.304 | 3.82 ms | 12.40 ms |
+| Mapping disabled | 297.25 s | 0.161 | 4.72 ms | 22.86 ms |
+
+The repeat ran in reverse order with JFR and GC logging. Across 173 main-thread capture calls, mapping took 23.40 ms in total and 2.78 ms for the longest call. G1 recorded full collections in both arms. The longest was 2.32 s with mapping enabled and 10.58 s with mapping disabled. The direction of the throughput difference changed between pairs, so these runs do not establish a stable throughput cost.
