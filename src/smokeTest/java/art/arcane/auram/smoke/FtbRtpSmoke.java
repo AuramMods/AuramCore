@@ -11,10 +11,12 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.DistanceManager;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.Ticket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -36,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /** Exercise the registered FTB command with a second, independently ticking player. */
@@ -45,6 +48,7 @@ public final class FtbRtpSmoke {
     private static final boolean ENABLED = "ftbrtp".equals(System.getProperty("auram.smoke"));
     private static final boolean NETHER = Boolean.getBoolean("auram.smoke.rtpNether");
     private static final boolean LIFECYCLE = Boolean.getBoolean("auram.smoke.rtpLifecycle");
+    private static final boolean PENDING_BIOME = Boolean.getBoolean("auram.smoke.rtpPendingBiome");
     private static FtbRtpSmoke active;
 
     private final MinecraftServer server;
@@ -64,6 +68,10 @@ public final class FtbRtpSmoke {
     private BlockPos origin;
     private boolean checkedSuccess;
     private TicketChecks ticketChecks;
+    private final CompletableFuture<Void> biomeGate = new CompletableFuture<>();
+    private ChunkPos biomeChunk;
+    private int observerAtBiomeWait;
+    private int pendingBiomeReads;
 
     private FtbRtpSmoke(MinecraftServer server) throws ReflectiveOperationException {
         this.server = server;
@@ -92,6 +100,21 @@ public final class FtbRtpSmoke {
                     return approved ? pass : veto;
                 });
         eventType.getMethod("register", Object.class).invoke(event, listener);
+    }
+
+    public static <T> CompletableFuture<T> holdFirstCandidateBiome(ServerChunkCache source, int x, int z,
+                                                                   CompletableFuture<T> future) {
+        var smoke = active;
+        if (!PENDING_BIOME || smoke == null || smoke.biomeGate.isDone() || !FtbRtpSearch.isActive(smoke.requester)
+                || source != smoke.level.getChunkSource() || Math.hypot(x, z) < 240) return future;
+        var chunk = new ChunkPos(x, z);
+        if (smoke.biomeChunk == null) {
+            smoke.biomeChunk = chunk;
+            smoke.observerAtBiomeWait = smoke.observer.tickCount;
+        }
+        check(smoke.biomeChunk.equals(chunk), "the same biome column is retried while pending");
+        smoke.pendingBiomeReads++;
+        return future.thenCombine(smoke.biomeGate, (result, released) -> result);
     }
 
     @SubscribeEvent
@@ -135,6 +158,10 @@ public final class FtbRtpSmoke {
             observerAtReturn = observer.tickCount;
         }
         if (tickStart != 0) tickNanos.add(System.nanoTime() - tickStart);
+        if (biomeChunk != null && !biomeGate.isDone() && observer.tickCount - observerAtBiomeWait >= 5) {
+            check(attempts.isEmpty() && pendingBiomeReads > 1, "biome wait suspends before any RTP listener runs");
+            biomeGate.complete(null);
+        }
         if (!checkedSuccess && requester.teleport != null) {
             checkedSuccess = true;
             completionNanos = System.nanoTime() - commandStarted;
@@ -181,6 +208,10 @@ public final class FtbRtpSmoke {
                     "attempts", attempts, "tick_nanos", tickNanos,
                     "requester_messages", requester.messages, "veto_messages", observer.messages);
             Files.writeString(Path.of("ftb-rtp-results.json"), new GsonBuilder().setPrettyPrinting().create().toJson(report));
+            if (PENDING_BIOME) {
+                check(biomeGate.isDone() && pendingBiomeReads > 1, "a pending BIOMES lookup was retried and released");
+                Files.writeString(Path.of("ftb-rtp-biome-results.txt"), pendingBiomeReads + " reads for one pending biome column\n");
+            }
             if (LIFECYCLE) ticketChecks = new TicketChecks();
             else complete();
         }
