@@ -18,6 +18,7 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.TickEvent;
@@ -41,6 +42,8 @@ public final class PacketMovementReplaySmoke {
     private static final int PACKET_COUNT = Integer.getInteger("auram.smoke.movementPackets", 2);
     private static final boolean TRANSITIONS = Boolean.getBoolean("auram.smoke.movementTransitions");
     private static final int TRIAL_COUNT = 5;
+    private static final List<String> TRANSITION_NAMES = List.of("teleport acknowledgement", "native speed correction",
+            "server-driven displacement", "mount and dismount", "knockback", "dimension change", "disconnect");
     private static PacketMovementReplaySmoke active;
 
     private final MinecraftServer server;
@@ -163,8 +166,26 @@ public final class PacketMovementReplaySmoke {
                     player.connection.tick();
                     player.stopRiding();
                     boat.discard();
+                    if (player.correction != null) acknowledgeCorrection();
                 }
                 case 4 -> {
+                    player.setDeltaMovement(Vec3.ZERO);
+                    player.knockback(0.4, 1, 0);
+                    var impulse = player.getDeltaMovement();
+                    check(impulse.x < 0, "Forge's native knockback changes velocity while movement is pending");
+                    // An in-process connection has no client to send the displacement from the impulse.
+                    var displaced = player.position().add(impulse);
+                    player.setPos(displaced.x, displaced.y, displaced.z);
+                    player.connection.tick();
+                    acknowledgeCorrection();
+                }
+                case 5 -> {
+                    var nether = server.getLevel(Level.NETHER);
+                    player.teleportTo(nether, 8.5, 128, 8.5, 0, 0);
+                    check(player.serverLevel() == nether, "player changes dimension while movement is pending");
+                    acknowledgeCorrection();
+                }
+                case 6 -> {
                     player.connection.onDisconnect(Component.literal("Smoke fixture finished"));
                     check(server.getPlayerList().getPlayer(player.getUUID()) == null, "native disconnect removes the player");
                 }
@@ -173,15 +194,21 @@ public final class PacketMovementReplaySmoke {
             readyTick = 0;
             return;
         }
-        if (stage != 4) player.connection.tick();
+        if (stage != 6) player.connection.tick();
         if (level.getChunkSource().getChunkNow(east.x, east.z) != null && readyTick == 0) readyTick = server.getTickCount();
         if (readyTick != 0 && server.getTickCount() - readyTick >= 3) {
             check(player.applied.isEmpty(), "the stale packet never applies after the original chunk becomes FULL");
-            transitions.add(List.of("teleport acknowledgement", "native speed correction", "server-driven displacement",
-                    "mount and dismount", "disconnect").get(stage));
+            if (stage == 4) {
+                check(player.getX() < from.x, "knockback displacement prevails over the queued forward packet");
+            }
+            if (stage == 5) {
+                player.teleportTo(level, from.x, from.y, from.z, 0, 0);
+                acknowledgeCorrection();
+            }
+            transitions.add(TRANSITION_NAMES.get(stage));
             level.getChunkSource().removeRegionTicket(TicketType.FORCED, east, 0, east);
             east = null;
-            if (stage == 4) finish();
+            if (transitions.size() == TRANSITION_NAMES.size()) finish();
         } else {
             check(server.getTickCount() - startedTick < 80, "the transition fixture's target reaches FULL");
         }
@@ -189,7 +216,9 @@ public final class PacketMovementReplaySmoke {
 
     private void acknowledgeCorrection() {
         check(player.correction != null, "server emitted the normal position correction packet");
-        player.connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(player.correction.getId()));
+        int id = player.correction.getId();
+        player.correction = null;
+        player.connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(id));
     }
 
     private void finish() throws Exception {
