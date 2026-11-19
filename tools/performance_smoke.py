@@ -136,9 +136,11 @@ source_config = Path(properties['modpack_deploy']).parent/'config/aether_redux_c
 if 'aether_redux' in wanted:
     shutil.copy2(source_config, config/source_config.name)
 (runtime/'eula.txt').write_text('eula=true\n')
+ground = '{"block":"minecraft:stone","height":71},' if args.mode == 'ftbrtp' else ''
 (runtime/'server.properties').write_text(
     'server-ip=127.0.0.1\nserver-port=0\nonline-mode=false\nlevel-type=minecraft:flat\n'
     'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},'
+    f'{ground}'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
     f'level-seed={args.seed}\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
 if args.mode in {'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'twigs', 'lithostarts', 'surfacejitter', 'surfaceterrain'}:
