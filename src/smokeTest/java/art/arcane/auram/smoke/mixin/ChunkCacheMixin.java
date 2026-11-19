@@ -1,6 +1,7 @@
 package art.arcane.auram.smoke.mixin;
 
 import art.arcane.auram.smoke.ChunkCacheProbe;
+import art.arcane.auram.smoke.PacketMovementSmoke;
 import art.arcane.auram.smoke.PatchSmokeMod;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.world.level.ChunkPos;
@@ -20,6 +21,7 @@ public abstract class ChunkCacheMixin implements ChunkCacheProbe {
     @Inject(method = "getChunk", at = @At("HEAD"))
     private void auramSmoke$rejectBlockingLookup(int x, int z, ChunkStatus status, boolean create,
                                                 CallbackInfoReturnable<ChunkAccess> ci) {
+        PacketMovementSmoke.observeChunkLookup(x, z, status, create);
         if (PatchSmokeMod.forbiddenChunkLookups.contains(ChunkPos.asLong(x, z))) {
             throw new AssertionError("Patched hook requested a blocking chunk lookup at " + x + "," + z);
         }

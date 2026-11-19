@@ -56,6 +56,11 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (smokeMode.equals("movementpacket")) {
+                PacketMovementSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-movementpacket-pass.txt"), "PASS Forge packet border crossings with pending FULL chunks\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("starterbooks")) {
                 StarterBooksSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-starterbooks-pass.txt"), "PASS starter guides, advancement recipe rewards and manual Logicraft crafting\n");

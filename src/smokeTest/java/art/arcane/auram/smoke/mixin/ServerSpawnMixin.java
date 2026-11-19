@@ -12,7 +12,7 @@ public abstract class ServerSpawnMixin {
     @Inject(method="prepareLevels",at=@At("HEAD"),cancellable=true)
     private void auramSmoke$skipSpawn(CallbackInfo ci) {
         String mode=System.getProperty("auram.smoke","");
-        if (mode.equals("book") || mode.equals("dhpriority-server") || mode.equals("ftbrtp") || mode.equals("wellproximity") || mode.equals("chunkproviding") || mode.equals("zetamap")
+        if (mode.equals("book") || mode.equals("dhpriority-server") || mode.equals("ftbrtp") || mode.equals("movementpacket") || mode.equals("wellproximity") || mode.equals("chunkproviding") || mode.equals("zetamap")
                 || mode.equals("starterbooks") || mode.equals("lithostarts") || mode.equals("surfacejitter") || mode.equals("surfaceterrain") || mode.startsWith("amlwater") || mode.startsWith("fluids") || mode.startsWith("biomes")) { ci.cancel(); return; }
         if(mode.equals("tuning") || mode.equals("structureprobes") || mode.equals("terrain") || mode.equals("density") || mode.equals("heightcache") || mode.equals("mappingperf") || mode.equals("wrought") || mode.equals("sparse") || mode.equals("terrainbatch")) ci.cancel();
     }
