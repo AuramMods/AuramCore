@@ -23,10 +23,13 @@ import java.util.List;
 @Mod.EventBusSubscriber(modid = "auram_patch_smoke", value = Dist.CLIENT)
 public final class DistantHorizonsClientSmoke {
     private static final int STATIONARY_TICKS = Integer.getInteger("auram.dh.stationaryTicks", 600);
+    private static final int START_IDLE_TICKS = Integer.getInteger("auram.dh.startIdleTicks", STATIONARY_TICKS);
     private static final int FLIGHT_BLOCKS = Integer.getInteger("auram.dh.flightBlocks", 800);
+    private static final boolean WAIT_FOR_SERVER = Boolean.getBoolean("auram.dh.waitForServer");
+    private static final Path SERVER_READY = Path.of("dh-connect-ready");
     private static final List<String> SAMPLES = new ArrayList<>();
     private static boolean connecting, finished;
-    private static double startX, startY, startZ;
+    private static double startX, startZ;
     private static int ticks, phase, endTicks;
     private static long started;
     public static int visibleBuffers;
@@ -37,6 +40,7 @@ public final class DistantHorizonsClientSmoke {
         var client = Minecraft.getInstance();
         if (client.getOverlay() != null) return;
         if (!connecting && client.screen instanceof TitleScreen title) {
+            if (WAIT_FOR_SERVER && !Files.isRegularFile(SERVER_READY)) return;
             connecting = true;
             String endpoint = System.getProperty("auram.dh.endpoint");
             ConnectScreen.startConnecting(title, client, ServerAddress.parseString(endpoint),
@@ -48,23 +52,22 @@ public final class DistantHorizonsClientSmoke {
         }
         var player = client.player;
         if (player == null || client.level == null || client.screen != null || !player.getAbilities().mayfly) return;
+        int flightY = client.level.getMaxBuildHeight() + DistantHorizonsSmoke.FLIGHT_CLEARANCE;
         if (started == 0) {
+            if (!player.getAbilities().flying || player.getY() < flightY) return;
             if (GLFW.glfwGetWindowAttrib(client.getWindow().getWindow(), GLFW.GLFW_VISIBLE) != GLFW.GLFW_FALSE) {
                 throw new AssertionError("DH fixture must run with a hidden client window");
             }
             started = System.nanoTime();
             startX = player.getX();
-            startY = Math.max(120, player.getY() + 12);
             startZ = player.getZ();
-            player.getAbilities().flying = true;
-            player.onUpdateAbilities();
         }
         double destinationX = startX + FLIGHT_BLOCKS;
-        if (ticks == STATIONARY_TICKS) phase = 1;
+        if (ticks == START_IDLE_TICKS) phase = 1;
         // Follow any server correction instead of resending a stale route coordinate.
         double nextX = phase == 0 ? startX : Math.min(destinationX, player.getX() + 1.25);
         player.setDeltaMovement(0, 0, 0);
-        player.setPos(nextX, Math.min(startY, player.getY() + 2.0), startZ);
+        player.setPos(nextX, flightY, startZ);
         if (phase != 0) {
             phase = nextX == destinationX ? 2 : 1;
             endTicks = phase == 2 ? endTicks + 1 : 0;
@@ -89,6 +92,9 @@ public final class DistantHorizonsClientSmoke {
         }
         SAMPLES.add(DistantHorizonsSmoke.csv(System.nanoTime() - started, ticks, phase,
                 position.x, position.z, loaded, visibleBuffers));
+        if (ticks % 200 == 0) {
+            System.out.printf("DH smoke tick %d phase %d position %s%n", ticks, phase, player.position());
+        }
         ticks++;
     }
 }

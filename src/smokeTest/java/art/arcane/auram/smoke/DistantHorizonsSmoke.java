@@ -6,6 +6,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameRules;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -26,6 +27,7 @@ public final class DistantHorizonsSmoke {
     public static final boolean SERVER = "dhpriority-server".equals(System.getProperty("auram.smoke"));
     public static final boolean CLIENT = "dhpriority-client".equals(System.getProperty("auram.smoke"));
     private static final boolean DEFER_DH = Boolean.getBoolean("auram.dh.defer");
+    static final int FLIGHT_CLEARANCE = 16;
     private static final Set<Queue> QUEUES = ConcurrentHashMap.newKeySet();
     private static final LongOpenHashSet ACTIVE = new LongOpenHashSet();
     private static final Long2ObjectOpenHashMap<Foreground> FOREGROUND = new Long2ObjectOpenHashMap<>();
@@ -74,6 +76,17 @@ public final class DistantHorizonsSmoke {
     @SubscribeEvent
     public static void started(ServerStartedEvent event) {
         if (SERVER) event.getServer().getGameRules().getRule(GameRules.RULE_SPAWN_RADIUS).set(0, event.getServer());
+    }
+
+    @SubscribeEvent
+    public static void joined(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!SERVER || !(event.getEntity() instanceof ServerPlayer player)
+                || !"AuramQA".equals(player.getGameProfile().getName())) return;
+        // Keep the same horizontal spawn and avoid testing collisions with mountaintops.
+        player.connection.teleport(player.getX(), player.serverLevel().getMaxBuildHeight() + FLIGHT_CLEARANCE,
+                player.getZ(), -90, 0);
+        player.getAbilities().flying = true;
+        player.onUpdateAbilities();
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)

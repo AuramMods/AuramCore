@@ -39,12 +39,17 @@ def parse_args():
     parser.add_argument("--full-client", action="store_true")
     parser.add_argument("--rate", required=True, type=int)
     parser.add_argument("--seed", type=int, default=104729)
+    parser.add_argument("--view-distance", type=int, default=4)
     parser.add_argument("--stationary-ticks", type=int, default=600)
+    parser.add_argument("--start-idle-ticks", type=int, help="Override the stationary interval before flight")
     parser.add_argument("--flight-blocks", type=int, default=800)
-    parser.add_argument("--warm", action="store_true", help="Measure a second launch with the same world and LOD caches")
+    warm = parser.add_mutually_exclusive_group()
+    warm.add_argument("--warm", action="store_true", help="Measure a second launch with this arm's world and LOD caches")
+    warm.add_argument("--warm-from", type=Path, help="Use a common completed fixture as the initial world and LOD caches")
     parser.add_argument("--wire-log", action="store_true", help="Enable Forge packet diagnostics for the fixture")
     parser.add_argument("--defer-dh", action="store_true", help="Try deferring new DH groups while foreground FULL is pending")
     parser.add_argument("--client-java-arg", action="append", default=[], help="Extra client JVM argument")
+    parser.add_argument("--server-java-arg", action="append", default=[], help="Extra server JVM argument")
     return parser.parse_args()
 
 
@@ -95,10 +100,10 @@ def prepare(args, server, client, port):
         f"server-ip=127.0.0.1\nserver-port={port}\n"
         "online-mode=false\nallow-flight=true\nlevel-type=minecraft:normal\n"
         "difficulty=peaceful\ngamemode=creative\nforce-gamemode=true\nspawn-protection=0\n"
-        f"level-seed={args.seed}\nmax-tick-time=-1\nview-distance=4\nsimulation-distance=4\n")
+        f"level-seed={args.seed}\nmax-tick-time=-1\nview-distance={args.view_distance}\nsimulation-distance=4\n")
     (client / "config/forge-client.toml").write_text("[client]\nshowLoadWarnings = false\n")
     (client / "options.txt").write_text(
-        "guiScale:2\nrenderDistance:4\nsimulationDistance:5\nmaxFps:30\n"
+        f"guiScale:2\nrenderDistance:{args.view_distance}\nsimulationDistance:5\nmaxFps:30\n"
         "onboardAccessibility:false\npauseOnLostFocus:false\ntutorialStep:none\nsoundCategory_master:0.0\n")
 
 
@@ -107,8 +112,11 @@ def start_client(args, game, log, endpoint):
     base = [arg for arg in base if not arg.startswith(("-Xm", "-XX:", "-javaagent:", "-Dauram."))]
     flags = ["-Xms1G", "-Xmx8G" if args.full_client else "-Xmx4G", "-XX:ActiveProcessorCount=4",
              "-Dauram.smoke=dhpriority-client", "-Dauram.smoke.hiddenWindow=true",
-             f"-Dauram.dh.endpoint={endpoint}", f"-Dauram.dh.stationaryTicks={args.stationary_ticks}",
+             "-Dauram.dh.waitForServer=true", f"-Dauram.dh.endpoint={endpoint}",
+             f"-Dauram.dh.stationaryTicks={args.stationary_ticks}",
              f"-Dauram.dh.flightBlocks={args.flight_blocks}"]
+    if args.start_idle_ticks is not None:
+        flags.append(f"-Dauram.dh.startIdleTicks={args.start_idle_ticks}")
     if args.wire_log:
         flags.append("-Dforge.logging.markers=NETWORK,NETWORK_PACKETS")
     flags.extend(args.client_java_arg)
@@ -212,7 +220,7 @@ def run(args, server, client, port, arm):
     result = args.work / arm
     result.mkdir()
     for directory, names in [(server, ["dh-server-ticks.csv", "dh-server-chunks.csv"]),
-                             (client, ["dh-client.csv", "dh-client-pass.txt"])]:
+                             (client, ["dh-client.csv", "dh-client-pass.txt", "dh-connect-ready"])]:
         for name in names:
             (directory / name).unlink(missing_ok=True)
     command = [args.server_java or args.java, "-Xms1G", "-Xmx8G" if args.server_template else "-Xmx4G",
@@ -221,6 +229,7 @@ def run(args, server, client, port, arm):
         command.append("-Dauram.dh.defer=true")
     if args.wire_log:
         command.append("-Dforge.logging.markers=NETWORK,NETWORK_PACKETS")
+    command.extend(args.server_java_arg)
     command += ["@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt", "nogui"]
     server_log, client_log = result / "server.log", result / "client.log"
     with server_log.open("w") as server_output, client_log.open("w") as client_output:
@@ -228,9 +237,10 @@ def run(args, server, client, port, arm):
                                      stdout=server_output, stderr=subprocess.STDOUT)
         player = None
         try:
-            wait_ready(server_log, dedicated)
             endpoint = args.endpoint or f"127.0.0.1:{port}"
             player = start_client(args, client, client_output, endpoint)
+            wait_ready(server_log, dedicated)
+            (client / "dh-connect-ready").touch()
             client_exit = player.wait(timeout=540)
             if client_exit != 0 or not (client / "dh-client-pass.txt").exists():
                 raise RuntimeError(f"Client did not finish route, exit {client_exit}")
@@ -249,7 +259,10 @@ def run(args, server, client, port, arm):
         shutil.copy2(server / name, result / name)
     shutil.copy2(client / "dh-client.csv", result / "dh-client.csv")
     metrics = summarize(result)
-    metrics.update(seed=args.seed, configured_rate=args.rate, server_core_sha256=hashlib.sha256(
+    with client_log.open(errors="replace") as log:
+        metrics["client_lod_update_errors"] = sum("Error while updating full data source" in line for line in log)
+    metrics.update(seed=args.seed, configured_rate=args.rate, view_distance=args.view_distance,
+        flight_blocks=args.flight_blocks, server_core_sha256=hashlib.sha256(
         (server / "mods/AuramCore.jar").read_bytes()).hexdigest(),
         server_lod_sections=lod_sections([server / "world/data/DistantHorizons.sqlite"]),
         client_lod_sections=lod_sections(client.glob("Distant_Horizons_server_data/*/*/DistantHorizons.sqlite")))
@@ -262,11 +275,20 @@ def run(args, server, client, port, arm):
 def main():
     args = parse_args()
     args.work = args.work.resolve()
-    with socket.socket() as sock:
-        sock.bind(("127.0.0.1", args.port or 0))
-        port = sock.getsockname()[1]
+    port = args.port
+    if port is None:
+        with socket.socket() as sock:
+            sock.bind(("127.0.0.1", 0))
+            port = sock.getsockname()[1]
     server, client = args.work / "server", args.work / "client"
     prepare(args, server, client, port)
+    if args.warm_from:
+        shutil.copytree(args.warm_from / "server/world", server / "world",
+                        ignore=shutil.ignore_patterns("playerdata", "session.lock"))
+        shutil.copytree(args.warm_from / "client/Distant_Horizons_server_data",
+                        client / "Distant_Horizons_server_data")
+        run(args, server, client, port, "warm")
+        return
     run(args, server, client, port, "cold")
     if args.warm:
         # Retain the world and both LOD caches, and spawn the test identity at the start again.
