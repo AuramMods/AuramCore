@@ -20,9 +20,9 @@ import java.util.function.BooleanSupplier;
 @Mixin(ChunkMap.class)
 public abstract class ChunkMapDemandMixin implements ForegroundChunkDemand {
     @Shadow @Final ServerLevel level;
-    @Shadow int viewDistance;
     @Shadow protected abstract ChunkHolder getVisibleChunkIfPresent(long pos);
 
+    @Unique private static final int NEARBY_CHUNK_RADIUS = 2;
     @Unique private volatile boolean auram$sampleRequested;
     @Unique private volatile boolean auram$playerChunksPending;
 
@@ -42,18 +42,15 @@ public abstract class ChunkMapDemandMixin implements ForegroundChunkDemand {
 
     @Unique
     private boolean auram$hasPendingPlayerChunk() {
-        int radius = viewDistance + 1;
         boolean spectatorsGenerate = level.getGameRules().getBoolean(GameRules.RULE_SPECTATORSGENERATECHUNKS);
         for (ServerPlayer player : level.players()) {
             if (player.isRemoved() || (player.isSpectator() && !spectatorsGenerate)) continue;
-            // Use the same tracked center and shape as ChunkMap's chunk delivery.
+            // Limit the guard to nearby chunks. The outer view can keep prefetching during flight.
             var center = player.getLastSectionPos();
-            for (int x = center.x() - radius; x <= center.x() + radius; x++) {
-                for (int z = center.z() - radius; z <= center.z() + radius; z++) {
-                    if (ChunkMap.isChunkInRange(x, z, center.x(), center.z(), viewDistance)) {
-                        ChunkHolder holder = getVisibleChunkIfPresent(ChunkPos.asLong(x, z));
-                        if (holder == null || holder.getTickingChunk() == null) return true;
-                    }
+            for (int x = center.x() - NEARBY_CHUNK_RADIUS; x <= center.x() + NEARBY_CHUNK_RADIUS; x++) {
+                for (int z = center.z() - NEARBY_CHUNK_RADIUS; z <= center.z() + NEARBY_CHUNK_RADIUS; z++) {
+                    ChunkHolder holder = getVisibleChunkIfPresent(ChunkPos.asLong(x, z));
+                    if (holder == null || holder.getTickingChunk() == null) return true;
                 }
             }
         }

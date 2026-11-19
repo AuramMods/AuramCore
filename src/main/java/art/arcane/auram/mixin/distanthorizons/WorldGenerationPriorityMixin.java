@@ -21,7 +21,6 @@ public abstract class WorldGenerationPriorityMixin {
     @Shadow public abstract int getWaitingTaskCount();
     @Shadow public abstract int getInProgressTaskCount();
 
-    @Unique private final DistantGenerationPriority auram$priority = new DistantGenerationPriority();
     @Unique private ForegroundChunkDemand auram$chunkDemand;
     @Unique private Method auram$readMode;
     @Unique private Object auram$modeEntry;
@@ -54,7 +53,7 @@ public abstract class WorldGenerationPriorityMixin {
             Object mode = auram$readMode.invoke(auram$modeEntry);
             if (mode instanceof Enum<?> value && value.name().equals("INTERNAL_SERVER")) {
                 boolean pending = auram$chunkDemand.auram$samplePlayerChunkDemand();
-                if (!ci.getReturnValueZ() && auram$priority.shouldDefer(pending, getInProgressTaskCount(), System.nanoTime())) {
+                if (!ci.getReturnValueZ() && DistantGenerationPriority.shouldDefer(pending, getInProgressTaskCount())) {
                     ci.setReturnValue(true);
                 }
             }
