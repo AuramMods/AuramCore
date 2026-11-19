@@ -14,6 +14,7 @@ import net.minecraft.nbt.TagParser;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundSetActionBarTextPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerFunctionManager;
@@ -33,8 +34,11 @@ public final class SelectorSmoke {
     public static void run(MinecraftServer server) throws Exception {
         ServerPlayer player = new ServerPlayer(server, server.overworld(),
                 new GameProfile(UUID.fromString("00000000-0000-0000-0000-000000000101"), "AuramSelectors"));
+        List<String> actionBars = new ArrayList<>();
         player.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player) {
-            @Override public void send(Packet<?> packet) { }
+            @Override public void send(Packet<?> packet) {
+                if (packet instanceof ClientboundSetActionBarTextPacket bar) actionBars.add(bar.getText().getString());
+            }
         };
         player.moveTo(8,-62,8,0,0);
         var players=(art.arcane.auram.smoke.mixin.PlayerListAccess)server.getPlayerList();
@@ -83,12 +87,16 @@ public final class SelectorSmoke {
             result.put("median_20_calls_ms",sorted[12]);result.put("p95_20_calls_ms",sorted[23]);
             result.put("batch_ms",times);result.put("traced_serializations",tracedSaves);
             result.put("trace_by_function",trace.metrics);
+            result.put("serializations_by_command", trace.serializationsByCommand);
             functions.add(result);
             LogUtils.getLogger().info("[AURAM SELECTORS] {} saves={} median={}ms",id,saves,sorted[12]);
         }
         Map<String,Object> result=new LinkedHashMap<>();
         result.put("semantic_comparisons",comparisons);result.put("functions",functions);
         result.put("scope","Installed datapacks, one live server player with tagged inventory and 32 armor stands; not a hosted-server speedup estimate.");
+        if (Boolean.getBoolean("auram.smoke.gunsOffhand")) {
+            result.put("guns_offhand", GunsOffhandSmoke.run(player, source, actionBars));
+        }
         Files.writeString(Path.of("selector-benchmark.json"),new GsonBuilder().setPrettyPrinting().create().toJson(result)+"\n");
     }
 
@@ -156,17 +164,21 @@ public final class SelectorSmoke {
 
     private static final class FunctionTrace implements ServerFunctionManager.TraceCallbacks {
         final Map<String,Map<String,Long>> metrics=new TreeMap<>();
+        final Map<String, Long> serializationsByCommand = new TreeMap<>();
         final Map<Integer,String> names=new HashMap<>();
-        long start,before;String active;
+        long start,before;String active, activeCommand;
         FunctionTrace(ResourceLocation root) { names.put(0,root.toString()); }
         public void onCommand(int depth,String command) {
             active=names.getOrDefault(depth,"unknown");start=System.nanoTime();before=SelectorProbe.value();
+            activeCommand = command;
         }
         private void finish(boolean error) {
             if(active==null) return;
             Map<String,Long> stats=metrics.computeIfAbsent(active,k->new TreeMap<>());
             stats.merge("commands",1L,Long::sum);stats.merge("nanos",System.nanoTime()-start,Long::sum);
-            stats.merge("entity_serializations",SelectorProbe.value()-before,Long::sum);
+            long serializations = SelectorProbe.value() - before;
+            stats.merge("entity_serializations", serializations, Long::sum);
+            if (serializations > 0) serializationsByCommand.merge(active + " " + activeCommand, serializations, Long::sum);
             if(error) stats.merge("command_errors",1L,Long::sum);
             active=null;
         }
@@ -174,6 +186,7 @@ public final class SelectorSmoke {
             if(active!=null) {
                 Map<String,Long> stats=metrics.computeIfAbsent(active,k->new TreeMap<>());
                 stats.put("result_hash",31*stats.getOrDefault("result_hash",0L)+31L*command.hashCode()+result);
+                stats.put("outcome_hash", 31 * stats.getOrDefault("outcome_hash", 0L) + result);
             }
             finish(false);
         }
