@@ -88,6 +88,7 @@ public class Auram {
         RecipeCache.load();
         modEventBus.register(this);
         context.registerConfig(ModConfig.Type.COMMON, AuramConfig.COMMON_SPEC);
+        context.registerConfig(ModConfig.Type.SERVER, AuramConfig.SERVER_SPEC);
         MinecraftForge.EVENT_BUS.register(new AuramCommands());
     } 
 

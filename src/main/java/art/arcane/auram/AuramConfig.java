@@ -6,11 +6,32 @@ import org.apache.commons.lang3.tuple.Pair;
 public class AuramConfig {
     public static final Common COMMON;
     public static final ForgeConfigSpec COMMON_SPEC;
+    private static final Pair<Server, ForgeConfigSpec> SERVER_CONFIG =
+            new ForgeConfigSpec.Builder().configure(Server::new);
+    public static final Server SERVER = SERVER_CONFIG.getLeft();
+    public static final ForgeConfigSpec SERVER_SPEC = SERVER_CONFIG.getRight();
 
     static {
         final Pair<Common, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(Common::new);
         COMMON_SPEC = specPair.getRight();
         COMMON = specPair.getLeft();
+    }
+
+    public static final class Server {
+        public final ForgeConfigSpec.BooleanValue surfaceMapEnabled;
+        public final ForgeConfigSpec.IntValue nearbyTilesPerSecond;
+        public final ForgeConfigSpec.DoubleValue backgroundTilesPerSecond;
+
+        private Server(ForgeConfigSpec.Builder builder) {
+            builder.push("surfaceMap");
+            surfaceMapEnabled = builder.comment("Build and serve shared JourneyMap surface tiles.")
+                    .define("enabled", true);
+            nearbyTilesPerSecond = builder.comment("Per-player tile uploads per second for the visible map.")
+                    .defineInRange("nearbyTilesPerSecond", 10, 1, 20);
+            backgroundTilesPerSecond = builder.comment("Per-player tile uploads per second outside the visible map.")
+                    .defineInRange("backgroundTilesPerSecond", 1.0, 0.05, 20.0);
+            builder.pop();
+        }
     }
 
     public static class Common {
