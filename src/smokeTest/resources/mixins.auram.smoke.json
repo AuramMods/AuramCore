@@ -37,6 +37,7 @@
     "HiddenWindowMixin",
     "SurfaceMapWireProbeMixin",
     "SurfaceMapReceptionProbeMixin",
+    "SurfaceMapRenderProbeMixin",
     "DhClientKeepAliveMixin",
     "DhJeiIndexingMixin",
     "TomeCopyProbeMixin",

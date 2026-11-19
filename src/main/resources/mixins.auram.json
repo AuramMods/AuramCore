@@ -57,6 +57,8 @@
   "client": [
     "akashictome.HudPreviewMixin",
     "journeymap.ImageHolderAccess",
+    "journeymap.FullscreenGridAccess",
+    "journeymap.MiniMapGridAccess",
     "journeymap.BaseMapTaskMixin",
     "journeymap.MapPlayerTaskMixin",
     "journeymap.MapStateMixin",

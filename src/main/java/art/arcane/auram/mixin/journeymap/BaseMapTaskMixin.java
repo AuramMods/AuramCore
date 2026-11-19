@@ -25,6 +25,7 @@ abstract class BaseMapTaskMixin {
             }
             var coordinates = chunk.getCoord();
             if (SurfaceMapClient.covered(region.dimension.location(), coordinates.x, coordinates.z)) {
+                chunk.setRendered(layer);
                 return false;
             }
         }

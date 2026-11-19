@@ -2,7 +2,9 @@ package art.arcane.auram.map.client;
 
 import art.arcane.auram.map.SurfaceMapView;
 import art.arcane.auram.map.SurfaceTile;
+import art.arcane.auram.mixin.journeymap.FullscreenGridAccess;
 import art.arcane.auram.mixin.journeymap.ImageHolderAccess;
+import art.arcane.auram.mixin.journeymap.MiniMapGridAccess;
 import com.mojang.blaze3d.platform.NativeImage;
 import journeymap.client.api.util.UIState;
 import journeymap.client.model.MapState;
@@ -27,16 +29,19 @@ final class JourneyMapSurface {
 
     static SurfaceMapView view(Minecraft minecraft, LocalPlayer player) {
         var dimension = player.level().dimension();
-        UIState state = minecraft.screen instanceof Fullscreen ? Fullscreen.uiState() : MiniMap.uiState();
-        if (state == null || !state.active || state.blockBounds == null || state.mapCenter == null
-                || !dimension.equals(state.dimension)) {
+        boolean fullscreen = minecraft.screen instanceof Fullscreen;
+        var grid = fullscreen ? FullscreenGridAccess.auram$grid() : MiniMapGridAccess.auram$grid();
+        UIState state = grid.getUIState();
+        var box = grid.getBlockBounds();
+        if (state == null || !state.active || box == null || !dimension.equals(state.dimension)) {
             int radius = Math.max(16, minecraft.options.getEffectiveRenderDistance() * 16);
             int x = player.getBlockX();
             int z = player.getBlockZ();
             return bounds(dimension.location(), x, z, x - radius, z - radius, x + radius, z + radius);
         }
-        var box = state.blockBounds;
-        return bounds(dimension.location(), state.mapCenter.getX(), state.mapCenter.getZ(),
+        // UIState equality excludes movement. Use the live grid to follow panning at the same zoom.
+        return bounds(dimension.location(), (int) Math.floor(grid.getCenterBlockX()),
+                (int) Math.floor(grid.getCenterBlockZ()),
                 (int) Math.floor(box.minX), (int) Math.floor(box.minZ),
                 (int) Math.ceil(box.maxX) - 1, (int) Math.ceil(box.maxZ) - 1);
     }
