@@ -166,6 +166,11 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-terrain-pass.txt"), "PASS structure terrain query trace\n");
                 return;
             }
+            if (smokeMode.equals("amlwater") || smokeMode.equals("amlwaterreference")) {
+                AmlWaterSmoke.run(event.getServer(), smokeMode.equals("amlwaterreference"));
+                Files.writeString(Path.of("auram-" + smokeMode + "-pass.txt"), "PASS AML affinity, health and pending Nether checks");
+                return;
+            }
             if (smokeMode.equals("surfaceterrain")) {
                 SurfaceTerrainSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-surfaceterrain-pass.txt"), "PASS four-dimension surface and FULL chunk fixture");

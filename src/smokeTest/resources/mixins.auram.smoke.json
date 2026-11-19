@@ -9,6 +9,7 @@
     "DimDoorsCollisionProbeMixin",
     "EntitySupportProbeMixin",
     "EntityFluidProbeMixin",
+    "EntityBlockPositionProbe",
     "BiomeFillProbeMixin",
     "BiomeSyncProbeMixin",
     "NoiseColumnProbeMixin",
