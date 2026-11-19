@@ -35,7 +35,9 @@ def parse_args():
     parser.add_argument("--launcher-cache", required=True, type=Path)
     parser.add_argument("--work", required=True, type=Path)
     parser.add_argument("--server-template", type=Path)
-    parser.add_argument("--server-core", type=Path, help="Override the test server's AuramCore jar for A/B comparison")
+    parser.add_argument("--server-core", type=Path, help="Pin the server's AuramCore jar for A/B comparison")
+    parser.add_argument("--client-core", type=Path, help="Pin the same client AuramCore jar across replay arms")
+    parser.add_argument("--smoke-jar", type=Path, help="Pin the same measurement jar across replay arms")
     parser.add_argument("--full-client", action="store_true")
     parser.add_argument("--client-timeout", type=int, default=540, help="Seconds allowed for client startup and replay")
     parser.add_argument("--rate", required=True, type=int)
@@ -83,9 +85,10 @@ def prepare(args, server, client, port):
                 continue
             if source or jar.name.startswith(("DistantHorizons-", "ProjectE-", "Patchouli-", "AkashicTome-")):
                 shutil.copy2(jar, target / "mods" / jar.name)
-        core = (args.server_core if target == server else None) or ROOT / f"build/libs/auram-{version}-all.jar"
+        core = (args.server_core if target == server else args.client_core) or ROOT / f"build/libs/auram-{version}-all.jar"
+        smoke = args.smoke_jar or ROOT / f"build/libs/auram-{version}-smoke-test.jar"
         shutil.copy2(core, target / "mods/AuramCore.jar")
-        shutil.copy2(ROOT / f"build/libs/auram-{version}-smoke-test.jar", target / "mods/AuramSmoke.jar")
+        shutil.copy2(smoke, target / "mods/AuramSmoke.jar")
         config = target / "config"
         config.mkdir(exist_ok=True)
         (config / "fml.toml").write_text("earlyWindowControl = false\nversionCheck = false\n")
@@ -263,8 +266,10 @@ def run(args, server, client, port, arm):
     with client_log.open(errors="replace") as log:
         metrics["client_lod_update_errors"] = sum("Error while updating full data source" in line for line in log)
     metrics.update(seed=args.seed, configured_rate=args.rate, view_distance=args.view_distance,
-        flight_blocks=args.flight_blocks, server_core_sha256=hashlib.sha256(
-        (server / "mods/AuramCore.jar").read_bytes()).hexdigest(),
+        flight_blocks=args.flight_blocks,
+        server_core_sha256=hashlib.sha256((server / "mods/AuramCore.jar").read_bytes()).hexdigest(),
+        client_core_sha256=hashlib.sha256((client / "mods/AuramCore.jar").read_bytes()).hexdigest(),
+        smoke_jar_sha256=hashlib.sha256((server / "mods/AuramSmoke.jar").read_bytes()).hexdigest(),
         server_lod_sections=lod_sections([server / "world/data/DistantHorizons.sqlite"]),
         client_lod_sections=lod_sections(client.glob("Distant_Horizons_server_data/*/*/DistantHorizons.sqlite")))
     (result / "summary.json").write_text(json.dumps(metrics, indent=2) + "\n")
