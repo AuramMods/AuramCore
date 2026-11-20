@@ -16,6 +16,8 @@
     "BiomeFillProbeMixin",
     "BiomeSyncProbeMixin",
     "AquiferSurfaceProbeMixin",
+    "AquiferSharedHitProbeMixin",
+    "BlenderFactory",
     "AquiferNoiseStageProbeMixin",
     "AquiferStructureStageProbeMixin",
     "NoiseColumnProbeMixin",

@@ -16,7 +16,8 @@ import java.util.concurrent.atomic.LongAdder;
 
 /** Observes completed vanilla scans without substituting their results. */
 public final class AquiferReuseProbe {
-    public static final boolean ENABLED = Boolean.getBoolean("auram.smoke.aquiferReuse");
+    public static final boolean VERIFY_HEIGHTS = Boolean.getBoolean("auram.smoke.verifyAquiferHeights");
+    public static final boolean ENABLED = VERIFY_HEIGHTS || Boolean.getBoolean("auram.smoke.aquiferReuse");
     public static final boolean TIME_STAGES = ENABLED || Boolean.getBoolean("auram.smoke.stageTimings");
     private static final int SLOTS = 1 << 17;
     private static final ThreadMXBean THREADS = ManagementFactory.getThreadMXBean();
@@ -68,6 +69,9 @@ public final class AquiferReuseProbe {
         final LongAdder sameWorker = new LongAdder();
         final LongAdder differentWorker = new LongAdder();
         final LongAdder mismatches = new LongAdder();
+        final LongAdder sharedLookups = new LongAdder();
+        final LongAdder sharedHits = new LongAdder();
+        final LongAdder verifiedHeights = new LongAdder();
         final LongAdder cpuSamples = new LongAdder();
         final LongAdder scanNanos = new LongAdder();
     }
@@ -115,6 +119,27 @@ public final class AquiferReuseProbe {
         }
     }
 
+    public static void sharedLookup(boolean hit) {
+        Scope scope = CURRENT.get();
+        if (scope == null) return;
+        Stats stats = scope.run.stats.get(scope.stage);
+        stats.sharedLookups.increment();
+        if (hit) stats.sharedHits.increment();
+    }
+
+    static long sharedLookups(Scope scope) {
+        return scope.run.stats.get(scope.stage).sharedLookups.sum();
+    }
+
+    public static void verifiedHeight(Scope scope) {
+        scope.run.stats.get(scope.stage).verifiedHeights.increment();
+    }
+
+    public static boolean fillingBiomes() {
+        Scope scope = CURRENT.get();
+        return scope != null && scope.stage() == Stage.BIOMES;
+    }
+
     public static void beginColdRun() {
         active = COLD;
     }
@@ -122,7 +147,7 @@ public final class AquiferReuseProbe {
     public static void write(Path path) throws IOException {
         if (!TIME_STAGES) return;
         StringBuilder csv = new StringBuilder("phase,stage,tasks,stage_cpu_ns,local_hits,scans,excluded,"
-                + "same_worker_repeats,cross_worker_repeats,mismatches,timed_scans,scan_cpu_ns\n");
+                + "same_worker_repeats,cross_worker_repeats,mismatches,timed_scans,scan_cpu_ns,verified_heights,shared_lookups,shared_hits\n");
         append(csv, "startup", STARTUP);
         append(csv, "cold", COLD);
         Files.writeString(path, csv);
@@ -134,6 +159,8 @@ public final class AquiferReuseProbe {
                 .append(stats.localHits.sum()).append(',').append(stats.scans.sum()).append(',')
                 .append(stats.excluded.sum()).append(',').append(stats.sameWorker.sum()).append(',')
                 .append(stats.differentWorker.sum()).append(',').append(stats.mismatches.sum()).append(',')
-                .append(stats.cpuSamples.sum()).append(',').append(stats.scanNanos.sum()).append('\n'));
+                .append(stats.cpuSamples.sum()).append(',').append(stats.scanNanos.sum()).append(',')
+                .append(stats.verifiedHeights.sum()).append(',').append(stats.sharedLookups.sum()).append(',')
+                .append(stats.sharedHits.sum()).append('\n'));
     }
 }

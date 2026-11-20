@@ -1,0 +1,557 @@
+{
+  "pack_commit": "bbd803b152e17435fc21f1f573da2a386d98b490",
+  "control_core": "1.0.20",
+  "environment": "Four-vCPU Lima ARM64 Ubuntu 24.04 VM, Temurin 17.0.21, guest ext4 world storage",
+  "dimension": "minecraft:overworld",
+  "world_seed": 104729,
+  "cold_origin_chunk": [
+    88,
+    88
+  ],
+  "cold_full_chunks": 48,
+  "mod_jar_count": 482,
+  "order": [
+    "aquifer-r2-b1",
+    "aquifer-r2-a1",
+    "aquifer-r2-a2",
+    "aquifer-r2-b2"
+  ],
+  "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+  "jvm_command": [
+    "/tmp/auram-bench-vm-java",
+    "-Xms4G",
+    "-Xmx10G",
+    "-XX:ActiveProcessorCount=4",
+    "-Dauram.smoke.stageTimings=true",
+    "-Dauram.smoke.dimension=minecraft:overworld",
+    "-XX:FlightRecorderOptions=stackdepth=128",
+    "-XX:StartFlightRecording=filename=worldgen.jfr,settings=profile,dumponexit=true,maxsize=128m",
+    "-Dauram.smoke=worldgen-bench",
+    "-Dauram.smoke.identityCandidate=false",
+    "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+    "nogui"
+  ],
+  "runs": {
+    "aquifer-r2-a1": {
+      "runtime": "/private/tmp/lima/auram-bench/worldgen-aquifer-r2-a1/auram-worldgen-bench-8tuxra_0",
+      "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+      "spawn_preparation_s": 0.036825022,
+      "level_to_spawn_ready_s": 81.106566786,
+      "cold_elapsed_s": 88.159818595,
+      "cold_full_chunks": 48,
+      "cold_full_chunks_per_s": 0.5444657301361816,
+      "chunk_ready_p50_ms": 7038.828891,
+      "chunk_ready_p95_ms": 69949.68147,
+      "tick_p95_ms": 10.458628,
+      "stages": {
+        "startup/STARTS": {
+          "tasks": 529,
+          "stage_cpu_ns": 30685973912,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/NOISE": {
+          "tasks": 25,
+          "stage_cpu_ns": 4880040262,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/CARVERS": {
+          "tasks": 25,
+          "stage_cpu_ns": 1414163949,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/BIOMES": {
+          "tasks": 49,
+          "stage_cpu_ns": 1597178459,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/SURFACE": {
+          "tasks": 25,
+          "stage_cpu_ns": 590843830,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/FEATURES": {
+          "tasks": 9,
+          "stage_cpu_ns": 1174689133,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/STARTS": {
+          "tasks": 1091,
+          "stage_cpu_ns": 49300382975,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/NOISE": {
+          "tasks": 176,
+          "stage_cpu_ns": 40892853922,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/CARVERS": {
+          "tasks": 176,
+          "stage_cpu_ns": 9508201717,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/BIOMES": {
+          "tasks": 240,
+          "stage_cpu_ns": 9314765835,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/SURFACE": {
+          "tasks": 176,
+          "stage_cpu_ns": 3494215705,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/FEATURES": {
+          "tasks": 120,
+          "stage_cpu_ns": 4208786054,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        }
+      }
+    },
+    "aquifer-r2-b1": {
+      "runtime": "/private/tmp/lima/auram-bench/worldgen-aquifer-r2-b1/auram-worldgen-bench-6621zrjx",
+      "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+      "spawn_preparation_s": 0.012732011,
+      "level_to_spawn_ready_s": 59.08653133,
+      "cold_elapsed_s": 98.532059697,
+      "cold_full_chunks": 48,
+      "cold_full_chunks_per_s": 0.48715108714469973,
+      "chunk_ready_p50_ms": 2845.831568,
+      "chunk_ready_p95_ms": 90356.173148,
+      "tick_p95_ms": 25.509804,
+      "stages": {
+        "startup/STARTS": {
+          "tasks": 529,
+          "stage_cpu_ns": 17882308545,
+          "shared_lookups": 20875,
+          "shared_hits": 16210
+        },
+        "startup/NOISE": {
+          "tasks": 25,
+          "stage_cpu_ns": 2494193516,
+          "shared_lookups": 3977,
+          "shared_hits": 3848
+        },
+        "startup/CARVERS": {
+          "tasks": 25,
+          "stage_cpu_ns": 592084783,
+          "shared_lookups": 1490,
+          "shared_hits": 1423
+        },
+        "startup/BIOMES": {
+          "tasks": 49,
+          "stage_cpu_ns": 3166865440,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/SURFACE": {
+          "tasks": 25,
+          "stage_cpu_ns": 547589080,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/FEATURES": {
+          "tasks": 9,
+          "stage_cpu_ns": 896275559,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/STARTS": {
+          "tasks": 1040,
+          "stage_cpu_ns": 51165534070,
+          "shared_lookups": 37663,
+          "shared_hits": 27932
+        },
+        "cold/NOISE": {
+          "tasks": 176,
+          "stage_cpu_ns": 19312538535,
+          "shared_lookups": 29505,
+          "shared_hits": 28086
+        },
+        "cold/CARVERS": {
+          "tasks": 176,
+          "stage_cpu_ns": 2996900165,
+          "shared_lookups": 8736,
+          "shared_hits": 8277
+        },
+        "cold/BIOMES": {
+          "tasks": 240,
+          "stage_cpu_ns": 9030979396,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/SURFACE": {
+          "tasks": 176,
+          "stage_cpu_ns": 3380088750,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/FEATURES": {
+          "tasks": 120,
+          "stage_cpu_ns": 4105078161,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        }
+      }
+    },
+    "aquifer-r2-a2": {
+      "runtime": "/private/tmp/lima/auram-bench/worldgen-aquifer-r2-a2/auram-worldgen-bench-a8shbqxz",
+      "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+      "spawn_preparation_s": 0.013597299,
+      "level_to_spawn_ready_s": 71.376535916,
+      "cold_elapsed_s": 158.746518199,
+      "cold_full_chunks": 48,
+      "cold_full_chunks_per_s": 0.3023688364605805,
+      "chunk_ready_p50_ms": 7571.306928,
+      "chunk_ready_p95_ms": 136424.73041,
+      "tick_p95_ms": 14.680091,
+      "stages": {
+        "startup/STARTS": {
+          "tasks": 529,
+          "stage_cpu_ns": 26007619086,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/NOISE": {
+          "tasks": 25,
+          "stage_cpu_ns": 5806397483,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/CARVERS": {
+          "tasks": 25,
+          "stage_cpu_ns": 1760168590,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/BIOMES": {
+          "tasks": 49,
+          "stage_cpu_ns": 2960622747,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/SURFACE": {
+          "tasks": 25,
+          "stage_cpu_ns": 556843178,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/FEATURES": {
+          "tasks": 9,
+          "stage_cpu_ns": 1688557407,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/STARTS": {
+          "tasks": 1091,
+          "stage_cpu_ns": 95141640262,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/NOISE": {
+          "tasks": 176,
+          "stage_cpu_ns": 37950467489,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/CARVERS": {
+          "tasks": 176,
+          "stage_cpu_ns": 8759488322,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/BIOMES": {
+          "tasks": 240,
+          "stage_cpu_ns": 9627952527,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/SURFACE": {
+          "tasks": 176,
+          "stage_cpu_ns": 3296583177,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/FEATURES": {
+          "tasks": 120,
+          "stage_cpu_ns": 4371215120,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        }
+      }
+    },
+    "aquifer-r2-b2": {
+      "runtime": "/private/tmp/lima/auram-bench/worldgen-aquifer-r2-b2/auram-worldgen-bench-lp6q87x_",
+      "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+      "spawn_preparation_s": 0.011496506,
+      "level_to_spawn_ready_s": 44.018119835,
+      "cold_elapsed_s": 157.597507412,
+      "cold_full_chunks": 48,
+      "cold_full_chunks_per_s": 0.30457334502452366,
+      "chunk_ready_p50_ms": 8166.618133,
+      "chunk_ready_p95_ms": 136529.705669,
+      "tick_p95_ms": 39.055057,
+      "stages": {
+        "startup/STARTS": {
+          "tasks": 529,
+          "stage_cpu_ns": 14252210147,
+          "shared_lookups": 20875,
+          "shared_hits": 16208
+        },
+        "startup/NOISE": {
+          "tasks": 25,
+          "stage_cpu_ns": 2792825584,
+          "shared_lookups": 3963,
+          "shared_hits": 3827
+        },
+        "startup/CARVERS": {
+          "tasks": 25,
+          "stage_cpu_ns": 669267332,
+          "shared_lookups": 1500,
+          "shared_hits": 1428
+        },
+        "startup/BIOMES": {
+          "tasks": 49,
+          "stage_cpu_ns": 3169911342,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/SURFACE": {
+          "tasks": 25,
+          "stage_cpu_ns": 610560245,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "startup/FEATURES": {
+          "tasks": 9,
+          "stage_cpu_ns": 1059159418,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/STARTS": {
+          "tasks": 1040,
+          "stage_cpu_ns": 69375802006,
+          "shared_lookups": 36987,
+          "shared_hits": 27279
+        },
+        "cold/NOISE": {
+          "tasks": 176,
+          "stage_cpu_ns": 40836767742,
+          "shared_lookups": 29508,
+          "shared_hits": 28163
+        },
+        "cold/CARVERS": {
+          "tasks": 176,
+          "stage_cpu_ns": 6388234950,
+          "shared_lookups": 8732,
+          "shared_hits": 8282
+        },
+        "cold/BIOMES": {
+          "tasks": 240,
+          "stage_cpu_ns": 21536506929,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/SURFACE": {
+          "tasks": 176,
+          "stage_cpu_ns": 6771418154,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        "cold/FEATURES": {
+          "tasks": 120,
+          "stage_cpu_ns": 7964955206,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        }
+      }
+    }
+  },
+  "full_pack_saved_chunk_comparisons": {
+    "stock_a1_vs_stock_a2": {
+      "compared_blocks": 13369344,
+      "differing_blocks": 45426,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "bde612fb8d50a9f81c602988714c5df390e734985d9ee6fbfb96c2b256e6aa31",
+        "c041cb7bc9e3a0c00227e7bb32c242faf0a8fdfaf1a3bd637a91995c12b4ca59"
+      ],
+      "compared_chunks": 48,
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 25,
+      "chunks_with_fluid_tick_differences_count": 0,
+      "chunks_with_structure_start_differences_count": 0
+    },
+    "stock_a1_vs_candidate_b1": {
+      "compared_blocks": 13369344,
+      "differing_blocks": 55127,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "bde612fb8d50a9f81c602988714c5df390e734985d9ee6fbfb96c2b256e6aa31",
+        "a100d47d94de37d52923c5f7c2f21f061791b607798fc50abd3bdec167d97d4d"
+      ],
+      "compared_chunks": 48,
+      "chunks_with_structure_start_differences": [
+        [
+          93,
+          91
+        ]
+      ],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 31,
+      "chunks_with_fluid_tick_differences_count": 0,
+      "chunks_with_structure_start_differences_count": 1
+    },
+    "stock_a1_vs_candidate_b2": {
+      "compared_blocks": 13369344,
+      "differing_blocks": 24726,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "bde612fb8d50a9f81c602988714c5df390e734985d9ee6fbfb96c2b256e6aa31",
+        "8e90252cd561bbdcff6f38b9fad082aaa176c1f1e4a912ca09baf4147376c4e1"
+      ],
+      "compared_chunks": 48,
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "chunks_with_fluid_tick_differences_count": 0,
+      "chunks_with_structure_start_differences_count": 0
+    }
+  },
+  "cold_jfr_classified_sample_counts": {
+    "a1": {
+      "Better Caves inclusive": 715,
+      "Better Caves with preliminary height": 445,
+      "preliminary height inclusive": 3115,
+      "total sampled": 7087,
+      "worldgen stack": 6750,
+      "worldgen-worker": 6854
+    },
+    "b1": {
+      "Better Caves inclusive": 311,
+      "Better Caves with preliminary height": 20,
+      "preliminary height inclusive": 591,
+      "total sampled": 5153,
+      "worldgen stack": 4789,
+      "worldgen-worker": 4921
+    },
+    "a2": {
+      "Better Caves inclusive": 738,
+      "Better Caves with preliminary height": 445,
+      "preliminary height inclusive": 4038,
+      "total sampled": 9260,
+      "worldgen stack": 8711,
+      "worldgen-worker": 8893
+    },
+    "b2": {
+      "Better Caves inclusive": 401,
+      "Better Caves with preliminary height": 33,
+      "preliminary height inclusive": 704,
+      "structure starts + preliminary height": 614,
+      "structure starts inclusive": 1125,
+      "total sampled": 5739,
+      "worldgen stack": 5206,
+      "worldgen-worker": 5342
+    }
+  },
+  "minimal_saved_world_with_height_oracle": {
+    "mods": [
+      "tectonic",
+      "lithostitched",
+      "bettercaves",
+      "ksyxis",
+      "projecte"
+    ],
+    "instrumentation": "Every observed preliminary surface sample was recomputed. This replay times the diagnostics too.",
+    "runs": [
+      {
+        "runtime": "/private/tmp/lima/auram-bench/worldgen-saved-aquifer-a1/auram-worldgen-bench-fh9vctrx",
+        "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+        "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+        "verified_heights": 23233,
+        "height_mismatches": 0
+      },
+      {
+        "runtime": "/private/tmp/lima/auram-bench/worldgen-saved-aquifer-b1/auram-worldgen-bench-k7erp_a4",
+        "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+        "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+        "verified_heights": 23233,
+        "height_mismatches": 0
+      }
+    ],
+    "saved_chunks": {
+      "compared_blocks": 1572864,
+      "differing_blocks": 128,
+      "differing_chunks": 4,
+      "canonical_block_fingerprints": [
+        "0ad5c0e7784b6c791f45c2599efb98a1c8630a871675579e551fa1d793637a93",
+        "a18e9cddee39f5d6297b25617bdf6b1de14e20f5f52a003de1b49a32acdf126e"
+      ],
+      "compared_chunks": 16,
+      "chunks_with_biome_differences": [],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": []
+    },
+    "largest_block_changes": [
+      {
+        "first": {
+          "Name": "minecraft:andesite"
+        },
+        "second": {
+          "Name": "minecraft:granite"
+        },
+        "count": 46
+      },
+      {
+        "first": {
+          "Name": "minecraft:andesite"
+        },
+        "second": {
+          "Name": "minecraft:dripstone_block"
+        },
+        "count": 18
+      },
+      {
+        "first": {
+          "Name": "minecraft:stone"
+        },
+        "second": {
+          "Name": "minecraft:dripstone_block"
+        },
+        "count": 15
+      },
+      {
+        "first": {
+          "Name": "minecraft:dripstone_block"
+        },
+        "second": {
+          "Name": "minecraft:deepslate",
+          "Properties": {
+            "axis": "y"
+          }
+        },
+        "count": 10
+      },
+      {
+        "first": {
+          "Name": "minecraft:dirt"
+        },
+        "second": {
+          "Name": "minecraft:dripstone_block"
+        },
+        "count": 7
+      }
+    ]
+  }
+}

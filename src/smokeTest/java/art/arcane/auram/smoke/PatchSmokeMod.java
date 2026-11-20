@@ -187,6 +187,11 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-surfacejitter-pass.txt"), "PASS raw biome corners, parallel cache isolation and chunk generation");
                 return;
             }
+            if (smokeMode.equals("aquiferparity")) {
+                AquiferHeightParitySmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-aquiferparity-pass.txt"), "PASS seeded preliminary heights with clipped noise settings");
+                return;
+            }
             if (smokeMode.equals("lithostarts")) {
                 LithoStartParitySmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-lithostarts-pass.txt"), "PASS seeded Lithostitched start positions, pieces and RNG");

@@ -34,3 +34,36 @@ This initial run used a packed coordinate hash that made adjacent diagonals coll
 The corrected probe completed 48 cold FULL targets and recorded 65.02 s of preliminary scan CPU. It observed 36,617 repeat scans out of 47,369 in structure starts, 27,549 out of 29,502 in noise fill, and 8,334 out of 8,738 in carving. The repeat rates were 77%, 93%, and 95%. Carving and noise fill saw most repeat scans last computed by a different worker. All repeat heights agreed. The largest remaining opportunities are shared by the three stages.
 
 Comparing saved output from both original-jar runs found 42,770 differing blocks out of 13,369,344, and biome differences in 25 of 48 chunks. All saved structure starts and fluid ticks agreed. The exact height oracle and deterministic target-specific fixtures supplement comparison of the full pack.
+
+## Exact aquifer surface-height reuse
+
+The cache stores integer preliminary heights in a bounded table owned by the seeded `RandomState`. Each sampler uses its own noise graph and local caches. Reuse requires enabled aquifers, an unblended sampler, matching effective height settings, and a supported preliminary density graph.
+
+Use the same hashed smoke jar and four-CPU settings on both arms. The oracle explicitly recomputes every observed preliminary height and should run separately from throughput measurement:
+
+```sh
+python3 tools/performance_smoke.py --no-build --mode aquiferparity \
+  --java /path/to/java17 --libraries /path/to/forge-libraries \
+  --baseline-jar /path/to/core-variant.jar --smoke-jar /path/to/smoke.jar \
+  --with-mod tectonic --with-mod lithostitched --no-mixin-export \
+  --java-arg=-XX:ActiveProcessorCount=4 --java-arg=-Dauram.smoke.verifyAquiferHeights=true
+```
+
+Compare `aquifer-parity.txt` for the seeded height fingerprint, `aquifer-fallback-parity.txt` for blended and unsupported sampler cases, and `worldgen-stage-cpu.csv` for lookups, hits, and verified heights. For an independent saved-world replay, use `worldgen-bench` with the same mods plus `bettercaves` and `ksyxis`. Keep the oracle enabled on both variants and compare the saved region files.
+
+The full-pack run order was candidate, control, control, candidate. All runs used seed 104729, 48 cold FULL targets, and the same four-CPU limits and instrumentation.
+
+| Run | World load to spawn-ready (s) | Cold FULL chunks/s | p95 chunk-ready (s) | Cold starts CPU (s) | Cold noise CPU (s) | Cold carving CPU (s) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Control A1 | 81.11 | 0.544 | 69.95 | 49.30 | 40.89 | 9.51 |
+| Candidate B1 | 59.09 | 0.487 | 90.36 | 51.17 | 19.31 | 3.00 |
+| Control A2 | 71.38 | 0.302 | 136.42 | 95.14 | 37.95 | 8.76 |
+| Candidate B2 | 44.02 | 0.305 | 136.53 | 69.38 | 40.84 | 6.39 |
+
+World load to spawn-ready improved by 22.02 and 27.36 seconds. The same 529 startup structure tasks used 30.69 and 26.01 seconds of worker CPU on the controls and 17.88 and 14.25 seconds on the candidates. Cold carving CPU improved in each pair. Cold throughput, p95 and cold noise CPU varied across pairs. The candidate shared cache hit 73–74% of cold start lookups and 94–96% of cold noise and carving lookups.
+
+The two identical full-pack controls yielded 45,426 block differences across 13,369,344 positions, and biome differences in 25 of 48 chunks. Their structure starts and fluid ticks matched. The first full-pack candidate replay differed in 55,127 block states and 31 biome palettes against the first control. The Trek fort at chunk (93, 91) was present in both controls. At its projected start (1480, 80, 1463), the saved biome was `biomesoplenty:field` in the controls and `environmental:pine_barrens` in the first candidate. The fort's biome tag admits the field and excludes pine barrens. The second candidate matched every saved biome, structure start, and fluid tick from the first control, with 24,726 block differences. The fixture option `-Dauram.smoke.orderBlueprintSlices=true` can hold the order of Blueprint's weighted biome slices fixed across a separate full-pack replay.
+
+The minimal fixture with Tectonic, Lithostitched and Better Caves agreed with the uncached oracle on 23,233 height checks in each arm. All 16 saved biome palettes, structure starts and fluid tick lists matched. The 128 block-state differences out of 1,572,864 positions were concentrated in stone variants, dripstone, ore and foliage. The separate direct fallback replay matched three seeds and confirmed zero shared lookups for the clipped height range, legacy terrain blending and an unfamiliar Y-dependent density function.
+
+The cold JFR recordings contained 715 and 738 Better Caves stack samples across the controls and 311 and 401 across the candidates. Preliminary height queries accounted for 445 and 445 control samples and 20 and 33 candidate samples. The residual samples were dominated by Better Caves noise evaluation. The overlap accounts for the observed reduction without an independent carver change.

@@ -1,0 +1,207 @@
+{
+  "seeds": [
+    104729,
+    17,
+    1907
+  ],
+  "effective_height_ranges": 2,
+  "runs": {
+    "aquifer-parity-a1": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-aquifer-parity-a1/auram-aquiferparity-zscmlxq5",
+      "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "jvm_command": [
+        "/tmp/auram-bench-vm-java",
+        "-Xms1G",
+        "-Xmx4G",
+        "-XX:ActiveProcessorCount=4",
+        "-Dauram.smoke.verifyAquiferHeights=true",
+        "-Dauram.smoke=aquiferparity",
+        "-Dauram.smoke.identityCandidate=false",
+        "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+        "nogui"
+      ],
+      "mods": {
+        "lithostitched": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lithostitched-forge-1.20.1-1.4.11.jar",
+          "sha256": "c19a5a36c0e6cb3782cf7ca5b9648fb1bce5fc41fd737bed423a1f4971bccf75"
+        },
+        "projecte": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+          "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+        },
+        "tectonic": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/tectonic-3.0.17-forge-1.20.1.jar",
+          "sha256": "c6de479b27cf090510de3f029918afc9fe17226981bd703e0002f7a25f4d8969"
+        }
+      },
+      "height_queries": 11025,
+      "fingerprint": "8fcf7b1ae9b043b77a3ebbc1fef35227f1bbd2e370df2d5b04134bef69184dd1",
+      "stage_cpu": [
+        {
+          "phase": "startup",
+          "stage": "STARTS",
+          "tasks": 529,
+          "stage_cpu_ns": 754155266,
+          "local_hits": 491,
+          "scans": 784,
+          "excluded": 0,
+          "same_worker_repeats": 128,
+          "cross_worker_repeats": 36,
+          "mismatches": 0,
+          "timed_scans": 784,
+          "scan_cpu_ns": 59174730,
+          "verified_heights": 784,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        {
+          "phase": "startup",
+          "stage": "NOISE",
+          "tasks": 34,
+          "stage_cpu_ns": 2799772171,
+          "local_hits": 4174,
+          "scans": 13968,
+          "excluded": 0,
+          "same_worker_repeats": 8276,
+          "cross_worker_repeats": 2051,
+          "mismatches": 0,
+          "timed_scans": 13968,
+          "scan_cpu_ns": 524131256,
+          "verified_heights": 13968,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        },
+        {
+          "phase": "startup",
+          "stage": "CARVERS",
+          "tasks": 25,
+          "stage_cpu_ns": 197930788,
+          "local_hits": 3665,
+          "scans": 802,
+          "excluded": 0,
+          "same_worker_repeats": 172,
+          "cross_worker_repeats": 471,
+          "mismatches": 0,
+          "timed_scans": 802,
+          "scan_cpu_ns": 44162873,
+          "verified_heights": 802,
+          "shared_lookups": 0,
+          "shared_hits": 0
+        }
+      ]
+    },
+    "aquifer-parity-b1": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-aquifer-parity-b1/auram-aquiferparity-f_b5c02a",
+      "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "jvm_command": [
+        "/tmp/auram-bench-vm-java",
+        "-Xms1G",
+        "-Xmx4G",
+        "-XX:ActiveProcessorCount=4",
+        "-Dauram.smoke.verifyAquiferHeights=true",
+        "-Dauram.smoke=aquiferparity",
+        "-Dauram.smoke.identityCandidate=false",
+        "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+        "nogui"
+      ],
+      "mods": {
+        "lithostitched": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/lithostitched-forge-1.20.1-1.4.11.jar",
+          "sha256": "c19a5a36c0e6cb3782cf7ca5b9648fb1bce5fc41fd737bed423a1f4971bccf75"
+        },
+        "projecte": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+          "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+        },
+        "tectonic": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/tectonic-3.0.17-forge-1.20.1.jar",
+          "sha256": "c6de479b27cf090510de3f029918afc9fe17226981bd703e0002f7a25f4d8969"
+        }
+      },
+      "height_queries": 11025,
+      "fingerprint": "8fcf7b1ae9b043b77a3ebbc1fef35227f1bbd2e370df2d5b04134bef69184dd1",
+      "stage_cpu": [
+        {
+          "phase": "startup",
+          "stage": "STARTS",
+          "tasks": 529,
+          "stage_cpu_ns": 607820410,
+          "local_hits": 491,
+          "scans": 784,
+          "excluded": 0,
+          "same_worker_repeats": 134,
+          "cross_worker_repeats": 30,
+          "mismatches": 0,
+          "timed_scans": 784,
+          "scan_cpu_ns": 40078888,
+          "verified_heights": 784,
+          "shared_lookups": 784,
+          "shared_hits": 164
+        },
+        {
+          "phase": "startup",
+          "stage": "NOISE",
+          "tasks": 34,
+          "stage_cpu_ns": 1930215533,
+          "local_hits": 4174,
+          "scans": 13968,
+          "excluded": 0,
+          "same_worker_repeats": 8277,
+          "cross_worker_repeats": 2030,
+          "mismatches": 0,
+          "timed_scans": 13968,
+          "scan_cpu_ns": 106102569,
+          "verified_heights": 13968,
+          "shared_lookups": 10293,
+          "shared_hits": 8185
+        },
+        {
+          "phase": "startup",
+          "stage": "CARVERS",
+          "tasks": 25,
+          "stage_cpu_ns": 150158576,
+          "local_hits": 3665,
+          "scans": 802,
+          "excluded": 0,
+          "same_worker_repeats": 206,
+          "cross_worker_repeats": 450,
+          "mismatches": 0,
+          "timed_scans": 802,
+          "scan_cpu_ns": 9651210,
+          "verified_heights": 802,
+          "shared_lookups": 802,
+          "shared_hits": 654
+        }
+      ]
+    }
+  },
+  "fallback_replay": {
+    "assertions": "Alternate effective height range, a legacy blended border, and an unrecognized Y-dependent density each accessed the primary shared cache zero times.",
+    "runs": {
+      "aquifer-fallback-a1": {
+        "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+        "smoke_sha256": "02e66774654a2305e8a100e8dbb55b9b42313f94a95d3481c8eea0f055379153",
+        "standard_heights": "11025 8fcf7b1ae9b043b77a3ebbc1fef35227f1bbd2e370df2d5b04134bef69184dd1",
+        "fallback_height_fingerprint": "de83ff0e36e31ad0d96bcfb3c8691461f84701077fceb769dd4a337f07387b18",
+        "verified_heights": 15590,
+        "observed_mismatches": 0,
+        "blended_queries_excluded_from_observer_reuse": 12,
+        "shared_lookups": 0,
+        "shared_hits": 0
+      },
+      "aquifer-fallback-b1": {
+        "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+        "smoke_sha256": "02e66774654a2305e8a100e8dbb55b9b42313f94a95d3481c8eea0f055379153",
+        "standard_heights": "11025 8fcf7b1ae9b043b77a3ebbc1fef35227f1bbd2e370df2d5b04134bef69184dd1",
+        "fallback_height_fingerprint": "de83ff0e36e31ad0d96bcfb3c8691461f84701077fceb769dd4a337f07387b18",
+        "verified_heights": 15590,
+        "observed_mismatches": 0,
+        "blended_queries_excluded_from_observer_reuse": 12,
+        "shared_lookups": 11891,
+        "shared_hits": 9010
+      }
+    }
+  }
+}
