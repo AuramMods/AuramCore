@@ -67,3 +67,15 @@ The two identical full-pack controls yielded 45,426 block differences across 13,
 The minimal fixture with Tectonic, Lithostitched and Better Caves agreed with the uncached oracle on 23,233 height checks in each arm. All 16 saved biome palettes, structure starts and fluid tick lists matched. The 128 block-state differences out of 1,572,864 positions were concentrated in stone variants, dripstone, ore and foliage. The separate direct fallback replay matched three seeds and confirmed zero shared lookups for the clipped height range, legacy terrain blending and an unfamiliar Y-dependent density function.
 
 The cold JFR recordings contained 715 and 738 Better Caves stack samples across the controls and 311 and 401 across the candidates. Preliminary height queries accounted for 445 and 445 control samples and 20 and 33 candidate samples. The residual samples were dominated by Better Caves noise evaluation. The overlap accounts for the observed reduction without an independent carver change.
+
+## Aether Bronze Dungeon terrain probes
+
+Use the `bronzeparity` fixture with `--with-mod aether` to compare the immediate aquifer baseline, the tunnel and room changes alone, and the combined variant with the four-corner search. The test calls Aether's structure code across 192 positions on three seeds. Its comparison includes placement decisions, start coordinates, serialized piece content, RNG draw counts, and the next RNG value. It canonicalizes piece ordering because Aether builds from identity-keyed adjacency maps. All six matched trials produced 23 accepted starts and the same 665 pieces.
+
+| Variant | Median candidate search CPU in each trial (ms) | Median accepted dungeon CPU (ms) | Median rejected dungeon CPU (ms) |
+| --- | --- | --- | --- |
+| Aquifer baseline | 5.75, 6.00 | 13.06, 13.90 | 5.73, 5.67 |
+| Tunnel and room probes | 5.59, 5.26 | 5.58, 5.89 | 5.59, 5.25 |
+| Tunnel, room and four-corner probes | 2.43, 2.24 | 10.61, 6.28 | 2.16, 2.14 |
+
+The combined variant preserves the inclusive vertical bounds, probe order and original thickness and tie rules. The largest benefit from the four-corner change is for rejected starts.

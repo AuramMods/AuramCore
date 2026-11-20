@@ -145,7 +145,7 @@ ground = '{"block":"minecraft:stone","height":71},' if args.mode == 'ftbrtp' els
     f'{ground}'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
     f'level-seed={args.seed}\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
-if args.mode in {'worldgen-bench', 'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'twigs', 'lithostarts', 'aquiferparity', 'surfacejitter', 'surfaceterrain'}:
+if args.mode in {'worldgen-bench', 'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'twigs', 'lithostarts', 'bronzeparity', 'aquiferparity', 'surfacejitter', 'surfaceterrain'}:
     settings = (runtime/'server.properties').read_text().splitlines()
     (runtime/'server.properties').write_text('\n'.join(
         'level-type=minecraft:normal' if s.startswith('level-type=') else

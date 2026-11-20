@@ -43,6 +43,8 @@
     "kubejs.UpdateCheckMixin",
     "midnight.BogStriderEnchantmentMixin",
     "aether.QuicksoilMovementMixin",
+    "aether.BronzeDungeonTerrainMixin",
+    "aether.BronzeDungeonStartMixin",
     "relics.FluidCollisionMixin",
     "dimdoors.PlayerCollisionMixin",
     "distanthorizons.ChunkMapDemandMixin",

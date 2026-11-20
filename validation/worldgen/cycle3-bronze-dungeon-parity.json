@@ -1,0 +1,110 @@
+{
+  "environment": "Four-vCPU Lima ARM64 Ubuntu 24.04 dedicated server, Temurin 17.0.21",
+  "baseline": "Exact aquifer cache from the preceding cycle",
+  "seed_values": [
+    104729,
+    17,
+    1907
+  ],
+  "chunk_window": [
+    -8,
+    84,
+    -1,
+    91
+  ],
+  "attempts_per_arm": 192,
+  "accepted_per_arm": 23,
+  "pieces_per_arm": 665,
+  "equality": "Exact start positions, canonical serialized piece content, per-attempt RNG calls and next RNG draws",
+  "attempts_sha256": "df4bcfe819df6a333bbb477edd22dbb085e8fa8b9c3bcc87103901a06e44d978",
+  "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+  "fixture": {
+    "aether": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/aether-1.20.1-1.5.2-neoforge.jar",
+      "sha256": "5cb64ab1f27e78e8338fe67f9c766578904aad9bc1f8bcc90f306ea52aea3fc5"
+    },
+    "curios": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/curios-forge-5.14.1+1.20.1.jar",
+      "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f"
+    },
+    "projecte": {
+      "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+      "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+    }
+  },
+  "jvm_command": [
+    "/tmp/auram-bench-vm-java",
+    "-Xms1G",
+    "-Xmx4G",
+    "-XX:ActiveProcessorCount=4",
+    "-Dauram.smoke=bronzeparity",
+    "-Dauram.smoke.identityCandidate=false",
+    "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+    "nogui"
+  ],
+  "pilot_with_different_smoke_jar": {
+    "runtime": "/tmp/lima/auram-bench/worldgen-bronze-a1/auram-bronzeparity-bpfxv_cv",
+    "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+    "smoke_sha256": "c2704bf09bac6d4f21ee80c367c9ec12b8060bbcfd3c3d030bb1ef92d5ac9cbb",
+    "total_cpu_ns": 5521536019,
+    "median_attempt_cpu_ns": 6466417.0,
+    "median_accepted_cpu_ns": 44352584,
+    "median_rejected_cpu_ns": 6386167
+  },
+  "matched_runs": {
+    "bronze-a2": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-bronze-a2/auram-bronzeparity-spxbgdcf",
+      "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "total_cpu_ns": 1315956504,
+      "median_attempt_cpu_ns": 5745333.5,
+      "median_accepted_cpu_ns": 13059959,
+      "median_rejected_cpu_ns": 5727292
+    },
+    "bronze-room-b1": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-bronze-room-b1/auram-bronzeparity-yt1cpxnl",
+      "artifact_sha256": "fb2239a3ec7afd4aab36002b46e19df86c7cc503bde83873fcb69e8fd5c79121",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "total_cpu_ns": 1100976833,
+      "median_attempt_cpu_ns": 5593520.5,
+      "median_accepted_cpu_ns": 5581625,
+      "median_rejected_cpu_ns": 5594208
+    },
+    "bronze-b1": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-bronze-b1/auram-bronzeparity-u9pkfzdd",
+      "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "total_cpu_ns": 2311995741,
+      "median_attempt_cpu_ns": 2425729.0,
+      "median_accepted_cpu_ns": 10606958,
+      "median_rejected_cpu_ns": 2157375
+    },
+    "bronze-b2": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-bronze-b2/auram-bronzeparity-uuvhuxas",
+      "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "total_cpu_ns": 686087866,
+      "median_attempt_cpu_ns": 2237833.5,
+      "median_accepted_cpu_ns": 6284125,
+      "median_rejected_cpu_ns": 2136417
+    },
+    "bronze-room-b2": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-bronze-room-b2/auram-bronzeparity-qdlsk4_c",
+      "artifact_sha256": "fb2239a3ec7afd4aab36002b46e19df86c7cc503bde83873fcb69e8fd5c79121",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "total_cpu_ns": 1049278203,
+      "median_attempt_cpu_ns": 5259104.0,
+      "median_accepted_cpu_ns": 5887875,
+      "median_rejected_cpu_ns": 5250709
+    },
+    "bronze-a3": {
+      "runtime": "/tmp/lima/auram-bench/worldgen-bronze-a3/auram-bronzeparity-dtufp4hw",
+      "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "total_cpu_ns": 1556866003,
+      "median_attempt_cpu_ns": 6002791.5,
+      "median_accepted_cpu_ns": 13897625,
+      "median_rejected_cpu_ns": 5673000
+    }
+  }
+}
