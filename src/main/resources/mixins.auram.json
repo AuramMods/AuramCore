@@ -69,6 +69,7 @@
   },
   "client": [
     "akashictome.HudPreviewMixin",
+    "botania.ManaPoolRendererMixin",
     "ftbchunks.ChunkUpdateSurfaceMixin",
     "ftbchunks.LargeMapSurfaceAccess",
     "ftbchunks.MapRegionSurfaceMixin",
