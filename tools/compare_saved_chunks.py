@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Compare the tuning workload's saved block states, independent of registry IDs."""
+"""Compare saved worldgen outputs, independent of registry IDs."""
 import argparse
+import csv
 from collections import Counter
 import gzip
 import hashlib
@@ -79,22 +80,49 @@ def section_states(section):
             for index in range(4096)]
 
 
+def section_biomes(section):
+    biome_states = section.get('biomes') if section else None
+    if biome_states is None:
+        return None
+    palette = biome_states['palette']
+    if len(palette) == 1:
+        return [palette[0]] * 64
+    bits = (len(palette) - 1).bit_length()
+    per_long, mask = 64 // bits, (1 << bits) - 1
+    data = biome_states['data']
+    return [palette[(data[index // per_long] >> ((index % per_long) * bits)) & mask]
+            for index in range(64)]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('first', type=Path, help='First world directory (only its region subdirectory is needed)')
     parser.add_argument('second', type=Path)
     parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--positions', type=Path, help='Worldgen benchmark CSV with chunk_x and chunk_z columns')
     args = parser.parse_args()
+    if args.positions:
+        with args.positions.open(newline='') as file:
+            positions = sorted({(int(row['chunk_x']), int(row['chunk_z'])) for row in csv.DictReader(file)})
+    else:
+        positions = [(80 + index % 10, 80 + index // 10) for index in range(80)]
     digests = [hashlib.sha256(), hashlib.sha256()]
     differences, examples, differing_chunks = Counter(), [], 0
     compared = 0
-    for index in range(80):
-        x, z = 80+index % 10, 80+index//10
+    differing_biomes, differing_starts, differing_fluid_ticks = [], [], []
+    for x, z in positions:
         chunks = [read_chunk(world, x, z) for world in (args.first, args.second)]
         sections = [{section['Y']: section for section in chunk['sections']} for chunk in chunks]
+        if chunks[0].get('structures', {}).get('starts') != chunks[1].get('structures', {}).get('starts'):
+            differing_starts.append((x, z))
+        if chunks[0].get('fluid_ticks') != chunks[1].get('fluid_ticks'):
+            differing_fluid_ticks.append((x, z))
         chunk_differences = 0
+        biome_difference = False
         for y in sorted(set(sections[0]) | set(sections[1])):
             states = [section_states(section.get(y)) for section in sections]
+            if not biome_difference:
+                biome_difference = section_biomes(sections[0].get(y)) != section_biomes(sections[1].get(y))
             for digest, values in zip(digests, states):
                 digest.update(f'{x},{y},{z}\0'.encode())
                 digest.update(('\0'.join(values)+'\0').encode())
@@ -109,6 +137,8 @@ def main():
                                                    z*16+(position//16) % 16],
                                      'first': json.loads(first), 'second': json.loads(second)})
         differing_chunks += bool(chunk_differences)
+        if biome_difference:
+            differing_biomes.append((x, z))
     result = {
         'worlds': [str(args.first), str(args.second)], 'compared_blocks': compared,
         'differing_blocks': sum(differences.values()), 'differing_chunks': differing_chunks,
@@ -116,7 +146,10 @@ def main():
         'largest_differences': [{'first': json.loads(pair[0]), 'second': json.loads(pair[1]), 'count': count}
                                 for pair, count in differences.most_common(20)],
         'examples': examples,
-        'scope': 'Same 80 target chunks; saved palette names/properties and packed state arrays, independent of numeric global registry IDs.',
+        'compared_chunks': len(positions), 'chunks_with_biome_differences': differing_biomes,
+        'chunks_with_structure_start_differences': differing_starts,
+        'chunks_with_fluid_tick_differences': differing_fluid_ticks,
+        'scope': 'Matched saved chunks with canonical block and biome palettes and complete structure starts.',
     }
     args.output.write_text(json.dumps(result, indent=2)+'\n')
     print(json.dumps({key: value for key, value in result.items()

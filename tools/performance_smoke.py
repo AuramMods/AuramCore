@@ -22,6 +22,7 @@ parser.add_argument('--libraries', required=True, type=Path, help='Installed For
 parser.add_argument('--mode', default='movement')
 parser.add_argument('--with-mod', action='append', default=[], dest='extra_mods', help='Extra mod id and its dependencies')
 parser.add_argument('--baseline-jar', type=Path, help='Use another Auram jar as a regression control')
+parser.add_argument('--smoke-jar', type=Path, help='Pin the test instrumentation jar across a comparison')
 parser.add_argument('--no-build', action='store_true')
 parser.add_argument('--datapack', type=Path, action='append', default=[], help='Installed datapack zip/jar to load in the fixture')
 parser.add_argument('--java-arg', action='append', default=[], help='Additional JVM argument (use --java-arg=VALUE)')
@@ -121,7 +122,8 @@ while wanted - done:
 
 artifact = args.baseline_jar or ROOT/f'build/libs/auram-{version}-all.jar'
 shutil.copy2(artifact, runtime/'mods/Auram.jar')
-shutil.copy2(ROOT/f'build/libs/auram-{version}-smoke-test.jar', runtime/'mods/auram-smoke.jar')
+smoke_artifact = args.smoke_jar or ROOT/f'build/libs/auram-{version}-smoke-test.jar'
+shutil.copy2(smoke_artifact, runtime/'mods/auram-smoke.jar')
 config = runtime/'config'
 config.mkdir(exist_ok=True)
 fixture_overrides = {}
@@ -143,7 +145,7 @@ ground = '{"block":"minecraft:stone","height":71},' if args.mode == 'ftbrtp' els
     f'{ground}'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
     f'level-seed={args.seed}\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
-if args.mode in {'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'twigs', 'lithostarts', 'surfacejitter', 'surfaceterrain'}:
+if args.mode in {'worldgen-bench', 'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'twigs', 'lithostarts', 'surfacejitter', 'surfaceterrain'}:
     settings = (runtime/'server.properties').read_text().splitlines()
     (runtime/'server.properties').write_text('\n'.join(
         'level-type=minecraft:normal' if s.startswith('level-type=') else
@@ -163,9 +165,12 @@ for phase in range(2 if args.mode == 'chunks' else 1):
         result = subprocess.run(command, cwd=runtime, stdout=log, stderr=subprocess.STDOUT, timeout=1800)
     codes.append(result.returncode)
 marker = 'auram-smoke-pass.txt' if args.mode == 'chunks' else f'auram-{args.mode}-pass.txt'
+if args.mode == 'worldgen-bench':
+    marker = 'worldgen-chunks.csv'
 passed = all(code == 0 for code in codes) and (runtime/marker).exists()
 summary = {'mode': args.mode, 'runtime': str(runtime), 'passed': passed, 'exit_codes': codes,
            'elapsed_seconds': time.monotonic()-start, 'artifact_sha256': hashlib.sha256(artifact.read_bytes()).hexdigest(),
+           'smoke_sha256': hashlib.sha256((runtime/'mods/auram-smoke.jar').read_bytes()).hexdigest(),
            'fixture': fixture, 'jvm_command': command,
            'server_template': str(args.server_template) if args.server_template else None,
            'fixture_overrides': fixture_overrides,
