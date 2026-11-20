@@ -2,7 +2,7 @@
 
 AuramCore captures decorated terrain at Minecraft’s FEATURES stage. Ordinary chunk generation and Distant Horizons in INTERNAL_SERVER mode use this stage. The capture copies the surface of the supplied chunk. A bounded worker assembles, compresses, and writes the tiles without posting chunk tickets. The server also fills missing coverage on natural loads and batches refreshes after surface edits.
 
-The server stores tiles under `auram-surface-map` in the world directory. Each tile contains up to 64 chunks in an 8×8 square and can be sent with partial coverage. Client caches live under `auram-surface-cache` in the instance directory, keyed by the server’s world ID and dimension. The client downloads and caches each tile once. JourneyMap and FTB Chunks load visible pixels from that cache into their own textures. Either mapper can run independently.
+The server stores tiles under `auram-surface-map` in the world directory. Each tile contains up to 64 chunks in an 8×8 square and can be sent with partial coverage. Client caches live under `auram-surface-cache` in the instance directory, keyed by the server’s world ID and dimension. JourneyMap and FTB Chunks share a download queue and disk cache. They load visible pixels from that cache into their own textures. Either mapper can run independently.
 
 On a participating server, both minimaps and fullscreen maps show the same surface layer underground and at night. The same pixels are available in the FTB Chunks claim screen. The Nether and other ceiling dimensions sample beneath the roof. Each mapper keeps its local surface fallback for uncovered chunks and skips its local terrain scans or rasterizer for imported chunks.
 
@@ -67,7 +67,7 @@ FTB displayed the covered pixel from a tile with eight populated chunks. An unlo
 | FTB Chunks and JourneyMap | 10 / 1 | 9.71 over 184 tiles | 1.00 over 25 tiles |
 | FTB Chunks only | 4 / 0.5 | 4.00 over 184 tiles | 0.50 over 13 tiles |
 
-The measurements count tile bodies, including any emitted for partial coverage. The FTB fullscreen map followed the new viewport after a same-zoom pan. The two-mapper run received each observed tile revision once.
+The measurements count tile bodies, including any emitted for partial coverage. The FTB fullscreen map followed the new viewport after a same-zoom pan. The distant tile used by both mappers arrived once. The same run logged a repeated background tile revision during End generation.
 
 ### Dedicated server comparison
 
