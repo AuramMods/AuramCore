@@ -1,0 +1,314 @@
+{
+  "runtime": "/private/tmp/lima/auram-bench/worldgen-probe-2/auram-worldgen-bench-luamc64n",
+  "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+  "smoke_sha256": "9d9809af17495202af08721e7bfe627e6fec55b0721366bfb7877d91257459c6",
+  "jvm_command": [
+    "/tmp/auram-bench-vm-java",
+    "-Xms4G",
+    "-Xmx10G",
+    "-XX:ActiveProcessorCount=4",
+    "-Dauram.smoke.stageTimings=true",
+    "-Dauram.smoke.dimension=minecraft:overworld",
+    "-XX:FlightRecorderOptions=stackdepth=128",
+    "-XX:StartFlightRecording=filename=worldgen.jfr,settings=profile,dumponexit=true,maxsize=128m",
+    "-Dauram.smoke.aquiferReuse=true",
+    "-Dauram.smoke=worldgen-bench",
+    "-Dauram.smoke.identityCandidate=false",
+    "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+    "nogui"
+  ],
+  "seed": "104729",
+  "mod_jar_count": 482,
+  "spawn_preparation_s": 0.035990021,
+  "level_to_spawn_ready_s": 83.087094187,
+  "cold_elapsed_s": 129.74945464,
+  "cold_full_chunks": 48,
+  "cold_full_chunks_per_s": 0.3699437514645418,
+  "chunk_ready_p50_ms": 7524.210151,
+  "chunk_ready_p95_ms": 104736.506515,
+  "tick_p95_ms": 14.256654,
+  "stages": [
+    {
+      "phase": "startup",
+      "stage": "STARTS",
+      "tasks": 529,
+      "stage_cpu_ns": 29921967668,
+      "local_hits": 55888,
+      "scans": 24065,
+      "excluded": 0,
+      "same_worker_repeats": 14369,
+      "cross_worker_repeats": 4732,
+      "mismatches": 0,
+      "timed_scans": 24065,
+      "scan_cpu_ns": 12334112654
+    },
+    {
+      "phase": "startup",
+      "stage": "NOISE",
+      "tasks": 25,
+      "stage_cpu_ns": 4631153598,
+      "local_hits": 15849,
+      "scans": 3977,
+      "excluded": 0,
+      "same_worker_repeats": 71,
+      "cross_worker_repeats": 3831,
+      "mismatches": 0,
+      "timed_scans": 3977,
+      "scan_cpu_ns": 2041391030
+    },
+    {
+      "phase": "startup",
+      "stage": "CARVERS",
+      "tasks": 25,
+      "stage_cpu_ns": 1316812532,
+      "local_hits": 13629,
+      "scans": 1490,
+      "excluded": 0,
+      "same_worker_repeats": 399,
+      "cross_worker_repeats": 1043,
+      "mismatches": 0,
+      "timed_scans": 1490,
+      "scan_cpu_ns": 798317771
+    },
+    {
+      "phase": "startup",
+      "stage": "BIOMES",
+      "tasks": 49,
+      "stage_cpu_ns": 1555076983,
+      "local_hits": 0,
+      "scans": 0,
+      "excluded": 0,
+      "same_worker_repeats": 0,
+      "cross_worker_repeats": 0,
+      "mismatches": 0,
+      "timed_scans": 0,
+      "scan_cpu_ns": 0
+    },
+    {
+      "phase": "startup",
+      "stage": "SURFACE",
+      "tasks": 25,
+      "stage_cpu_ns": 617188326,
+      "local_hits": 100,
+      "scans": 0,
+      "excluded": 0,
+      "same_worker_repeats": 0,
+      "cross_worker_repeats": 0,
+      "mismatches": 0,
+      "timed_scans": 0,
+      "scan_cpu_ns": 0
+    },
+    {
+      "phase": "startup",
+      "stage": "FEATURES",
+      "tasks": 9,
+      "stage_cpu_ns": 1318754588,
+      "local_hits": 0,
+      "scans": 0,
+      "excluded": 0,
+      "same_worker_repeats": 0,
+      "cross_worker_repeats": 0,
+      "mismatches": 0,
+      "timed_scans": 0,
+      "scan_cpu_ns": 0
+    },
+    {
+      "phase": "cold",
+      "stage": "STARTS",
+      "tasks": 1072,
+      "stage_cpu_ns": 73072729927,
+      "local_hits": 123139,
+      "scans": 47369,
+      "excluded": 0,
+      "same_worker_repeats": 27831,
+      "cross_worker_repeats": 8786,
+      "mismatches": 0,
+      "timed_scans": 47369,
+      "scan_cpu_ns": 32979768333
+    },
+    {
+      "phase": "cold",
+      "stage": "NOISE",
+      "tasks": 176,
+      "stage_cpu_ns": 55025839090,
+      "local_hits": 125775,
+      "scans": 29502,
+      "excluded": 0,
+      "same_worker_repeats": 727,
+      "cross_worker_repeats": 26822,
+      "mismatches": 0,
+      "timed_scans": 29502,
+      "scan_cpu_ns": 24994407656
+    },
+    {
+      "phase": "cold",
+      "stage": "CARVERS",
+      "tasks": 176,
+      "stage_cpu_ns": 11298230076,
+      "local_hits": 79169,
+      "scans": 8738,
+      "excluded": 0,
+      "same_worker_repeats": 1874,
+      "cross_worker_repeats": 6460,
+      "mismatches": 0,
+      "timed_scans": 8738,
+      "scan_cpu_ns": 7043775386
+    },
+    {
+      "phase": "cold",
+      "stage": "BIOMES",
+      "tasks": 240,
+      "stage_cpu_ns": 9283558871,
+      "local_hits": 0,
+      "scans": 0,
+      "excluded": 0,
+      "same_worker_repeats": 0,
+      "cross_worker_repeats": 0,
+      "mismatches": 0,
+      "timed_scans": 0,
+      "scan_cpu_ns": 0
+    },
+    {
+      "phase": "cold",
+      "stage": "SURFACE",
+      "tasks": 176,
+      "stage_cpu_ns": 4118620511,
+      "local_hits": 704,
+      "scans": 0,
+      "excluded": 0,
+      "same_worker_repeats": 0,
+      "cross_worker_repeats": 0,
+      "mismatches": 0,
+      "timed_scans": 0,
+      "scan_cpu_ns": 0
+    },
+    {
+      "phase": "cold",
+      "stage": "FEATURES",
+      "tasks": 120,
+      "stage_cpu_ns": 5003228499,
+      "local_hits": 0,
+      "scans": 0,
+      "excluded": 0,
+      "same_worker_repeats": 0,
+      "cross_worker_repeats": 0,
+      "mismatches": 0,
+      "timed_scans": 0,
+      "scan_cpu_ns": 0
+    }
+  ],
+  "same_production_jar_replay": {
+    "compared_blocks": 13369344,
+    "differing_blocks": 42770,
+    "differing_chunks": 48,
+    "chunks_with_biome_differences": [
+      [
+        90,
+        93
+      ],
+      [
+        91,
+        92
+      ],
+      [
+        91,
+        93
+      ],
+      [
+        92,
+        88
+      ],
+      [
+        92,
+        89
+      ],
+      [
+        92,
+        92
+      ],
+      [
+        92,
+        93
+      ],
+      [
+        93,
+        88
+      ],
+      [
+        93,
+        89
+      ],
+      [
+        93,
+        90
+      ],
+      [
+        93,
+        91
+      ],
+      [
+        93,
+        92
+      ],
+      [
+        93,
+        93
+      ],
+      [
+        94,
+        88
+      ],
+      [
+        94,
+        89
+      ],
+      [
+        94,
+        90
+      ],
+      [
+        94,
+        91
+      ],
+      [
+        94,
+        92
+      ],
+      [
+        94,
+        93
+      ],
+      [
+        95,
+        88
+      ],
+      [
+        95,
+        89
+      ],
+      [
+        95,
+        90
+      ],
+      [
+        95,
+        91
+      ],
+      [
+        95,
+        92
+      ],
+      [
+        95,
+        93
+      ]
+    ],
+    "chunks_with_structure_start_differences": [],
+    "chunks_with_fluid_tick_differences": [],
+    "canonical_block_fingerprints": [
+      "95e63f432e34a2640b547fa3fdfb8fa43ca2bdd34d1506935c26dd4640a300c5",
+      "10488380bf704b705fb53cfefc51aa6220bf005c6d95cdce99121a20c4aea959"
+    ],
+    "notes": "Both runs used AuramCore 1.0.20, the same server pack export, seed and chunk coordinates. The observation hash changed and the repeated run reused the generated Connector cache. Use this pair to establish same-jar saved-chunk variability."
+  }
+}
