@@ -197,6 +197,11 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-regionparity-pass.txt"), "PASS seeded chunk biome fill");
                 return;
             }
+            if (smokeMode.equals("scatterparity")) {
+                ScatterOreParitySmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-scatterparity-pass.txt"), "PASS seeded scatter ore writes and RNG");
+                return;
+            }
             if (smokeMode.equals("bronzeparity")) {
                 BronzeDungeonParitySmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-bronzeparity-pass.txt"), "PASS seeded Bronze Dungeon starts, pieces and RNG");

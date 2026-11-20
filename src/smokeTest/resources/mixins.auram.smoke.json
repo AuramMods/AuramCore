@@ -20,6 +20,8 @@
     "BlenderFactory",
     "DecorationParitySmokeMixin",
     "TerraBlenderLockProbeMixin",
+    "DreamtinkerFeatureProbeMixin",
+    "DreamtinkerTagProbeMixin",
     "AquiferNoiseStageProbeMixin",
     "AquiferStructureStageProbeMixin",
     "NoiseColumnProbeMixin",

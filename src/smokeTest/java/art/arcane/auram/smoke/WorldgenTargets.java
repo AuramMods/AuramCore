@@ -15,7 +15,7 @@ public final class WorldgenTargets {
     private static final EnumMap<Target, Totals> COLD = totals();
     private static volatile EnumMap<Target, Totals> phase = STARTUP;
 
-    public enum Target { TERRA_READ_LOCK, TERRA_WRITE_LOCK }
+    public enum Target { TERRA_READ_LOCK, TERRA_WRITE_LOCK, DREAM_FEATURE, DREAM_TAG_TEST }
 
     private static final class Totals {
         final LongAdder calls = new LongAdder();

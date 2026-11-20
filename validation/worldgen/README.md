@@ -94,3 +94,9 @@ The `regionparity` fixture runs seeded biome fills on a dedicated server with fo
 | Nether | 62.4, 46.9 | 50.2, 19.4 | 204,884, 205,706 | 9,301, 9,309 | 278.9 → 56.2, 245.5 → 29.4 |
 
 The read-lock count represents original area lookups, including recursive lookups. The off-CPU estimate subtracts thread CPU from acquisition wall time and includes scheduling and instrumentation overhead. Write-lock counts and per-stage CPU are in the cycle report. The cache holds the area identity and quart X/Z within one fill. The original climate sampler still evaluates Y-dependent values and biome selection.
+
+## Dreamtinker scatter ore
+
+The `scatterparity` fixture with `--with-mod dreamtinker --with-mod immersiveengineering` exercises the registered `dreamtinker:shadow_silver_ore` feature against seeded layouts of stone, tagged silver, and existing ore. Each arm includes 120 measured placements. All four arms produced the same 360 block writes in the same order, placement decisions, RNG draw counts and next RNG values.
+
+Aggregate feature CPU fell from 642 to 529 ms in the pair with tracing disabled and from 299 to 229 ms in the pair with tracing enabled. The instrumented process-wide count, including startup and warm-up, fell from 2,990,613 original two-tag calls to 4,208 across the same 534 feature calls. The cache lives within one feature invocation and applies to the exact Dreamtinker two-tag rule.

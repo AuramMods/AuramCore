@@ -47,6 +47,7 @@
     "aether.BronzeDungeonStartMixin",
     "terrablender.BiomeFillMixin",
     "terrablender.RegionAreaMixin",
+    "dreamtinker.ScatterReplaceOreMixin",
     "relics.FluidCollisionMixin",
     "dimdoors.PlayerCollisionMixin",
     "distanthorizons.ChunkMapDemandMixin",
