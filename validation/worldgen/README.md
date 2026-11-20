@@ -117,3 +117,18 @@ All six dedicated runs used the pack export, seed 104729, and 48 cold Aether chu
 The full-pack pairs showed lower Bronze Dungeon start stack counts in JFR, from 14 to 6 samples and 15 to 1, with slower cold wall time. TerraBlender's dedicated fixture measured a repeatable reduction in lock acquisitions and fill time. Its full-pack Aether timings varied widely, including the longer startup and cold window in C2.
 
 The two identical aquifer controls differed in 545 of 3,305,472 saved block states. The Bronze comparisons differed by 2,404 and 1,833 states. The TerraBlender comparisons differed by 1,824 and 2,824 states. Roseroot foliage was among the largest differences. All five comparisons matched every saved biome palette, structure start, and fluid-tick list in the 48 chunks.
+
+## Full-pack Nether
+
+Both matched pairs used 48 cold Nether chunks beginning at (88, 88). The baseline includes the aquifer and Bronze Dungeon changes. The candidates add the TerraBlender region cache.
+
+| Run | World load to spawn-ready (s) | Cold FULL chunks/s | p95 chunk-ready (s) | Cold biome CPU (s) |
+| --- | ---: | ---: | ---: | ---: |
+| Control A1 | 55.18 | 0.328 | 139.49 | 20.395 |
+| Control A2 | 70.09 | 1.835 | 14.43 | 3.275 |
+| Candidate B1 | 738.42 | 0.565 | 61.32 | 6.315 |
+| Candidate B2 | 87.88 | 1.248 | 29.01 | 4.286 |
+
+The first pair improved cold throughput and p95. The second pair moved in the opposite direction. Host CPU samples reached zero idle during the slower segment of the campaign. During B1's long Overworld startup, worker stacks showed Blueprint biome queries for concentric structure placement. CPU increased across multiple unrelated stages with the same measured startup task counts. The controlled Nether fixture isolated the region lookup improvement from this variation.
+
+The two identical controls differed at 23,636 of 3,145,728 saved block positions. The candidate comparisons differed at 20,148 and 26,758 positions. Soulstone, ore and vegetation were among the largest differences. All three comparisons matched every saved biome palette, structure start, and fluid-tick list.
