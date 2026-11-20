@@ -100,3 +100,20 @@ The read-lock count represents original area lookups, including recursive lookup
 The `scatterparity` fixture with `--with-mod dreamtinker --with-mod immersiveengineering` exercises the registered `dreamtinker:shadow_silver_ore` feature against seeded layouts of stone, tagged silver, and existing ore. Each arm includes 120 measured placements. All four arms produced the same 360 block writes in the same order, placement decisions, RNG draw counts and next RNG values.
 
 Aggregate feature CPU fell from 642 to 529 ms in the pair with tracing disabled and from 299 to 229 ms in the pair with tracing enabled. The instrumented process-wide count, including startup and warm-up, fell from 2,990,613 original two-tag calls to 4,208 across the same 534 feature calls. The cache lives within one feature invocation and applies to the exact Dreamtinker two-tag rule.
+
+## Full-pack Aether
+
+All six dedicated runs used the pack export, seed 104729, and 48 cold Aether chunks beginning at (-8, 84). Spawn-ready covers Overworld startup. Cold stage CPU includes concurrent worker activity elsewhere on the server.
+
+| Variant | World load to spawn-ready (s) | Cold FULL chunks/s | p95 chunk-ready (s) | Cold starts CPU (s) | Cold biome CPU (s) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Aquifer A1 | 52.73 | 5.272 | 7.25 | 4.801 | 0.179 |
+| Aquifer A2 | 58.60 | 4.550 | 8.59 | 3.006 | 0.105 |
+| Add Bronze B1 | 63.14 | 4.973 | 7.78 | 3.629 | 0.117 |
+| Add Bronze B2 | 50.30 | 1.686 | 25.07 | 4.868 | 0.278 |
+| Add TerraBlender C1 | 63.81 | 4.925 | 7.79 | 3.228 | 0.142 |
+| Add TerraBlender C2 | 232.24 | 0.777 | 55.98 | 6.579 | 0.370 |
+
+The full-pack pairs showed lower Bronze Dungeon start stack counts in JFR, from 14 to 6 samples and 15 to 1, with slower cold wall time. TerraBlender's dedicated fixture measured a repeatable reduction in lock acquisitions and fill time. Its full-pack Aether timings varied widely, including the longer startup and cold window in C2.
+
+The two identical aquifer controls differed in 545 of 3,305,472 saved block states. The Bronze comparisons differed by 2,404 and 1,833 states. The TerraBlender comparisons differed by 1,824 and 2,824 states. Roseroot foliage was among the largest differences. All five comparisons matched every saved biome palette, structure start, and fluid-tick list in the 48 chunks.
