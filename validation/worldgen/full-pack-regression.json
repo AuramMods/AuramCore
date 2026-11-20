@@ -1,0 +1,1633 @@
+{
+  "environment": "Lima Ubuntu 24.04 ARM64 dedicated server VM with four vCPUs, Temurin 17.0.21 and guest ext4 storage",
+  "pack_commit": "bbd803b152e17435fc21f1f573da2a386d98b490",
+  "seed": 104729,
+  "cold_full_chunks_per_run": 48,
+  "note": "Stage CPU accumulates all worker activity in the measurement phase, including background generation.",
+  "dimensions": {
+    "aether": {
+      "variants": "A is aquifer only, B adds Bronze probes, C adds TerraBlender",
+      "jvm_command": [
+        "/tmp/auram-bench-vm-java",
+        "-Xms4G",
+        "-Xmx10G",
+        "-XX:ActiveProcessorCount=4",
+        "-Dauram.smoke.stageTimings=true",
+        "-Dauram.smoke.dimension=aether:the_aether",
+        "-XX:FlightRecorderOptions=stackdepth=128",
+        "-XX:StartFlightRecording=filename=worldgen.jfr,settings=profile,dumponexit=true,maxsize=128m",
+        "-Dauram.smoke.chunkOriginX=-8",
+        "-Dauram.smoke.chunkOriginZ=84",
+        "-Dauram.smoke=worldgen-bench",
+        "-Dauram.smoke.identityCandidate=false",
+        "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+        "nogui"
+      ],
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "mod_jar_count": 482,
+      "seed": "104729",
+      "runs": {
+        "full-aether-a1": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-aether-a1/auram-worldgen-bench-9mh_q0ul",
+          "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+          "level_to_spawn_ready_s": 52.730751086,
+          "spawn_preparation_s": 0.013270789,
+          "cold_elapsed_s": 9.105069331,
+          "cold_full_chunks_per_s": 5.27178852296869,
+          "chunk_ready_p50_ms": 147.874308,
+          "chunk_ready_p95_ms": 7249.119621,
+          "tick_p95_ms": 12.078933,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 15091585007,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 2722019826,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 616140298,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 2212345780,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 674544754,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1460658906,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 4801087024,
+              "tasks": 1444
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 374074065,
+              "tasks": 120
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 77135785,
+              "tasks": 120
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 179488466,
+              "tasks": 168
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 291254294,
+              "tasks": 120
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 472353846,
+              "tasks": 80
+            }
+          }
+        },
+        "full-aether-b1": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-aether-b1/auram-worldgen-bench-r1twbtap",
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "level_to_spawn_ready_s": 63.143996167,
+          "spawn_preparation_s": 0.012985159,
+          "cold_elapsed_s": 9.651492923,
+          "cold_full_chunks_per_s": 4.973323856002998,
+          "chunk_ready_p50_ms": 100.258328,
+          "chunk_ready_p95_ms": 7778.393675,
+          "tick_p95_ms": 20.682139,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 22298442967,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 3892413362,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 697123667,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 4361793139,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 648327124,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1760601776,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 3628743010,
+              "tasks": 1582
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 505902360,
+              "tasks": 120
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 58718758,
+              "tasks": 120
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 116896207,
+              "tasks": 168
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 378090884,
+              "tasks": 120
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 414705780,
+              "tasks": 80
+            }
+          }
+        },
+        "full-aether-a2": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-aether-a2/auram-worldgen-bench-9xrjypsy",
+          "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+          "level_to_spawn_ready_s": 58.602039086,
+          "spawn_preparation_s": 0.009817288,
+          "cold_elapsed_s": 10.549263128,
+          "cold_full_chunks_per_s": 4.5500808366982275,
+          "chunk_ready_p50_ms": 211.213139,
+          "chunk_ready_p95_ms": 8594.681321,
+          "tick_p95_ms": 14.527924,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 17021384024,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 2153046184,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 511142419,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 2247573916,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 464535381,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1006340343,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 3006404039,
+              "tasks": 1309
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 346172928,
+              "tasks": 120
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 88517208,
+              "tasks": 120
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 105392994,
+              "tasks": 168
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 261182072,
+              "tasks": 120
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 434366927,
+              "tasks": 80
+            }
+          }
+        },
+        "full-aether-b2": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-aether-b2/auram-worldgen-bench-4v1di_m1",
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "level_to_spawn_ready_s": 50.302972973,
+          "spawn_preparation_s": 0.013765466,
+          "cold_elapsed_s": 28.477562336,
+          "cold_full_chunks_per_s": 1.6855375271822564,
+          "chunk_ready_p50_ms": 785.654487,
+          "chunk_ready_p95_ms": 25073.254434,
+          "tick_p95_ms": 124.652243,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 15973381664,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 2533272816,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 537762910,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 1426554604,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 568413124,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1038568121,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 4868461269,
+              "tasks": 890
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 888403973,
+              "tasks": 120
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 123139843,
+              "tasks": 120
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 277784332,
+              "tasks": 168
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 509721492,
+              "tasks": 120
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 661974196,
+              "tasks": 80
+            }
+          }
+        },
+        "full-aether-c1": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-aether-c1/auram-worldgen-bench-6vlilppp",
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "level_to_spawn_ready_s": 63.808727216,
+          "spawn_preparation_s": 0.013410388,
+          "cold_elapsed_s": 9.74609886,
+          "cold_full_chunks_per_s": 4.925047517935807,
+          "chunk_ready_p50_ms": 101.446826,
+          "chunk_ready_p95_ms": 7794.801167,
+          "tick_p95_ms": 9.912769,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 20490199851,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 3021918741,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 706024501,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 1663601911,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 597499543,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 941605748,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 3227773029,
+              "tasks": 1598
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 609954374,
+              "tasks": 120
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 52969879,
+              "tasks": 120
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 141815378,
+              "tasks": 168
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 259926457,
+              "tasks": 120
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 416131202,
+              "tasks": 80
+            }
+          }
+        },
+        "full-aether-c2": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-aether-c2/auram-worldgen-bench-jsu4ilaq",
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "level_to_spawn_ready_s": 232.241625239,
+          "spawn_preparation_s": 0.055023286,
+          "cold_elapsed_s": 61.780630387,
+          "cold_full_chunks_per_s": 0.7769425416886042,
+          "chunk_ready_p50_ms": 1470.54534,
+          "chunk_ready_p95_ms": 55977.435719,
+          "tick_p95_ms": 168.87211,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 51218814148,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 10777341567,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 1797206110,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 8761364792,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 2168791374,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 3945334893,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 6579260094,
+              "tasks": 898
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 807829876,
+              "tasks": 120
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 121008415,
+              "tasks": 120
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 369893193,
+              "tasks": 168
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 1029344160,
+              "tasks": 120
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 1291592638,
+              "tasks": 80
+            }
+          }
+        }
+      }
+    },
+    "nether": {
+      "variants": "A is aquifer and Bronze, B adds TerraBlender",
+      "jvm_command": [
+        "/tmp/auram-bench-vm-java",
+        "-Xms4G",
+        "-Xmx10G",
+        "-XX:ActiveProcessorCount=4",
+        "-Dauram.smoke.stageTimings=true",
+        "-Dauram.smoke.dimension=minecraft:the_nether",
+        "-XX:FlightRecorderOptions=stackdepth=128",
+        "-XX:StartFlightRecording=filename=worldgen.jfr,settings=profile,dumponexit=true,maxsize=128m",
+        "-Dauram.smoke=worldgen-bench",
+        "-Dauram.smoke.identityCandidate=false",
+        "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+        "nogui"
+      ],
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "mod_jar_count": 482,
+      "seed": "104729",
+      "runs": {
+        "full-nether-a1": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-nether-a1/auram-worldgen-bench-tlykgaiv",
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "level_to_spawn_ready_s": 55.179836419,
+          "spawn_preparation_s": 0.018867609,
+          "cold_elapsed_s": 146.414968524,
+          "cold_full_chunks_per_s": 0.32783533325782843,
+          "chunk_ready_p50_ms": 2746.59836,
+          "chunk_ready_p95_ms": 139492.465901,
+          "tick_p95_ms": 241.976811,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 17032618549,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 3074614786,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 712225962,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 3085009087,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 590415958,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1115022363,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 23983783551,
+              "tasks": 1040
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 29501366938,
+              "tasks": 176
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 3602878664,
+              "tasks": 176
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 20395077259,
+              "tasks": 240
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 8690578876,
+              "tasks": 176
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 13652516646,
+              "tasks": 120
+            }
+          }
+        },
+        "full-nether-b1": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-nether-b1/auram-worldgen-bench-drj8hol8",
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "level_to_spawn_ready_s": 738.419023328,
+          "spawn_preparation_s": 0.090976065,
+          "cold_elapsed_s": 84.999679849,
+          "cold_full_chunks_per_s": 0.5647080093156928,
+          "chunk_ready_p50_ms": 8246.274366,
+          "chunk_ready_p95_ms": 61316.468895,
+          "tick_p95_ms": 143.049544,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 123228557867,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 35677157741,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 6567840650,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 35474098816,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 6063452304,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 15572414240,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 27081234188,
+              "tasks": 970
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 15540214073,
+              "tasks": 144
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 897948627,
+              "tasks": 133
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 6314850235,
+              "tasks": 200
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 6211599136,
+              "tasks": 144
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 10175459754,
+              "tasks": 84
+            }
+          }
+        },
+        "full-nether-a2": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-nether-a2/auram-worldgen-bench-pw6nl1_q",
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "level_to_spawn_ready_s": 70.087605769,
+          "spawn_preparation_s": 0.016254452,
+          "cold_elapsed_s": 26.152449657,
+          "cold_full_chunks_per_s": 1.835392119267583,
+          "chunk_ready_p50_ms": 3370.996293,
+          "chunk_ready_p95_ms": 14432.380752,
+          "tick_p95_ms": 58.175726,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 20127308348,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 3600731051,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 678994708,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 2823924171,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 824260617,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1607991119,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 11689395172,
+              "tasks": 936
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 11012601863,
+              "tasks": 144
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 407060637,
+              "tasks": 129
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 3275048086,
+              "tasks": 200
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 2820205094,
+              "tasks": 131
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 3327252837,
+              "tasks": 80
+            }
+          }
+        },
+        "full-nether-b2": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-nether-b2/auram-worldgen-bench-dqaf663p",
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "level_to_spawn_ready_s": 87.879712931,
+          "spawn_preparation_s": 0.013909427,
+          "cold_elapsed_s": 38.467530487,
+          "cold_full_chunks_per_s": 1.247805601043755,
+          "chunk_ready_p50_ms": 3607.905964,
+          "chunk_ready_p95_ms": 29010.40284,
+          "tick_p95_ms": 40.01881,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 32434807633,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 3722672117,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 892461832,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 3267852915,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 961661573,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1430229123,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 12388768180,
+              "tasks": 936
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 7224903858,
+              "tasks": 137
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 51034919,
+              "tasks": 120
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 4286369062,
+              "tasks": 200
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 2306441824,
+              "tasks": 122
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 3793741991,
+              "tasks": 80
+            }
+          }
+        }
+      }
+    },
+    "overworld": {
+      "variants": "A is aquifer, Bronze and TerraBlender, B adds Dreamtinker",
+      "jvm_command": [
+        "/tmp/auram-bench-vm-java",
+        "-Xms4G",
+        "-Xmx10G",
+        "-XX:ActiveProcessorCount=4",
+        "-Dauram.smoke.stageTimings=true",
+        "-Dauram.smoke.dimension=minecraft:overworld",
+        "-XX:FlightRecorderOptions=stackdepth=128",
+        "-XX:StartFlightRecording=filename=worldgen.jfr,settings=profile,dumponexit=true,maxsize=128m",
+        "-Dauram.smoke=worldgen-bench",
+        "-Dauram.smoke.identityCandidate=false",
+        "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+        "nogui"
+      ],
+      "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+      "mod_jar_count": 482,
+      "seed": "104729",
+      "runs": {
+        "full-dreamtinker-a1": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-dreamtinker-a1/auram-worldgen-bench-qjhede64",
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "level_to_spawn_ready_s": 70.977646606,
+          "spawn_preparation_s": 0.050450193,
+          "cold_elapsed_s": 223.449294349,
+          "cold_full_chunks_per_s": 0.21481383568403653,
+          "chunk_ready_p50_ms": 16999.86568,
+          "chunk_ready_p95_ms": 180228.412927,
+          "tick_p95_ms": 41.943348,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 23286349234,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 3562498916,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 674934131,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 1997676771,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 744555668,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1360964996,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 101365609944,
+              "tasks": 1040
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 59529157463,
+              "tasks": 176
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 7328526148,
+              "tasks": 176
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 29172411797,
+              "tasks": 240
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 9520052348,
+              "tasks": 176
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 11983887529,
+              "tasks": 120
+            }
+          }
+        },
+        "full-dreamtinker-b1": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-dreamtinker-b1/auram-worldgen-bench-ejf_ndwk",
+          "artifact_sha256": "ace7f995eb70c62c79565ea9254ab42f123087f08602541a3e7adbc8a0d2891e",
+          "level_to_spawn_ready_s": 55.349369428,
+          "spawn_preparation_s": 0.013239837,
+          "cold_elapsed_s": 89.245189232,
+          "cold_full_chunks_per_s": 0.5378441170113961,
+          "chunk_ready_p50_ms": 7803.66022,
+          "chunk_ready_p95_ms": 67092.783365,
+          "tick_p95_ms": 22.54557,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 16737481554,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 3417003408,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 695577246,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 2687923744,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 637938255,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 1079351511,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 47582424312,
+              "tasks": 1040
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 24380773260,
+              "tasks": 176
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 3813981608,
+              "tasks": 176
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 11189026258,
+              "tasks": 240
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 4256553575,
+              "tasks": 176
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 5861400678,
+              "tasks": 120
+            }
+          }
+        },
+        "full-dreamtinker-a2": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-dreamtinker-a2/auram-worldgen-bench-xe4owwez",
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "level_to_spawn_ready_s": 65.320617582,
+          "spawn_preparation_s": 0.012134248,
+          "cold_elapsed_s": 80.790630998,
+          "cold_full_chunks_per_s": 0.5941282968960628,
+          "chunk_ready_p50_ms": 4301.57734,
+          "chunk_ready_p95_ms": 68838.999787,
+          "tick_p95_ms": 13.546448,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 20834730652,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 2517546038,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 503778365,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 1471930942,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 580363882,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 810778500,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 43843752230,
+              "tasks": 1040
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 23116954798,
+              "tasks": 176
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 4043240200,
+              "tasks": 176
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 9942203578,
+              "tasks": 240
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 4112512685,
+              "tasks": 176
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 6326201911,
+              "tasks": 120
+            }
+          }
+        },
+        "full-dreamtinker-b2": {
+          "runtime": "/private/tmp/lima/auram-bench/worldgen-full-dreamtinker-b2/auram-worldgen-bench-x3ufm4b3",
+          "artifact_sha256": "ace7f995eb70c62c79565ea9254ab42f123087f08602541a3e7adbc8a0d2891e",
+          "level_to_spawn_ready_s": 56.781832338,
+          "spawn_preparation_s": 0.310777536,
+          "cold_elapsed_s": 141.746893334,
+          "cold_full_chunks_per_s": 0.3386317602523887,
+          "chunk_ready_p50_ms": 4398.340072,
+          "chunk_ready_p95_ms": 130979.532149,
+          "tick_p95_ms": 54.819354,
+          "stage_metrics": {
+            "startup/STARTS": {
+              "worker_cpu_ns": 15287857453,
+              "tasks": 529
+            },
+            "startup/NOISE": {
+              "worker_cpu_ns": 4361198806,
+              "tasks": 25
+            },
+            "startup/CARVERS": {
+              "worker_cpu_ns": 721590374,
+              "tasks": 25
+            },
+            "startup/BIOMES": {
+              "worker_cpu_ns": 2718884543,
+              "tasks": 49
+            },
+            "startup/SURFACE": {
+              "worker_cpu_ns": 635216536,
+              "tasks": 25
+            },
+            "startup/FEATURES": {
+              "worker_cpu_ns": 2240873706,
+              "tasks": 9
+            },
+            "cold/STARTS": {
+              "worker_cpu_ns": 70560764306,
+              "tasks": 1040
+            },
+            "cold/NOISE": {
+              "worker_cpu_ns": 26621123459,
+              "tasks": 176
+            },
+            "cold/CARVERS": {
+              "worker_cpu_ns": 4710182590,
+              "tasks": 176
+            },
+            "cold/BIOMES": {
+              "worker_cpu_ns": 14838999163,
+              "tasks": 240
+            },
+            "cold/SURFACE": {
+              "worker_cpu_ns": 4515182763,
+              "tasks": 176
+            },
+            "cold/FEATURES": {
+              "worker_cpu_ns": 5376460315,
+              "tasks": 120
+            }
+          }
+        }
+      }
+    }
+  },
+  "saved_comparisons": {
+    "aquifer-r2-a1-vs-full-dreamtinker-b1": {
+      "compared_chunks": 48,
+      "compared_blocks": 13369344,
+      "differing_blocks": 21788,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "bde612fb8d50a9f81c602988714c5df390e734985d9ee6fbfb96c2b256e6aa31",
+        "61f05f6587a6b09e47095966bd3fd2021a968d5c9b88df15bcc851392c6d858e"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "minecraft:oak_leaves",
+            "Properties": {
+              "distance": "2",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "count": 892
+        },
+        {
+          "first": {
+            "Name": "minecraft:oak_leaves",
+            "Properties": {
+              "distance": "2",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 853
+        },
+        {
+          "first": {
+            "Name": "biomesoplenty:sprout"
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 683
+        }
+      ]
+    },
+    "aquifer-r2-a2-vs-full-dreamtinker-b2": {
+      "compared_chunks": 48,
+      "compared_blocks": 13369344,
+      "differing_blocks": 46697,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "c041cb7bc9e3a0c00227e7bb32c242faf0a8fdfaf1a3bd637a91995c12b4ca59",
+        "eb821559e2d505865fdd7f31147bd0ec2a25b500fcec247ff4e63140f20924f3"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 25,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "2",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 4135
+        },
+        {
+          "first": {
+            "Name": "minecraft:stone",
+            "Properties": {
+              "weathering": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:dirt"
+          },
+          "count": 3424
+        },
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "1",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 1810
+        }
+      ]
+    },
+    "full-aether-a1-vs-full-aether-a2": {
+      "compared_chunks": 48,
+      "compared_blocks": 3305472,
+      "differing_blocks": 545,
+      "differing_chunks": 12,
+      "canonical_block_fingerprints": [
+        "2afb5d479f0a7f4419a193180a61b979bf39dbb29eecafaeedf08b741dccba93",
+        "e507fc0f460de3514da96bc038a8ad91f7eb3ee6dbf73dea7717b5a3e5345fec"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 86
+        },
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "2",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 73
+        },
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "4",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 60
+        }
+      ]
+    },
+    "full-aether-a1-vs-full-aether-b1": {
+      "compared_chunks": 48,
+      "compared_blocks": 3305472,
+      "differing_blocks": 2404,
+      "differing_chunks": 17,
+      "canonical_block_fingerprints": [
+        "2afb5d479f0a7f4419a193180a61b979bf39dbb29eecafaeedf08b741dccba93",
+        "326dc90c303f9d2a3bd4353b83ae05355236b04a9a10c67d7cfc51065679f938"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 284
+        },
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "2",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 243
+        },
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "4",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 194
+        }
+      ]
+    },
+    "full-aether-a2-vs-full-aether-b2": {
+      "compared_chunks": 48,
+      "compared_blocks": 3305472,
+      "differing_blocks": 1833,
+      "differing_chunks": 12,
+      "canonical_block_fingerprints": [
+        "e507fc0f460de3514da96bc038a8ad91f7eb3ee6dbf73dea7717b5a3e5345fec",
+        "ebc3fadcda10783d913aec7307e3155f17917399a8230d337d44262eb8dc74f0"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 208
+        },
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "2",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 172
+        },
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "count": 152
+        }
+      ]
+    },
+    "full-aether-b1-vs-full-aether-c1": {
+      "compared_chunks": 48,
+      "compared_blocks": 3305472,
+      "differing_blocks": 1824,
+      "differing_chunks": 15,
+      "canonical_block_fingerprints": [
+        "326dc90c303f9d2a3bd4353b83ae05355236b04a9a10c67d7cfc51065679f938",
+        "5124b2b504ab8b2d96df67bbade3c44bbd0c90d7fa7266629db98d0969b513d7"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "count": 208
+        },
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "2",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "count": 172
+        },
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 152
+        }
+      ]
+    },
+    "full-aether-b2-vs-full-aether-c2": {
+      "compared_chunks": 48,
+      "compared_blocks": 3305472,
+      "differing_blocks": 2824,
+      "differing_chunks": 20,
+      "canonical_block_fingerprints": [
+        "ebc3fadcda10783d913aec7307e3155f17917399a8230d337d44262eb8dc74f0",
+        "4b72c39e537615d700afc66e116b19ec53584aa778d84a02a4ad01d4e62fcc76"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "count": 293
+        },
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "2",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "count": 246
+        },
+        {
+          "first": {
+            "Name": "deep_aether:roseroot_leaves",
+            "Properties": {
+              "distance": "3",
+              "double_drops": "true",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 234
+        }
+      ]
+    },
+    "full-dreamtinker-a1-vs-full-dreamtinker-a2": {
+      "compared_chunks": 48,
+      "compared_blocks": 13369344,
+      "differing_blocks": 39006,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "6dd81baf94943ab10ee9d066879eb0fb728386cf61d9808ddf4db97cb1ffe469",
+        "489a7cc9c7192b5b8f852274e10951fdfd98db7919a54dc7949ecd90a4215547"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "2",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 3580
+        },
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "2",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "count": 3319
+        },
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "1",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 1519
+        }
+      ]
+    },
+    "full-dreamtinker-a1-vs-full-dreamtinker-b1": {
+      "compared_chunks": 48,
+      "compared_blocks": 13369344,
+      "differing_blocks": 40328,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "6dd81baf94943ab10ee9d066879eb0fb728386cf61d9808ddf4db97cb1ffe469",
+        "61f05f6587a6b09e47095966bd3fd2021a968d5c9b88df15bcc851392c6d858e"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 25,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "2",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 4211
+        },
+        {
+          "first": {
+            "Name": "minecraft:stone",
+            "Properties": {
+              "weathering": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:dirt"
+          },
+          "count": 3458
+        },
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "1",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 1807
+        }
+      ]
+    },
+    "full-dreamtinker-a2-vs-full-dreamtinker-b2": {
+      "compared_chunks": 48,
+      "compared_blocks": 13369344,
+      "differing_blocks": 45811,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "489a7cc9c7192b5b8f852274e10951fdfd98db7919a54dc7949ecd90a4215547",
+        "eb821559e2d505865fdd7f31147bd0ec2a25b500fcec247ff4e63140f20924f3"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 25,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "2",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 3921
+        },
+        {
+          "first": {
+            "Name": "minecraft:stone",
+            "Properties": {
+              "weathering": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:dirt"
+          },
+          "count": 3414
+        },
+        {
+          "first": {
+            "Name": "environmental:pine_leaves",
+            "Properties": {
+              "distance": "1",
+              "persistent": "false",
+              "waterlogged": "false"
+            }
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 1725
+        }
+      ]
+    },
+    "full-nether-a1-vs-full-nether-a2": {
+      "compared_chunks": 48,
+      "compared_blocks": 3145728,
+      "differing_blocks": 23636,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "093d5001c0c702484c3c3a4cfa01cef6bccce63a3582ad34b867bae87caeee63",
+        "2df0ff93c0b1142af1eee5de0de98fad05e629498b09283567ed530e77e26c7b"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "minecraft:netherrack"
+          },
+          "second": {
+            "Name": "mysticalagriculture:soulstone"
+          },
+          "count": 5954
+        },
+        {
+          "first": {
+            "Name": "mysticalagriculture:soulstone"
+          },
+          "second": {
+            "Name": "minecraft:netherrack"
+          },
+          "count": 4619
+        },
+        {
+          "first": {
+            "Name": "regions_unexplored:mycotoxic_grass"
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 1203
+        }
+      ]
+    },
+    "full-nether-a1-vs-full-nether-b1": {
+      "compared_chunks": 48,
+      "compared_blocks": 3145728,
+      "differing_blocks": 20148,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "093d5001c0c702484c3c3a4cfa01cef6bccce63a3582ad34b867bae87caeee63",
+        "4df140ec7e36f2e5fb4584048cead5dab717648dfdbfe40f09986bacce50c890"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "minecraft:netherrack"
+          },
+          "second": {
+            "Name": "mysticalagriculture:soulstone"
+          },
+          "count": 5656
+        },
+        {
+          "first": {
+            "Name": "mysticalagriculture:soulstone"
+          },
+          "second": {
+            "Name": "minecraft:netherrack"
+          },
+          "count": 3616
+        },
+        {
+          "first": {
+            "Name": "regions_unexplored:mycotoxic_grass"
+          },
+          "second": {
+            "Name": "minecraft:air"
+          },
+          "count": 1056
+        }
+      ]
+    },
+    "full-nether-a2-vs-full-nether-b2": {
+      "compared_chunks": 48,
+      "compared_blocks": 3145728,
+      "differing_blocks": 26758,
+      "differing_chunks": 48,
+      "canonical_block_fingerprints": [
+        "2df0ff93c0b1142af1eee5de0de98fad05e629498b09283567ed530e77e26c7b",
+        "292460e1dcdfd2e57e95dab96bb295d7613d1a24f8ae0e7f757984dc9a1b5a00"
+      ],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": [],
+      "chunks_with_biome_differences_count": 0,
+      "largest_block_differences": [
+        {
+          "first": {
+            "Name": "minecraft:netherrack"
+          },
+          "second": {
+            "Name": "mysticalagriculture:soulstone"
+          },
+          "count": 6947
+        },
+        {
+          "first": {
+            "Name": "mysticalagriculture:soulstone"
+          },
+          "second": {
+            "Name": "minecraft:netherrack"
+          },
+          "count": 6145
+        },
+        {
+          "first": {
+            "Name": "minecraft:air"
+          },
+          "second": {
+            "Name": "regions_unexplored:yellow_bioshroom_block"
+          },
+          "count": 1110
+        }
+      ]
+    }
+  }
+}

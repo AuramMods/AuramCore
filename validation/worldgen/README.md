@@ -132,3 +132,22 @@ Both matched pairs used 48 cold Nether chunks beginning at (88, 88). The baselin
 The first pair improved cold throughput and p95. The second pair moved in the opposite direction. Host CPU samples reached zero idle during the slower segment of the campaign. During B1's long Overworld startup, worker stacks showed Blueprint biome queries for concentric structure placement. CPU increased across multiple unrelated stages with the same measured startup task counts. The controlled Nether fixture isolated the region lookup improvement from this variation.
 
 The two identical controls differed at 23,636 of 3,145,728 saved block positions. The candidate comparisons differed at 20,148 and 26,758 positions. Soulstone, ore and vegetation were among the largest differences. All three comparisons matched every saved biome palette, structure start, and fluid-tick list.
+
+## Combined Overworld regression
+
+The final run order was B1, A1, A2, B2. The immediate controls include the aquifer, Bronze Dungeon, and TerraBlender changes. The combined arms also include Dreamtinker's predicate cache. The stock controls come from the aquifer timing campaign with the same test jar, JVM flags, seed and 48 cold target coordinates.
+
+| Variant | World load to spawn-ready (s) | Cold FULL chunks/s | p95 chunk-ready (s) | Cold features CPU (s) |
+| --- | ---: | ---: | ---: | ---: |
+| Stock 1.0.20 A1 | 81.11 | 0.544 | 69.95 | 4.209 |
+| Stock 1.0.20 A2 | 71.38 | 0.302 | 136.42 | 4.371 |
+| Immediate control A1 | 70.98 | 0.215 | 180.23 | 11.984 |
+| Immediate control A2 | 65.32 | 0.594 | 68.84 | 6.326 |
+| Combined B1 | 55.35 | 0.538 | 67.09 | 5.861 |
+| Combined B2 | 56.78 | 0.339 | 130.98 | 5.376 |
+
+Relative to the stock controls, the combined arms reduced cold noise CPU from 40.89 and 37.95 seconds to 24.38 and 26.62. Cold carving CPU fell from 9.51 and 8.76 seconds to 3.81 and 4.71. The combined Overworld brought spawn-ready forward in both pairs. Cold throughput varied across pairs.
+
+Relative to the immediate controls, features CPU fell from 11.98 and 6.33 seconds to 5.86 and 5.38. Multiple unrelated stages also changed between runs, so the direct scatter fixture supplies the isolated Dreamtinker measurement.
+
+The two immediate controls differed in 39,006 saved block states with identical biome palettes. The combined comparisons against those controls differed in 40,328 and 45,811 states and 25 biome palettes each. Comparisons against the original stock controls differed in 21,788 and 46,697 states and in zero and 25 biome palettes. All comparisons matched structure starts and fluid ticks across 48 chunks. The exact scoped fixtures cover aquifer heights and saved terrain before decoration, Bronze Dungeon pieces and RNG, TerraBlender biome sampling, and Dreamtinker ore writes and RNG.
