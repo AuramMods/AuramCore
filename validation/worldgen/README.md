@@ -66,6 +66,10 @@ The two identical full-pack controls yielded 45,426 block differences across 13,
 
 The minimal fixture with Tectonic, Lithostitched and Better Caves agreed with the uncached oracle on 23,233 height checks in each arm. All 16 saved biome palettes, structure starts and fluid tick lists matched. The 128 block-state differences out of 1,572,864 positions were concentrated in stone variants, dripstone, ore and foliage. The separate direct fallback replay matched three seeds and confirmed zero shared lookups for the clipped height range, legacy terrain blending and an unfamiliar Y-dependent density function.
 
+With Blueprint's weighted slice order fixed in the test mod, the full-pack replay matched all 16 biome palettes, complete structure starts and fluid tick lists. Both arms placed the same five-piece Trek fort. The control and candidate verified 94,995 and 87,444 uncached heights respectively with zero mismatches. The saved blocks still differed at 8,637 of 4,456,448 positions, including ore and foliage.
+
+Use `--java-arg=-Dauram.smoke.compareBeforeDecoration=true` in the minimal replay to isolate saved output after terrain, surface and carving. The smoke mod then skips decoration in the disposable worlds. This replay matched all 1,572,864 block states, biome palettes, complete structure starts and fluid ticks across all 16 chunks.
+
 The cold JFR recordings contained 715 and 738 Better Caves stack samples across the controls and 311 and 401 across the candidates. Preliminary height queries accounted for 445 and 445 control samples and 20 and 33 candidate samples. The residual samples were dominated by Better Caves noise evaluation. The overlap accounts for the observed reduction without an independent carver change.
 
 ## Aether Bronze Dungeon terrain probes

@@ -1,0 +1,152 @@
+{
+  "seed": 104729,
+  "four_cpu_vm": true,
+  "full_pack_fixed_blueprint_slice_order": {
+    "runs": [
+      {
+        "runtime": "/tmp/lima/auram-bench/worldgen-sorted-pack-a1/auram-worldgen-bench-fk8kh5fc",
+        "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+        "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+        "jvm_command": [
+          "/tmp/auram-bench-vm-java",
+          "-Xms4G",
+          "-Xmx10G",
+          "-XX:ActiveProcessorCount=4",
+          "-Dauram.smoke.stageTimings=true",
+          "-Dauram.smoke.dimension=minecraft:overworld",
+          "-XX:FlightRecorderOptions=stackdepth=128",
+          "-XX:StartFlightRecording=filename=worldgen.jfr,settings=profile,dumponexit=true,maxsize=128m",
+          "-Dauram.smoke.chunkRequests=16",
+          "-Dauram.smoke.chunkOriginZ=90",
+          "-Dauram.smoke.orderBlueprintSlices=true",
+          "-Dauram.smoke.verifyAquiferHeights=true",
+          "-Dauram.smoke=worldgen-bench",
+          "-Dauram.smoke.identityCandidate=false",
+          "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+          "nogui"
+        ],
+        "verified_heights": 94995,
+        "height_mismatches": 0,
+        "mods": 482
+      },
+      {
+        "runtime": "/tmp/lima/auram-bench/worldgen-sorted-pack-b1/auram-worldgen-bench-ianuf20_",
+        "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+        "smoke_sha256": "7e72b818e3f75ea5f9baacda634205fb0594a3cdf33313ad11d27161bfc8911e",
+        "jvm_command": [
+          "/tmp/auram-bench-vm-java",
+          "-Xms4G",
+          "-Xmx10G",
+          "-XX:ActiveProcessorCount=4",
+          "-Dauram.smoke.stageTimings=true",
+          "-Dauram.smoke.dimension=minecraft:overworld",
+          "-XX:FlightRecorderOptions=stackdepth=128",
+          "-XX:StartFlightRecording=filename=worldgen.jfr,settings=profile,dumponexit=true,maxsize=128m",
+          "-Dauram.smoke.chunkRequests=16",
+          "-Dauram.smoke.chunkOriginZ=90",
+          "-Dauram.smoke.orderBlueprintSlices=true",
+          "-Dauram.smoke.verifyAquiferHeights=true",
+          "-Dauram.smoke=worldgen-bench",
+          "-Dauram.smoke.identityCandidate=false",
+          "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+          "nogui"
+        ],
+        "verified_heights": 87444,
+        "height_mismatches": 0,
+        "mods": 482
+      }
+    ],
+    "saved_comparison": {
+      "compared_blocks": 4456448,
+      "differing_blocks": 8637,
+      "differing_chunks": 16,
+      "canonical_block_fingerprints": [
+        "9bfec588d587e0f0242bc158f26a6844b85e694bf172c4e51b07d2f32fcd06ef",
+        "152fd805c026dd95a48e5e487c8161f82e536661229658118c6b28e1781e7a82"
+      ],
+      "compared_chunks": 16,
+      "chunks_with_biome_differences": [],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": []
+    },
+    "trek_fort": {
+      "chunk": [
+        93,
+        91
+      ],
+      "projected_start": [
+        1480,
+        80,
+        1463
+      ],
+      "biome_both_arms": "biomesoplenty:field",
+      "serialized_pieces_both_arms": 5
+    }
+  },
+  "terrain_before_decoration": {
+    "runs": [
+      {
+        "runtime": "/tmp/lima/auram-bench/worldgen-predecoration-aquifer-a1/auram-worldgen-bench-nvav6e_l",
+        "artifact_sha256": "35b581823dcb8936ca7c250a7e2bfa439413999aa25fb604913769d4411ad99a",
+        "smoke_sha256": "921424996ae1cb27f4b19ac47410936a92deee3a98251337e49bd65bb8f3a8cf",
+        "jvm_command": [
+          "/tmp/auram-bench-vm-java",
+          "-Xms1G",
+          "-Xmx4G",
+          "-XX:ActiveProcessorCount=4",
+          "-Dauram.smoke.chunkRequests=16",
+          "-Dauram.smoke.verifyAquiferHeights=true",
+          "-Dauram.smoke.compareBeforeDecoration=true",
+          "-Dauram.smoke=worldgen-bench",
+          "-Dauram.smoke.identityCandidate=false",
+          "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+          "nogui"
+        ],
+        "verified_heights": 23233,
+        "height_mismatches": 0,
+        "mods": 8
+      },
+      {
+        "runtime": "/tmp/lima/auram-bench/worldgen-predecoration-aquifer-b1/auram-worldgen-bench-1x77d_h1",
+        "artifact_sha256": "9df761f4e0c98e7c8df832b627eea16adacc7751cb3835e68888bdac2c5540c2",
+        "smoke_sha256": "921424996ae1cb27f4b19ac47410936a92deee3a98251337e49bd65bb8f3a8cf",
+        "jvm_command": [
+          "/tmp/auram-bench-vm-java",
+          "-Xms1G",
+          "-Xmx4G",
+          "-XX:ActiveProcessorCount=4",
+          "-Dauram.smoke.chunkRequests=16",
+          "-Dauram.smoke.verifyAquiferHeights=true",
+          "-Dauram.smoke.compareBeforeDecoration=true",
+          "-Dauram.smoke=worldgen-bench",
+          "-Dauram.smoke.identityCandidate=false",
+          "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+          "nogui"
+        ],
+        "verified_heights": 23233,
+        "height_mismatches": 0,
+        "mods": 8
+      }
+    ],
+    "saved_comparison": {
+      "compared_blocks": 1572864,
+      "differing_blocks": 0,
+      "differing_chunks": 0,
+      "canonical_block_fingerprints": [
+        "6499fe1408643d817b8ac9388b55966d742a62a75e4fafd8f9f1c0aec27dbb07",
+        "6499fe1408643d817b8ac9388b55966d742a62a75e4fafd8f9f1c0aec27dbb07"
+      ],
+      "compared_chunks": 16,
+      "chunks_with_biome_differences": [],
+      "chunks_with_structure_start_differences": [],
+      "chunks_with_fluid_tick_differences": []
+    },
+    "fixture_mods": [
+      "tectonic",
+      "lithostitched",
+      "bettercaves",
+      "ksyxis",
+      "projecte"
+    ]
+  }
+}

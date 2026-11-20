@@ -18,6 +18,7 @@
     "AquiferSurfaceProbeMixin",
     "AquiferSharedHitProbeMixin",
     "BlenderFactory",
+    "DecorationParitySmokeMixin",
     "AquiferNoiseStageProbeMixin",
     "AquiferStructureStageProbeMixin",
     "NoiseColumnProbeMixin",
