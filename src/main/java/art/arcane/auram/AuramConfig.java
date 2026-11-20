@@ -24,7 +24,7 @@ public class AuramConfig {
 
         private Server(ForgeConfigSpec.Builder builder) {
             builder.push("surfaceMap");
-            surfaceMapEnabled = builder.comment("Build and serve shared JourneyMap surface tiles.")
+            surfaceMapEnabled = builder.comment("Build and serve shared surface map tiles.")
                     .define("enabled", true);
             nearbyTilesPerSecond = builder.comment("Per-player tile uploads per second for the visible map.")
                     .defineInRange("nearbyTilesPerSecond", 10, 1, 20);
