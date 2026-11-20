@@ -26,6 +26,7 @@ def summarize(runtime):
     elapsed = int(ticks[-1]['elapsed_ns']) / 1e9
     latency = [int(chunk['ready_ns']) / 1e6 for chunk in chunks]
     stages = runtime / 'worldgen-stage-cpu.csv'
+    targets = runtime / 'worldgen-targets.csv'
     level_to_spawn = runtime / 'worldgen-level-ready-ns.txt'
     return {
         'runtime': str(runtime.resolve()),
@@ -45,6 +46,8 @@ def summarize(runtime):
         'tick_p95_ms': percentile([int(tick['tick_ns']) / 1e6 for tick in ticks], .95),
         'stages': [{key: value if key in {'phase', 'stage'} else int(value) for key, value in row.items()}
                    for row in rows(stages)] if stages.exists() else [],
+        'targets': [{key: value if key in {'phase', 'target'} else int(value) for key, value in row.items()}
+                    for row in rows(targets)] if targets.exists() else [],
     }
 
 

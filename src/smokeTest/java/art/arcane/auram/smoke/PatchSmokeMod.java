@@ -192,6 +192,11 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-aquiferparity-pass.txt"), "PASS seeded preliminary heights with clipped noise settings");
                 return;
             }
+            if (smokeMode.equals("regionparity")) {
+                BiomeRegionParitySmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-regionparity-pass.txt"), "PASS seeded chunk biome fill");
+                return;
+            }
             if (smokeMode.equals("bronzeparity")) {
                 BronzeDungeonParitySmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-bronzeparity-pass.txt"), "PASS seeded Bronze Dungeon starts, pieces and RNG");

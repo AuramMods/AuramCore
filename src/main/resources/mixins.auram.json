@@ -45,6 +45,8 @@
     "aether.QuicksoilMovementMixin",
     "aether.BronzeDungeonTerrainMixin",
     "aether.BronzeDungeonStartMixin",
+    "terrablender.BiomeFillMixin",
+    "terrablender.RegionAreaMixin",
     "relics.FluidCollisionMixin",
     "dimdoors.PlayerCollisionMixin",
     "distanthorizons.ChunkMapDemandMixin",

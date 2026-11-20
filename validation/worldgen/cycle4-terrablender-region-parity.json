@@ -1,0 +1,339 @@
+{
+  "environment": "Four-vCPU Lima Ubuntu 24.04 ARM64 dedicated server, Temurin 17.0.21",
+  "seed": 104729,
+  "arm_order": [
+    "a1",
+    "b1",
+    "b2",
+    "a2"
+  ],
+  "control": "Aquifer and Aether patches with original TerraBlender Area lookups",
+  "candidate": "A task-local quart-column cache around vanilla biome fill",
+  "counting": "One read-lock acquisition per uncached Area.get, including recursive child layers. Off-CPU estimates sum max(0, wall minus current-thread CPU) for acquisition and include scheduling and timing overhead.",
+  "dimensions": {
+    "aether": {
+      "checked_biome_entries": 49152,
+      "biome_fingerprint": "bc7a632442dca47133944152c11e2a9a26042ea58a8591732bee7c819572a0ab",
+      "fixture": {
+        "deep_aether": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/deep_aether-1.20.1-1.1.7.jar",
+          "sha256": "ab6bce474afa41edb53299d6ccbba6af22b881b7a7eab4988124ba6b6eff7feb"
+        },
+        "aeroblender": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/deep_aether-1.20.1-1.1.7.jar!META-INF/jarjar/aeroblender-1.20.1-1.0.2-rc1-neoforge.jar",
+          "sha256": "a6cc6b2dbf831ca403ef6312669afd0c91b55aae3f75eb6686447f5631a00d45"
+        },
+        "aether": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/aether-1.20.1-1.5.2-neoforge.jar",
+          "sha256": "5cb64ab1f27e78e8338fe67f9c766578904aad9bc1f8bcc90f306ea52aea3fc5"
+        },
+        "curios": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/curios-forge-5.14.1+1.20.1.jar",
+          "sha256": "1e817919a35b37cf30524aaec73f0ca5130452f23f168f844854df282eb8e51f"
+        },
+        "projecte": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+          "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+        },
+        "terrablender": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/TerraBlender-forge-1.20.1-3.0.1.10.jar",
+          "sha256": "c77a13e3879f9f991cf592abac60ad0c6d2ed17f5ff697ec2db3872b22902d4a"
+        }
+      },
+      "jvm_command": [
+        "/tmp/auram-bench-vm-java",
+        "-Xms1G",
+        "-Xmx4G",
+        "-XX:ActiveProcessorCount=4",
+        "-Dauram.smoke.dimension=aether:the_aether",
+        "-Dauram.smoke.targetWorldgen=true",
+        "-Dauram.smoke.stageTimings=true",
+        "-Dauram.smoke=regionparity",
+        "-Dauram.smoke.identityCandidate=false",
+        "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+        "nogui"
+      ],
+      "smoke_sha256": "cf92ab5c7a9a034e624359bd923c40e6c8ac843a3fb815ddb6f64cc92e9036a4",
+      "runs": {
+        "a1": {
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-aether-a1/auram-regionparity-yzqkpk_z",
+          "timed_batches_ns": [
+            59559309,
+            40343128,
+            33462748
+          ],
+          "median_batch_wall_ns": 40343128,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 204827,
+              "cpu_ns": 73085162,
+              "wall_ns": 295488247,
+              "off_cpu_ns": 222403085
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 3258,
+              "cpu_ns": 3577346,
+              "wall_ns": 33112808,
+              "off_cpu_ns": 29535462
+            }
+          ]
+        },
+        "b1": {
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-aether-b1/auram-regionparity-wkx_wco4",
+          "timed_batches_ns": [
+            45684382,
+            17693901,
+            15279907
+          ],
+          "median_batch_wall_ns": 17693901,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 9341,
+              "cpu_ns": 3121544,
+              "wall_ns": 10146075,
+              "off_cpu_ns": 7024531
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 2492,
+              "cpu_ns": 1304655,
+              "wall_ns": 3410860,
+              "off_cpu_ns": 2106205
+            }
+          ]
+        },
+        "b2": {
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-aether-b2/auram-regionparity-oubert53",
+          "timed_batches_ns": [
+            41305150,
+            16879513,
+            16585462
+          ],
+          "median_batch_wall_ns": 16879513,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 9299,
+              "cpu_ns": 3277124,
+              "wall_ns": 26663647,
+              "off_cpu_ns": 23386523
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 2479,
+              "cpu_ns": 1366502,
+              "wall_ns": 17249291,
+              "off_cpu_ns": 15882789
+            }
+          ]
+        },
+        "a2": {
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-aether-a2/auram-regionparity-zutz7w8s",
+          "timed_batches_ns": [
+            76745885,
+            46154835,
+            42186193
+          ],
+          "median_batch_wall_ns": 46154835,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 205481,
+              "cpu_ns": 86524815,
+              "wall_ns": 350588714,
+              "off_cpu_ns": 264063899
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 3470,
+              "cpu_ns": 4942203,
+              "wall_ns": 41852024,
+              "off_cpu_ns": 36909821
+            }
+          ]
+        }
+      }
+    },
+    "nether": {
+      "checked_biome_entries": 49152,
+      "biome_fingerprint": "898d7049bd2f93516bd6e59bdccab278d8e6ce25c8431e3aebb448c0b9e723d3",
+      "fixture": {
+        "biomesoplenty": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/BiomesOPlenty-forge-1.20.1-19.0.0.96.jar",
+          "sha256": "84bbfe8fa25a453dae3a8e6c46e8e129f48f7d9df58e33bb7f3d28b90f591b3f"
+        },
+        "glitchcore": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/GlitchCore-forge-1.20.1-0.0.1.1.jar",
+          "sha256": "dedd857b1ee356f002471ec97a2174c7d193d6d1aede60782d0bbe2c241b2a7f"
+        },
+        "projecte": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/ProjectE-1.20.1-PE1.0.1.jar",
+          "sha256": "f51f387e56307e7cda26915ca0c789760d85e97a8b40b8bfa0988be66371d018"
+        },
+        "terrablender": {
+          "source": "/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram/minecraft/mods/TerraBlender-forge-1.20.1-3.0.1.10.jar",
+          "sha256": "c77a13e3879f9f991cf592abac60ad0c6d2ed17f5ff697ec2db3872b22902d4a"
+        }
+      },
+      "jvm_command": [
+        "/tmp/auram-bench-vm-java",
+        "-Xms1G",
+        "-Xmx4G",
+        "-XX:ActiveProcessorCount=4",
+        "-Dauram.smoke.dimension=minecraft:the_nether",
+        "-Dauram.smoke.targetWorldgen=true",
+        "-Dauram.smoke.stageTimings=true",
+        "-Dauram.smoke=regionparity",
+        "-Dauram.smoke.identityCandidate=false",
+        "@libraries/net/minecraftforge/forge/1.20.1-47.4.10/unix_args.txt",
+        "nogui"
+      ],
+      "smoke_sha256": "cf92ab5c7a9a034e624359bd923c40e6c8ac843a3fb815ddb6f64cc92e9036a4",
+      "runs": {
+        "a1": {
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-nether-a1/auram-regionparity-knzkq0o9",
+          "timed_batches_ns": [
+            64462658,
+            40155141,
+            62432427
+          ],
+          "median_batch_wall_ns": 62432427,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 204884,
+              "cpu_ns": 81374984,
+              "wall_ns": 313031123,
+              "off_cpu_ns": 231656139
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 3279,
+              "cpu_ns": 4594183,
+              "wall_ns": 51844956,
+              "off_cpu_ns": 47250773
+            }
+          ]
+        },
+        "b1": {
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-nether-b1/auram-regionparity-ic4xrkdd",
+          "timed_batches_ns": [
+            54152677,
+            50224716,
+            18211384
+          ],
+          "median_batch_wall_ns": 50224716,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 9301,
+              "cpu_ns": 3549661,
+              "wall_ns": 43759542,
+              "off_cpu_ns": 40209881
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 2482,
+              "cpu_ns": 1325772,
+              "wall_ns": 17298581,
+              "off_cpu_ns": 15972809
+            }
+          ]
+        },
+        "b2": {
+          "artifact_sha256": "43174db9197f0b1c7dfa4f1cf30cf9a69e8af18766414224143405e1f3fabc0e",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-nether-b2/auram-regionparity-iadwj1tc",
+          "timed_batches_ns": [
+            35940700,
+            17244171,
+            19445331
+          ],
+          "median_batch_wall_ns": 19445331,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 9309,
+              "cpu_ns": 3200539,
+              "wall_ns": 24213702,
+              "off_cpu_ns": 21013163
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 2486,
+              "cpu_ns": 1057099,
+              "wall_ns": 9490402,
+              "off_cpu_ns": 8433303
+            }
+          ]
+        },
+        "a2": {
+          "artifact_sha256": "d708f8f0dd37db0092b8cd790e3c9f388dc65c8b5386fc91d4bebe6689caf424",
+          "runtime": "/tmp/lima/auram-bench/worldgen-region-r2-nether-a2/auram-regionparity-ir597eev",
+          "timed_batches_ns": [
+            65110507,
+            46949091,
+            41160166
+          ],
+          "median_batch_wall_ns": 46949091,
+          "cold_biome_tasks": 0,
+          "cold_biome_stage_cpu_ns": 0,
+          "locks": [
+            {
+              "phase": "cold",
+              "target": "TERRA_READ_LOCK",
+              "calls": 205706,
+              "cpu_ns": 95390948,
+              "wall_ns": 306567537,
+              "off_cpu_ns": 211176589
+            },
+            {
+              "phase": "cold",
+              "target": "TERRA_WRITE_LOCK",
+              "calls": 3601,
+              "cpu_ns": 6068523,
+              "wall_ns": 40356827,
+              "off_cpu_ns": 34288304
+            }
+          ]
+        }
+      }
+    }
+  }
+}

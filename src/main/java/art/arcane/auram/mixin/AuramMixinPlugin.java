@@ -33,6 +33,7 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         }
         // These mixins target vanilla classes, so @Pseudo cannot make them optional.
         return switch (mixinClassName) {
+            case "art.arcane.auram.mixin.terrablender.BiomeFillMixin" -> "terrablender.worldgen.noise.Area";
             case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";
             case "art.arcane.auram.mixin.dimdoors.PlayerCollisionMixin" -> "org.dimdev.dimdoors.mixin.ServerPlayNetworkHandlerMixin";
             case "art.arcane.auram.mixin.distanthorizons.ChunkMapDemandMixin" ->

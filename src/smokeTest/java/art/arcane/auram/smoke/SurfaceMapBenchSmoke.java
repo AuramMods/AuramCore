@@ -76,7 +76,10 @@ public final class SurfaceMapBenchSmoke {
                 tickStart = System.nanoTime();
                 if (start == 0) {
                     start = tickStart;
-                    if (WORLDGEN) AquiferReuseProbe.beginColdRun();
+                    if (WORLDGEN) {
+                        AquiferReuseProbe.beginColdRun();
+                        WorldgenTargets.beginCold();
+                    }
                 }
             }
             return;
@@ -148,6 +151,7 @@ public final class SurfaceMapBenchSmoke {
             completedRequests.add(0, "chunk_x,chunk_z,ready_ns");
             Files.write(Path.of("worldgen-chunks.csv"), completedRequests);
             AquiferReuseProbe.write(Path.of("worldgen-stage-cpu.csv"));
+            WorldgenTargets.write();
             Files.writeString(Path.of("worldgen-spawn-ns.txt"), Long.toString(spawnElapsed));
             Files.writeString(Path.of("worldgen-level-ready-ns.txt"), Long.toString(levelToSpawn));
         }

@@ -83,3 +83,14 @@ Use the `bronzeparity` fixture with `--with-mod aether` to compare the immediate
 | Tunnel, room and four-corner probes | 2.43, 2.24 | 10.61, 6.28 | 2.16, 2.14 |
 
 The combined variant preserves the inclusive vertical bounds, probe order and original thickness and tie rules. The largest benefit from the four-corner change is for rejected starts.
+
+## TerraBlender region IDs
+
+The `regionparity` fixture runs seeded biome fills on a dedicated server with four CPUs. Use `--with-mod terrablender --with-mod deep_aether --java-arg=-Dauram.smoke.dimension=aether:the_aether` for Aether and `--with-mod terrablender --with-mod biomesoplenty --java-arg=-Dauram.smoke.dimension=minecraft:the_nether` for the Nether. Enable `auram.smoke.stageTimings` and `auram.smoke.targetWorldgen` on both arms to measure locks. Each run compares 49,152 biome positions across 48 chunks. All four fingerprints matched within each dimension.
+
+| Dimension | Baseline median wall time per 48 fills (ms) | Candidate median wall time (ms) | Baseline read-lock acquisitions | Candidate read-lock acquisitions | Aggregate off-CPU acquisition time baseline → candidate (ms) |
+| --- | --- | --- | --- | --- | --- |
+| Aether | 40.3, 46.2 | 17.7, 16.9 | 204,827, 205,481 | 9,341, 9,299 | 251.9 → 9.1, 301.0 → 39.3 |
+| Nether | 62.4, 46.9 | 50.2, 19.4 | 204,884, 205,706 | 9,301, 9,309 | 278.9 → 56.2, 245.5 → 29.4 |
+
+The read-lock count represents original area lookups, including recursive lookups. The off-CPU estimate subtracts thread CPU from acquisition wall time and includes scheduling and instrumentation overhead. Write-lock counts and per-stage CPU are in the cycle report. The cache holds the area identity and quart X/Z within one fill. The original climate sampler still evaluates Y-dependent values and biome selection.
