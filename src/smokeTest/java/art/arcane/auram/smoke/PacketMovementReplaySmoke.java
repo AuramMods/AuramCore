@@ -39,6 +39,7 @@ public final class PacketMovementReplaySmoke {
     private static final String MODE = "movementpacketreplay";
     private static final boolean CANDIDATE = Boolean.getBoolean("auram.smoke.movementCandidate");
     private static final boolean WALKING = Boolean.getBoolean("auram.smoke.movementWalking");
+    private static final boolean NO_TICKET = Boolean.getBoolean("auram.smoke.movementNoTicket");
     private static final int PACKET_COUNT = Integer.getInteger("auram.smoke.movementPackets", 2);
     private static final boolean TRANSITIONS = Boolean.getBoolean("auram.smoke.movementTransitions");
     private static final int TRIAL_COUNT = 5;
@@ -107,7 +108,7 @@ public final class PacketMovementReplaySmoke {
             int observerTicks = observer.tickCount - observerAtSend;
             check(CANDIDATE ? observerTicks > 0 : observerTicks == 0, "observer tick count during the pending movement");
             trials.add(Map.of("first_packet_nanos", duration, "observer_ticks", observerTicks,
-                    "walking", WALKING, "arrivals", arrivals));
+                    "walking", WALKING, "destination_ticketed", !NO_TICKET, "arrivals", arrivals));
             source.removeRegionTicket(TicketType.FORCED, east, 0, east);
             east = null;
             if (trials.size() == TRIAL_COUNT && !TRANSITIONS) finish();
@@ -130,10 +131,14 @@ public final class PacketMovementReplaySmoke {
         player.setOnGround(WALKING);
         player.applied.clear();
         player.correction = null;
-        source.addRegionTicket(TicketType.FORCED, east, 0, east);
-        ((ChunkCacheProbe) source).auramSmoke$runDistanceManagerUpdates();
-        check(source.hasChunk(east.x, east.z) && source.getChunkNow(east.x, east.z) == null,
-                "pending FULL before movement");
+        if (NO_TICKET && trial < TRIAL_COUNT) {
+            check(!source.hasChunk(east.x, east.z), "destination has no FULL ticket before movement");
+        } else {
+            source.addRegionTicket(TicketType.FORCED, east, 0, east);
+            ((ChunkCacheProbe) source).auramSmoke$runDistanceManagerUpdates();
+            check(source.hasChunk(east.x, east.z) && source.getChunkNow(east.x, east.z) == null,
+                    "pending FULL before movement");
+        }
         startedTick = server.getTickCount();
     }
 

@@ -56,6 +56,12 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (smokeMode.equals("basinfluid")) {
+                BasinFluidSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-basinfluid-pass.txt"), "PASS pending and loaded cross-border mash tub probes\n");
+                event.getServer().halt(false);
+                return;
+            }
             if (smokeMode.equals("movementpacket")) {
                 PacketMovementSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-movementpacket-pass.txt"), "PASS Forge packet border crossings with pending FULL chunks\n");
