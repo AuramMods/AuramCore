@@ -50,6 +50,8 @@
     "terrablender.RegionAreaMixin",
     "dreamtinker.ScatterReplaceOreMixin",
     "relics.FluidCollisionMixin",
+    "immersiveweathering.LeafPileBlockMixin",
+    "immersiveweathering.LeafPileSpeedMixin",
     "psychedelicraft.MashTubFluidReadinessMixin",
     "dimdoors.PlayerCollisionMixin",
     "distanthorizons.ChunkMapDemandMixin",
