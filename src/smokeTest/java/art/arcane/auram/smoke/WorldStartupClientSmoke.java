@@ -101,6 +101,7 @@ public final class WorldStartupClientSmoke {
     private static void reopen(Minecraft client) {
         try {
             var title = new TitleScreen();
+            client.level.disconnect();
             client.clearLevel(title);
             start = System.nanoTime();
             phase = 2;
