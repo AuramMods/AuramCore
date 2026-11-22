@@ -84,6 +84,7 @@
     "jerm.JeiRepairIngredientsMixin",
     "mekanism.JeiReplicatorRecipeMixin",
     "supplementaries.CartographerPreviewMixin",
+    "supplementaries.AdventurerMapPreviewMixin",
     "psychedelicraft.JeiFluidFocusMixin",
     "botania.ManaPoolRendererMixin",
     "ftbchunks.ChunkUpdateSurfaceMixin",

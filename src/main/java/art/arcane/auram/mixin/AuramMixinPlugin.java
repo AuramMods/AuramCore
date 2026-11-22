@@ -37,7 +37,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
-            case "art.arcane.auram.mixin.supplementaries.CartographerPreviewMixin" ->
+            case "art.arcane.auram.mixin.supplementaries.CartographerPreviewMixin",
+                    "art.arcane.auram.mixin.supplementaries.AdventurerMapPreviewMixin" ->
                     "jeresources.collection.TradeList";
             case "art.arcane.auram.mixin.cyclic.JeiCraftingRegistrationMixin",
                     "art.arcane.auram.mixin.jerm.JeiRepairIngredientsMixin",
