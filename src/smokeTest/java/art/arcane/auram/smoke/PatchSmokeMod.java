@@ -50,12 +50,16 @@ public final class PatchSmokeMod {
     public static void onStarted(ServerStartedEvent event) {
         String smokeMode = System.getProperty("auram.smoke", "");
         if ((smokeMode.equals("surfacemap-server") || smokeMode.equals("surfacemap-bench") || SurfaceMapBenchSmoke.WORLDGEN) || smokeMode.equals("book") || smokeMode.equals("ftbrtp") || smokeMode.equals("movementpacketreplay") || smokeMode.startsWith("memory-") || smokeMode.equals("tomehud")
-                || DistantHorizonsSmoke.SERVER) return;
+                || smokeMode.equals("world-startup") || DistantHorizonsSmoke.SERVER) return;
         if(System.getProperty("auram.smoke", "").equals("tuning")) {
             TuningSmoke.start(event.getServer());
             return;
         }
         try {
+            if (smokeMode.equals("ring-search")) {
+                RingSearchSmoke.run(event.getServer().overworld());
+                return;
+            }
             if (smokeMode.equals("basinfluid")) {
                 BasinFluidSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-basinfluid-pass.txt"), "PASS pending and loaded cross-border mash tub probes\n");

@@ -17,14 +17,28 @@ ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--pack', type=Path, default=Path('/Users/cyberpwn/Library/Application Support/PrismLauncher/instances/Auram'))
 parser.add_argument('--prism', default='/Applications/Prism Launcher.app/Contents/MacOS/prismlauncher')
+parser.add_argument('--prism-root', type=Path, help='Use an isolated, already configured Prism data directory')
 parser.add_argument('--runs', type=int, default=3)
+parser.add_argument('--mode', choices=('startup', 'world-startup'), default='startup')
+parser.add_argument('--baseline-jar', type=Path)
+parser.add_argument('--seed', type=int, default=104729)
+parser.add_argument('--eager-rings', action='store_true')
+parser.add_argument('--verify-rings', action='store_true')
+parser.add_argument('--disable-tooltip-search', action='store_true')
+parser.add_argument('--disable-distant-generation', action='store_true')
+parser.add_argument('--jfr', action='store_true', help='Record the client with Java Flight Recorder')
 parser.add_argument('--output', type=Path, required=True)
 args = parser.parse_args()
 version = next(line.split('=', 1)[1] for line in (ROOT/'gradle.properties').read_text().splitlines() if line.startswith('mod_version='))
-artifact = ROOT/f'build/libs/auram-{version}-all.jar'
+artifact = args.baseline_jar or ROOT/f'build/libs/auram-{version}-all.jar'
 smoke = ROOT/f'build/libs/auram-{version}-smoke-test.jar'
-instance_id = 'Auram-Zeta-QA-' + uuid.uuid4().hex[:8]
-instance = args.pack.parent/instance_id
+instance_id = 'Auram-Startup-QA-' + uuid.uuid4().hex[:8]
+world_test = args.mode == 'world-startup'
+marker_prefix = 'auram-world-startup' if world_test else 'auram-startup-client'
+pass_marker = marker_prefix + '-pass.txt'
+fail_marker = marker_prefix + '-failed.txt'
+instances = args.prism_root/'instances' if args.prism_root else args.pack.parent
+instance = instances/instance_id
 game = instance/'minecraft'
 game.mkdir(parents=True)
 args.output.mkdir(parents=True, exist_ok=True)
@@ -40,7 +54,14 @@ for name in ['mods', 'config', 'defaultconfigs', 'kubejs', 'scripts', 'resourcep
     if source.is_dir(): shutil.copytree(source, game/name, copy_function=copy_private)
 shutil.copy2(args.pack/'mmc-pack.json', instance/'mmc-pack.json')
 settings = (args.pack/'instance.cfg').read_text()
-overrides = {'name': instance_id, 'uuid': str(uuid.uuid4()), 'JvmArgs': '"-XX:+UseG1GC -Dauram.smoke=startup -Dauram.smoke.hiddenWindow=true"',
+jvm_flags = ['-XX:+UseG1GC', f'-Dauram.smoke={args.mode}', '-Dauram.smoke.hiddenWindow=true',
+             f'-Dauram.smoke.seed={args.seed}', f'-Dauram.worldgen.eagerStructureRings={str(args.eager_rings).lower()}']
+if args.verify_rings:
+    jvm_flags.append('-Dauram.smoke.verifyRings=true')
+if args.jfr:
+    jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
+jvm_args = '"' + ' '.join(jvm_flags) + '"'
+overrides = {'name': instance_id, 'uuid': str(uuid.uuid4()), 'JvmArgs': jvm_args,
              'OverrideJavaArgs': 'true', 'OverrideMemory': 'true', 'MinMemAlloc': '2048', 'MaxMemAlloc': '20000',
              'OverrideConsole': 'true', 'ShowConsole': 'false', 'ShowConsoleOnError': 'false', 'AutoCloseConsole': 'true',
              'LaunchMaximized': 'false', 'MinecraftWinWidth': '854', 'MinecraftWinHeight': '480', 'JoinServerOnLaunch': 'false'}
@@ -60,6 +81,12 @@ fml=game/'config/fml.toml'
 text=fml.read_text()
 text='\n'.join('earlyWindowControl = false' if line.startswith('earlyWindowControl =') else line for line in text.splitlines())+'\n'
 fml.write_text(text)
+if args.disable_tooltip_search:
+    jei = game/'config/jei/jei-client.ini'
+    jei.write_text(jei.read_text().replace('TooltipSearchMode = ENABLED', 'TooltipSearchMode = DISABLED'))
+if args.disable_distant_generation:
+    dh = game/'config/DistantHorizons.toml'
+    dh.write_text(dh.read_text().replace('generatorPlan = "SURFACE_THEN_CHUNKS"', 'generatorPlan = "DISABLED"'))
 
 def java_pids():
     result=[]
@@ -73,23 +100,33 @@ summary={'instance':str(instance),'artifact_sha256':hashlib.sha256(artifact.read
          'mod_jars':len(list((game/'mods').glob('*.jar'))),'runs':results}
 print('Fixture: '+str(instance),flush=True)
 for run in range(1,args.runs+1):
-    for marker in ['auram-startup-client-pass.txt','auram-startup-client-failed.txt','startup-client-results.json']:
+    if world_test:
+        shutil.rmtree(game/'saves/auram-world-startup-smoke', ignore_errors=True)
+    for marker in [pass_marker, fail_marker, 'startup-client-results.json']:
         (game/marker).unlink(missing_ok=True)
     shutil.copy2(args.pack/'minecraft/options.txt',game/'options.txt')
     log=game/'logs/latest.log'
     if log.exists(): log.unlink()
     start=time.monotonic()
-    subprocess.run([args.prism,'--launch',instance_id,'--offline','AuramQA'],check=True,
-                   stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    command = [args.prism]
+    if args.prism_root:
+        command.extend(['--dir', str(args.prism_root)])
+    command.extend(['--launch', instance_id, '--offline', 'AuramQA'])
+    with (args.output/f'launcher-{run}.log').open('w') as console:
+        launcher = subprocess.Popen(command, stdout=console, stderr=subprocess.STDOUT)
     seen=False; reason=None
-    while time.monotonic()-start<360:
+    while time.monotonic()-start < (900 if world_test else 360):
         alive=java_pids();seen=seen or bool(alive)
+        if launcher.poll() not in (None, 0) and not alive:
+            reason = f'launcher exited with status {launcher.returncode}'
+            break
         if log.exists():
-            data=log.read_text(errors='replace')
-            if 'Failed to complete lifecycle event CONSTRUCT' in data:
-                reason='mod construction failed'
-                for pid in alive: os.kill(pid,signal.SIGTERM)
-        terminal = (game/'auram-startup-client-pass.txt').exists() or (game/'auram-startup-client-failed.txt').exists()
+            with log.open('rb') as current:
+                current.seek(max(0, log.stat().st_size - 262144))
+                if b'Failed to complete lifecycle event CONSTRUCT' in current.read():
+                    reason = 'mod construction failed'
+                    for pid in alive: os.kill(pid, signal.SIGTERM)
+        terminal = (game/pass_marker).exists() or (game/fail_marker).exists()
         if not alive and (seen or terminal):break
         time.sleep(1)
     else:
@@ -99,14 +136,22 @@ for run in range(1,args.runs+1):
             if not java_pids():break
             time.sleep(1)
         for pid in java_pids():os.kill(pid,signal.SIGKILL)
-    passed=(game/'auram-startup-client-pass.txt').exists() and reason is None
+    passed=(game/pass_marker).exists() and reason is None
     record={'run':run,'passed':passed,'elapsed_seconds':time.monotonic()-start,'reason':reason}
     if (game/'startup-client-results.json').exists():record['checks']=json.loads((game/'startup-client-results.json').read_text())
-    if (game/'auram-startup-client-failed.txt').exists():record['failure']=(game/'auram-startup-client-failed.txt').read_text()
+    if (game/fail_marker).exists():record['failure']=(game/fail_marker).read_text()
+    if passed and world_test:
+        record['world_timings'] = dict(line.split('=', 1) for line in (game/pass_marker).read_text().splitlines())
     if log.exists():shutil.copy2(log,args.output/f'client-{run}.log')
+    if world_test and (game/'logs/debug.log').exists():
+        shutil.copy2(game/'logs/debug.log', args.output/f'client-{run}-debug.log')
+    for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr'):
+        path = game/artifact_name
+        if path.exists():
+            shutil.copy2(path, args.output/f'{run}-{artifact_name}')
     if (game/'startup-menu.png').exists():shutil.copy2(game/'startup-menu.png',args.output/f'menu-{run}.png')
     results.append(record)
     (args.output/'results.json').write_text(json.dumps(summary,indent=2)+'\n')
     print(json.dumps(record),flush=True)
     if not passed:raise SystemExit(1)
-print('PASS repeated hidden client startup and resource reload',flush=True)
+print(f'PASS hidden client {args.mode}', flush=True)

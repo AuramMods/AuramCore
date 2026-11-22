@@ -37,7 +37,11 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
+            case "art.arcane.auram.mixin.supplementaries.CartographerPreviewMixin" ->
+                    "jeresources.collection.TradeList";
             case "art.arcane.auram.mixin.cyclic.JeiCraftingRegistrationMixin",
+                    "art.arcane.auram.mixin.jerm.JeiRepairIngredientsMixin",
+                    "art.arcane.auram.mixin.mekanism.JeiReplicatorRecipeMixin",
                     "art.arcane.auram.mixin.psychedelicraft.JeiFluidFocusMixin" ->
                     "mezz.jei.api.gui.builder.IRecipeLayoutBuilder";
             case "art.arcane.auram.mixin.botania.ManaPoolRendererMixin" -> "net.irisshaders.iris.api.v0.IrisApi";
