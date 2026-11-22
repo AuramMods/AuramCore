@@ -19,6 +19,7 @@ parser.add_argument('--pack', type=Path, default=Path('/Users/cyberpwn/Library/A
 parser.add_argument('--prism', default='/Applications/Prism Launcher.app/Contents/MacOS/prismlauncher')
 parser.add_argument('--prism-root', type=Path, help='Use an isolated, already configured Prism data directory')
 parser.add_argument('--runs', type=int, default=3)
+parser.add_argument('--max-memory', type=int, help='Maximum client heap in MiB')
 parser.add_argument('--mode', choices=('startup', 'world-startup', 'forge-remote'), default='startup')
 parser.add_argument('--baseline-jar', type=Path)
 parser.add_argument('--seed', type=int, default=104729)
@@ -69,8 +70,9 @@ if args.verify_rings:
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'
+max_memory = args.max_memory or (4096 if args.minimal_network else 16000)
 overrides = {'name': instance_id, 'uuid': str(uuid.uuid4()), 'JvmArgs': jvm_args,
-             'OverrideJavaArgs': 'true', 'OverrideMemory': 'true', 'MinMemAlloc': '2048', 'MaxMemAlloc': '20000',
+             'OverrideJavaArgs': 'true', 'OverrideMemory': 'true', 'MinMemAlloc': '2048', 'MaxMemAlloc': str(max_memory),
              'OverrideConsole': 'true', 'ShowConsole': 'false', 'ShowConsoleOnError': 'false', 'AutoCloseConsole': 'true',
              'LaunchMaximized': 'false', 'MinecraftWinWidth': '854', 'MinecraftWinHeight': '480', 'JoinServerOnLaunch': 'false'}
 lines=[]
@@ -101,11 +103,50 @@ if args.disable_distant_generation:
     dh.write_text(dh.read_text().replace('generatorPlan = "SURFACE_THEN_CHUNKS"', 'generatorPlan = "DISABLED"'))
 
 def java_pids():
-    result=[]
-    for line in subprocess.check_output(['ps','-axo','pid=,command='],text=True).splitlines():
-        if instance_id in line and 'org.prismlauncher.EntryPoint' in line:
-            result.append(int(line.split(None,1)[0]))
+    processes = subprocess.check_output(['ps', '-axo', 'pid=,ucomm=,args='], text=True)
+    result = []
+    for line in processes.splitlines():
+        fields = line.split(None, 2)
+        if len(fields) == 3:
+            pid, executable, arguments = fields
+            if executable == 'java' and instance_id in arguments and 'org.prismlauncher.EntryPoint' in arguments:
+                result.append(int(pid))
     return result
+
+
+def signal_clients(pids, sig):
+    for pid in pids:
+        try:
+            os.kill(pid, sig)
+        except ProcessLookupError:
+            pass
+
+
+def finish_launch(launcher):
+    # Stop this launcher's process first, so an interrupted launch cannot start a client during cleanup.
+    if launcher.poll() is None:
+        launcher.terminate()
+    signal_clients(java_pids(), signal.SIGTERM)
+    deadline = time.monotonic() + 15
+    while time.monotonic() < deadline and (launcher.poll() is None or java_pids()):
+        time.sleep(0.25)
+    if launcher.poll() is None:
+        launcher.kill()
+    launcher.wait()
+    signal_clients(java_pids(), signal.SIGKILL)
+    deadline = time.monotonic() + 5
+    while java_pids():
+        if time.monotonic() >= deadline:
+            raise RuntimeError(f'QA client {instance_id} is still running after shutdown')
+        time.sleep(0.25)
+
+
+def stop_runner(sig, frame):
+    raise SystemExit(128 + sig)
+
+
+signal.signal(signal.SIGTERM, stop_runner)
+signal.signal(signal.SIGHUP, stop_runner)
 
 results=[]
 summary={'instance':str(instance),'artifact_sha256':hashlib.sha256(artifact.read_bytes()).hexdigest(),
@@ -130,30 +171,34 @@ for run in range(1,args.runs+1):
     with (args.output/f'launcher-{run}.log').open('w') as console:
         launcher = subprocess.Popen(command, stdout=console, stderr=subprocess.STDOUT)
     seen=False; reason=None
-    while time.monotonic()-start < (900 if world_test else 360):
-        alive=java_pids();seen=seen or bool(alive)
-        if launcher.poll() not in (None, 0) and not alive:
-            reason = f'launcher exited with status {launcher.returncode}'
-            break
-        if log.exists():
-            with log.open('rb') as current:
-                current.seek(max(0, log.stat().st_size - 262144))
-                if b'Failed to complete lifecycle event CONSTRUCT' in current.read():
-                    reason = 'mod construction failed'
-                    for pid in alive: os.kill(pid, signal.SIGTERM)
-        if args.lan_port and (game/'auram-forge-remote-server-pass.txt').exists():
-            (game/pass_marker).write_text('LAN client joined.\n')
-            for pid in alive: os.kill(pid, signal.SIGTERM)
-        terminal = (game/pass_marker).exists() or (game/fail_marker).exists()
-        if not alive and (seen or terminal):break
-        time.sleep(1)
-    else:
-        reason='client timeout'
-        for pid in java_pids():os.kill(pid,signal.SIGTERM)
-        for _ in range(20):
-            if not java_pids():break
+    try:
+        while time.monotonic()-start < (900 if world_test else 360):
+            alive = java_pids()
+            seen = seen or bool(alive)
+            if launcher.poll() not in (None, 0) and not alive:
+                reason = f'launcher exited with status {launcher.returncode}'
+                break
+            if log.exists():
+                with log.open('rb') as current:
+                    current.seek(max(0, log.stat().st_size - 262144))
+                    recent = current.read()
+                    if b'Failed to complete lifecycle event CONSTRUCT' in recent:
+                        reason = 'mod construction failed'
+                        break
+                    if world_test and b"Failed to load datapacks, can't proceed with server load" in recent:
+                        reason = 'world datapack load failed'
+                        break
+            if args.lan_port and (game/'auram-forge-remote-server-pass.txt').exists():
+                (game/pass_marker).write_text('LAN client joined.\n')
+                break
+            terminal = (game/pass_marker).exists() or (game/fail_marker).exists()
+            if not alive and (seen or terminal):
+                break
             time.sleep(1)
-        for pid in java_pids():os.kill(pid,signal.SIGKILL)
+        else:
+            reason = 'client timeout'
+    finally:
+        finish_launch(launcher)
     passed=(game/pass_marker).exists() and reason is None
     record={'run':run,'passed':passed,'elapsed_seconds':time.monotonic()-start,'reason':reason}
     if (game/'startup-client-results.json').exists():record['checks']=json.loads((game/'startup-client-results.json').read_text())
