@@ -47,11 +47,13 @@ public abstract class StructureRingSearchMixin implements DeferredRingSearch.Acc
         return plan.defer(x, z, search, executor);
     }
 
-    @Inject(method = "generateRingPositions", at = @At("RETURN"))
+    @Inject(method = "generateRingPositions", at = @At(value = "INVOKE", target =
+            "Lnet/minecraft/Util;sequence(Ljava/util/List;)Ljava/util/concurrent/CompletableFuture;"))
     private void auram$indexRingSearch(Holder<StructureSet> structures, ConcentricRingsStructurePlacement placement,
             CallbackInfoReturnable<CompletableFuture<List<ChunkPos>>> callback,
             @Share("auramRingSearch") LocalRef<DeferredRingSearch> shared) {
         var plan = shared.get();
+        // ModernFix can wrap the completed search at RETURN. Publish this plan before that callback.
         if (plan != null) auram$ringSearches.put(placement, plan);
     }
 

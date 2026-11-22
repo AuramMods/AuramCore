@@ -60,6 +60,8 @@ shutil.copy2(args.pack/'mmc-pack.json', instance/'mmc-pack.json')
 settings = (args.pack/'instance.cfg').read_text()
 jvm_flags = ['-XX:+UseG1GC', f'-Dauram.smoke={args.mode}', '-Dauram.smoke.hiddenWindow=true',
              f'-Dauram.smoke.seed={args.seed}', f'-Dauram.worldgen.eagerStructureRings={str(args.eager_rings).lower()}']
+if args.connect:
+    jvm_flags.append(f'-Dauram.smoke.connect={args.connect}')
 if args.lan_port:
     jvm_flags.append(f'-Dauram.smoke.lanPort={args.lan_port}')
 if args.verify_rings:
@@ -125,8 +127,6 @@ for run in range(1,args.runs+1):
     if args.prism_root:
         command.extend(['--dir', str(args.prism_root)])
     command.extend(['--launch', instance_id, '--offline', 'AuramQA' if not args.connect else 'AuramQARemote'])
-    if args.connect:
-        command.extend(['--server', args.connect])
     with (args.output/f'launcher-{run}.log').open('w') as console:
         launcher = subprocess.Popen(command, stdout=console, stderr=subprocess.STDOUT)
     seen=False; reason=None
