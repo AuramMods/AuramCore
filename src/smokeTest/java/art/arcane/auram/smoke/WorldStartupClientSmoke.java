@@ -15,6 +15,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -39,11 +40,12 @@ public final class WorldStartupClientSmoke {
             System.out.println("Auram world startup smoke opening from " + client.screen.getClass().getSimpleName());
             phase = 1;
             start = System.nanoTime();
+            boolean lan = Integer.getInteger("auram.smoke.lanPort", 0) != 0;
             var settings = new LevelSettings("Auram Startup QA", GameType.CREATIVE, false,
                     Difficulty.PEACEFUL, true, new GameRules(), WorldDataConfiguration.DEFAULT);
             client.createWorldOpenFlows().createFreshLevel(SAVE, settings,
-                    new WorldOptions(Long.getLong("auram.smoke.seed", 104729L), true, false),
-                    access -> access.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.NORMAL)
+                    new WorldOptions(Long.getLong("auram.smoke.seed", 104729L), !lan, false),
+                    access -> access.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(lan ? WorldPresets.FLAT : WorldPresets.NORMAL)
                             .value().createWorldDimensions());
         } catch (Throwable error) {
             fail(client, error);
@@ -62,6 +64,14 @@ public final class WorldStartupClientSmoke {
                 freshMillis = elapsedMillis;
                 phase = 3;
                 System.out.println("Auram world startup smoke fresh_ms=" + freshMillis);
+                int lanPort = Integer.getInteger("auram.smoke.lanPort", 0);
+                if (lanPort != 0) {
+                    var server = client.getSingleplayerServer();
+                    server.setUsesAuthentication(false);
+                    server.getConnection().startTcpServerListener(InetAddress.getLoopbackAddress(), lanPort);
+                    Files.writeString(Path.of("auram-lan-ready.txt"), Integer.toString(lanPort));
+                    return;
+                }
                 if (Boolean.getBoolean("auram.smoke.verifyRings")) {
                     var server = client.getSingleplayerServer();
                     CompletableFuture.runAsync(() -> {

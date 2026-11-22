@@ -19,9 +19,12 @@ parser.add_argument('--pack', type=Path, default=Path('/Users/cyberpwn/Library/A
 parser.add_argument('--prism', default='/Applications/Prism Launcher.app/Contents/MacOS/prismlauncher')
 parser.add_argument('--prism-root', type=Path, help='Use an isolated, already configured Prism data directory')
 parser.add_argument('--runs', type=int, default=3)
-parser.add_argument('--mode', choices=('startup', 'world-startup'), default='startup')
+parser.add_argument('--mode', choices=('startup', 'world-startup', 'forge-remote'), default='startup')
 parser.add_argument('--baseline-jar', type=Path)
 parser.add_argument('--seed', type=int, default=104729)
+parser.add_argument('--connect', help='Join a disposable server by host:port')
+parser.add_argument('--lan-port', type=int, help='Host a disposable integrated world on the specified loopback port')
+parser.add_argument('--minimal-network', action='store_true', help='Keep only AuramCore and the smoke mod dependencies')
 parser.add_argument('--eager-rings', action='store_true')
 parser.add_argument('--verify-rings', action='store_true')
 parser.add_argument('--disable-tooltip-search', action='store_true')
@@ -34,7 +37,8 @@ artifact = args.baseline_jar or ROOT/f'build/libs/auram-{version}-all.jar'
 smoke = ROOT/f'build/libs/auram-{version}-smoke-test.jar'
 instance_id = 'Auram-Startup-QA-' + uuid.uuid4().hex[:8]
 world_test = args.mode == 'world-startup'
-marker_prefix = 'auram-world-startup' if world_test else 'auram-startup-client'
+marker_prefix = {'startup':'auram-startup-client', 'world-startup':'auram-world-startup',
+                 'forge-remote':'auram-forge-remote'}[args.mode]
 pass_marker = marker_prefix + '-pass.txt'
 fail_marker = marker_prefix + '-failed.txt'
 instances = args.prism_root/'instances' if args.prism_root else args.pack.parent
@@ -56,6 +60,8 @@ shutil.copy2(args.pack/'mmc-pack.json', instance/'mmc-pack.json')
 settings = (args.pack/'instance.cfg').read_text()
 jvm_flags = ['-XX:+UseG1GC', f'-Dauram.smoke={args.mode}', '-Dauram.smoke.hiddenWindow=true',
              f'-Dauram.smoke.seed={args.seed}', f'-Dauram.worldgen.eagerStructureRings={str(args.eager_rings).lower()}']
+if args.lan_port:
+    jvm_flags.append(f'-Dauram.smoke.lanPort={args.lan_port}')
 if args.verify_rings:
     jvm_flags.append('-Dauram.smoke.verifyRings=true')
 if args.jfr:
@@ -75,6 +81,10 @@ lines[position:position]=[key+'='+value for key,value in overrides.items()]
 (instance/'instance.cfg').write_text('\n'.join(lines)+'\n')
 for path in (game/'mods').glob('AuramCore-*.jar'): path.unlink()
 if (game/'mods/Auram.jar').exists(): (game/'mods/Auram.jar').unlink()
+if args.minimal_network:
+    for mod in (game/'mods').glob('*.jar'):
+        if not mod.name.startswith(('ProjectE-', 'Patchouli-')):
+            mod.unlink()
 shutil.copy2(artifact, game/'mods'/f'AuramCore-{version}.jar')
 shutil.copy2(smoke, game/'mods/auram-startup-smoke.jar')
 fml=game/'config/fml.toml'
@@ -105,13 +115,18 @@ for run in range(1,args.runs+1):
     for marker in [pass_marker, fail_marker, 'startup-client-results.json']:
         (game/marker).unlink(missing_ok=True)
     shutil.copy2(args.pack/'minecraft/options.txt',game/'options.txt')
+    if args.lan_port:
+        options = game/'options.txt'
+        options.write_text(options.read_text().replace('pauseOnLostFocus:true', 'pauseOnLostFocus:false'))
     log=game/'logs/latest.log'
     if log.exists(): log.unlink()
     start=time.monotonic()
     command = [args.prism]
     if args.prism_root:
         command.extend(['--dir', str(args.prism_root)])
-    command.extend(['--launch', instance_id, '--offline', 'AuramQA'])
+    command.extend(['--launch', instance_id, '--offline', 'AuramQA' if not args.connect else 'AuramQARemote'])
+    if args.connect:
+        command.extend(['--server', args.connect])
     with (args.output/f'launcher-{run}.log').open('w') as console:
         launcher = subprocess.Popen(command, stdout=console, stderr=subprocess.STDOUT)
     seen=False; reason=None
@@ -126,6 +141,9 @@ for run in range(1,args.runs+1):
                 if b'Failed to complete lifecycle event CONSTRUCT' in current.read():
                     reason = 'mod construction failed'
                     for pid in alive: os.kill(pid, signal.SIGTERM)
+        if args.lan_port and (game/'auram-forge-remote-server-pass.txt').exists():
+            (game/pass_marker).write_text('LAN client joined.\n')
+            for pid in alive: os.kill(pid, signal.SIGTERM)
         terminal = (game/pass_marker).exists() or (game/fail_marker).exists()
         if not alive and (seen or terminal):break
         time.sleep(1)
@@ -140,7 +158,7 @@ for run in range(1,args.runs+1):
     record={'run':run,'passed':passed,'elapsed_seconds':time.monotonic()-start,'reason':reason}
     if (game/'startup-client-results.json').exists():record['checks']=json.loads((game/'startup-client-results.json').read_text())
     if (game/fail_marker).exists():record['failure']=(game/fail_marker).read_text()
-    if passed and world_test:
+    if passed and world_test and not args.lan_port:
         record['world_timings'] = dict(line.split('=', 1) for line in (game/pass_marker).read_text().splitlines())
     if log.exists():shutil.copy2(log,args.output/f'client-{run}.log')
     if world_test and (game/'logs/debug.log').exists():
