@@ -15,7 +15,11 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         String optionalTarget = optionalTarget(mixinClassName);
         if (optionalTarget == null) return true;
         try {
-            MixinService.getService().getBytecodeProvider().getClassNode(optionalTarget);
+            ClassNode dependency = MixinService.getService().getBytecodeProvider().getClassNode(optionalTarget);
+            if (mixinClassName.equals("art.arcane.auram.mixin.psychedelicraft.JeiFluidFocusMixin")) {
+                return dependency.methods.stream().noneMatch(method ->
+                        method.name.equals("createFocusLink") && method.desc.equals("(Ljava/util/Collection;)V"));
+            }
             return true;
         } catch (ClassNotFoundException e) {
             return false;
@@ -31,8 +35,11 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.ftbchunks.")) {
             return "dev.ftb.mods.ftbchunks.client.FTBChunksClient";
         }
-        // These mixins target vanilla classes, so @Pseudo cannot make them optional.
+        // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
+            case "art.arcane.auram.mixin.cyclic.JeiCraftingRegistrationMixin",
+                    "art.arcane.auram.mixin.psychedelicraft.JeiFluidFocusMixin" ->
+                    "mezz.jei.api.gui.builder.IRecipeLayoutBuilder";
             case "art.arcane.auram.mixin.botania.ManaPoolRendererMixin" -> "net.irisshaders.iris.api.v0.IrisApi";
             case "art.arcane.auram.mixin.terrablender.BiomeFillMixin" -> "terrablender.worldgen.noise.Area";
             case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";

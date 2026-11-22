@@ -6,6 +6,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "auram.refmap.json",
   "mixins": [
+    "forge.LocalConfigSyncMixin",
     "minecraft.EntitySupportMixin",
     "minecraft.SuperflatWorldDimensionsMixin",
     "minecraft.SurfaceMapGenerationMixin",
@@ -74,6 +75,8 @@
   },
   "client": [
     "akashictome.HudPreviewMixin",
+    "cyclic.JeiCraftingRegistrationMixin",
+    "psychedelicraft.JeiFluidFocusMixin",
     "botania.ManaPoolRendererMixin",
     "ftbchunks.ChunkUpdateSurfaceMixin",
     "ftbchunks.LargeMapSurfaceAccess",
