@@ -64,6 +64,8 @@ public final class WorldStartupClientSmoke {
                 freshMillis = elapsedMillis;
                 phase = 3;
                 System.out.println("Auram world startup smoke fresh_ms=" + freshMillis);
+                System.out.println("Auram integrated scheduling: "
+                        + client.getSingleplayerServer().getRunningThread().getPriority());
                 int lanPort = Integer.getInteger("auram.smoke.lanPort", 0);
                 if (lanPort != 0) {
                     var server = client.getSingleplayerServer();
@@ -89,6 +91,8 @@ public final class WorldStartupClientSmoke {
                 }
             } else {
                 phase = 3;
+                System.out.println("Auram integrated scheduling after reopen: "
+                        + client.getSingleplayerServer().getRunningThread().getPriority());
                 Files.writeString(Path.of("auram-world-startup-pass.txt"),
                         "fresh_ms=%d%nreopen_ms=%d%n".formatted(freshMillis, elapsedMillis));
                 client.stop();

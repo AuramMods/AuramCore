@@ -72,11 +72,13 @@ public final class TuningSmoke {
         CompletableFuture<Either<ChunkAccess,ChunkHolder.ChunkLoadingFailure>> spawn;
         CompoundTag expected;
         int phase,queued,completed,tickNumber,peakPool,peakActive;
+        final Map<String, Object> schedulingAtStart;
         long tickStart,lastTickStart,start,lastBatch,cpuStart,allocatedStart,mainCpuStart,peakHeap,nbtSaves;
         Recording recording;
 
-        Run(MinecraftServer server) {
+        Run(MinecraftServer server) throws Exception {
             this.server=server;level=server.overworld();
+            schedulingAtStart = SchedulingSmoke.capture();
             threads.setThreadAllocatedMemoryEnabled(true);threads.setThreadCpuTimeEnabled(true);
             level.getGameRules().getRule(GameRules.RULE_DOMOBSPAWNING).set(false,server);
             level.getGameRules().getRule(GameRules.RULE_DAYLIGHT).set(false,server);
@@ -180,6 +182,8 @@ public final class TuningSmoke {
             result.put("heap_end",ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().toString());
             result.put("nbt_entity_serializations",nbtSaves);result.put("nbt_entities",entities);
             result.put("available_processors",Runtime.getRuntime().availableProcessors());result.put("max_heap_bytes",Runtime.getRuntime().maxMemory());
+            result.put("scheduling_at_start", schedulingAtStart);
+            result.put("scheduling_at_finish", SchedulingSmoke.capture());
             result.put("java_version",System.getProperty("java.runtime.version"));result.put("os",System.getProperty("os.name")+" "+System.getProperty("os.arch"));
             result.put("jvm_arguments",ManagementFactory.getRuntimeMXBean().getInputArguments());
             Object executor=Util.backgroundExecutor();result.put("background_executor",executor.getClass().getName());

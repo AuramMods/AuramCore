@@ -32,7 +32,7 @@ parser.add_argument('--xmx', default='4G', help='Maximum JVM heap')
 parser.add_argument('--runtime-parent', type=Path, help='Directory for disposable fixture servers')
 parser.add_argument('--no-mixin-export', action='store_true', help='Disable class-file export during throughput measurements')
 parser.add_argument('--server-template', type=Path, help='Copy a complete exported server pack instead of a minimal mod set')
-parser.add_argument('--threadtweak-workers', type=int, help='Override ThreadTweak main workers in this disposable fixture only')
+parser.add_argument('--threadtweak-workers', type=int, help='Override main workers in this disposable fixture only')
 parser.add_argument('--identity-candidate', action='store_true', help='Enable the experimental identity shortcut in the test mod only')
 args = parser.parse_args()
 properties = dict(line.split('=', 1) for line in (ROOT/'gradle.properties').read_text().splitlines()
@@ -128,10 +128,13 @@ config = runtime/'config'
 config.mkdir(exist_ok=True)
 fixture_overrides = {}
 if args.threadtweak_workers is not None:
-    threadtweak = config/'threadtweak.json'
-    settings = json.loads(threadtweak.read_text())
+    scheduling = config/'auram/thread-scheduling.json'
+    settings = json.loads(scheduling.read_text()) if scheduling.exists() else {}
+    if not settings.get('enabled'):
+        scheduling = config/'threadtweak.json'
+        settings = json.loads(scheduling.read_text())
     settings['threadCount']['main'] = args.threadtweak_workers
-    threadtweak.write_text(json.dumps(settings, indent=2)+'\n')
+    scheduling.write_text(json.dumps(settings, indent=2)+'\n')
     fixture_overrides['threadtweak_main_workers'] = args.threadtweak_workers
 (config/'fml.toml').write_text('versionCheck = false\n')
 source_config = Path(properties['modpack_deploy']).parent/'config/aether_redux_common.toml'

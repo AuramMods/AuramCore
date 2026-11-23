@@ -158,9 +158,11 @@ for run in range(1,args.runs+1):
     for marker in [pass_marker, fail_marker, 'startup-client-results.json']:
         (game/marker).unlink(missing_ok=True)
     shutil.copy2(args.pack/'minecraft/options.txt',game/'options.txt')
+    options = game/'options.txt'
+    lines = [line for line in options.read_text().splitlines() if not line.startswith('soundCategory_master:')]
     if args.lan_port:
-        options = game/'options.txt'
-        options.write_text(options.read_text().replace('pauseOnLostFocus:true', 'pauseOnLostFocus:false'))
+        lines = ['pauseOnLostFocus:false' if line == 'pauseOnLostFocus:true' else line for line in lines]
+    options.write_text('\n'.join([*lines, 'soundCategory_master:0.0'])+'\n')
     log=game/'logs/latest.log'
     if log.exists(): log.unlink()
     start=time.monotonic()

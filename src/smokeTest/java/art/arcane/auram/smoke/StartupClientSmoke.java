@@ -71,7 +71,8 @@ public final class StartupClientSmoke {
             require(sprite.contents().name().toString().equals(path), "stitched sprite " + path);
         }
         return Map.of("phase", phase, "mods", ModList.get().size(), "packs", packs, "textures", textures,
-                "map_class", map.getClass().getName(), "sprites_present", true);
+                "map_class", map.getClass().getName(), "sprites_present", true,
+                "scheduling", SchedulingSmoke.capture());
     }
 
     private static void fail(Minecraft client, Throwable error) {
