@@ -51,6 +51,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
             case "art.arcane.auram.mixin.botania.ManaPoolRendererMixin" -> "net.irisshaders.iris.api.v0.IrisApi";
             case "art.arcane.auram.mixin.terrablender.BiomeFillMixin" -> "terrablender.worldgen.noise.Area";
             case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";
+            case "art.arcane.auram.mixin.bettercaves.AquiferPositionMixin" ->
+                    "com.yungnickyoung.minecraft.bettercaves.mixin.aquiferfix.AquiferMixin";
             case "art.arcane.auram.mixin.immersiveweathering.LeafPileSpeedMixin" ->
                     "com.ordana.immersive_weathering.blocks.LeafPileBlock";
             case "art.arcane.auram.mixin.psychedelicraft.MashTubFluidReadinessMixin" ->

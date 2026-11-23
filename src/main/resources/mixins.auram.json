@@ -71,6 +71,8 @@
     "aether.BronzeDungeonStartMixin",
     "terrablender.BiomeFillMixin",
     "terrablender.RegionAreaMixin",
+    "bettercaves.AquiferPositionMixin",
+    "bettercaves.LiquidRegionsCacheMixin",
     "dreamtinker.ScatterReplaceOreMixin",
     "relics.FluidCollisionMixin",
     "immersiveweathering.LeafPileBlockMixin",

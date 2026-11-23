@@ -140,6 +140,15 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-selectors-pass.txt"), "PASS selector equivalence and installed function attribution\n");
                 return;
             }
+            if (System.getProperty("auram.smoke", "").equals("bettercaves-lookup")) {
+                try {
+                    BetterCavesLookupSmoke.run();
+                } catch (Throwable failure) {
+                    throw new IllegalStateException("Better Caves liquid table fixture failed", failure);
+                }
+                Files.writeString(Path.of("auram-bettercaves-lookup-pass.txt"), "PASS cache-hit identity and seeded tables\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("terrainbatch")) {
                 TerrainBatchSmoke.run(event.getServer());
                 HeightCacheSmoke.run(event.getServer());

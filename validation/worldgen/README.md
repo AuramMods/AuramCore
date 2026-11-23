@@ -72,6 +72,12 @@ Use `--java-arg=-Dauram.smoke.compareBeforeDecoration=true` in the minimal repla
 
 The cold JFR recordings contained 715 and 738 Better Caves stack samples across the controls and 311 and 401 across the candidates. Preliminary height queries accounted for 445 and 445 control samples and 20 and 33 candidate samples. The residual samples were dominated by Better Caves noise evaluation. The overlap accounts for the observed reduction without an independent carver change.
 
+## Better Caves liquid lookups
+
+The `bettercaves-lookup` fixture measures hits in the installed Better Caves 2.0.7 table with `--with-mod bettercaves`. Sixteen seeded chunk coordinates straddle zero. All returned table identities and the fingerprint of the fluid states and altitudes matched. The warmed median cache-hit cost dropped from 12.13 to 7.79 ns. The p95 moved from 12.17 to 11.80 ns. The fixture reuses its lookup keys to isolate the map hot path.
+
+Two independent replays with Tectonic, Lithostitched and Better Caves each matched all 48 saved chunks, 4,718,592 block states, biome palettes, structure starts and fluid ticks after excluding decoration in both arms. Fresh FULL throughput varied between 2.12 and 10.87/s in the controls and between 7.46 and 7.89/s in the candidates. These runs establish parity and lower lookup cost. The overall throughput effect varies across replays.
+
 ## Aether Bronze Dungeon terrain probes
 
 Use the `bronzeparity` fixture with `--with-mod aether` to compare the immediate aquifer baseline, the tunnel and room changes alone, and the combined variant with the four-corner search. The test calls Aether's structure code across 192 positions on three seeds. Its comparison includes placement decisions, start coordinates, serialized piece content, RNG draw counts, and the next RNG value. It canonicalizes piece ordering because Aether builds from identity-keyed adjacency maps. All six matched trials produced 23 accepted starts and the same 665 pieces.
