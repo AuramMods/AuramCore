@@ -76,9 +76,23 @@ public final class TerrainBatch implements AutoCloseable {
     public int height(int x,int z,Heightmap.Types type) {
         Cell cell=cell(x,z);
         if(cell==null) return generator.getBaseHeight(x,z,type,height,state);
-        if(!dense) return cell.terrain.height(x,z,type,height.getMinBuildHeight());
+        int index=Math.floorMod(x,width)*width+Math.floorMod(z,width);
+        if(!dense) {
+            if (cell.lastHeightmap != type || cell.lastIndex != index) {
+                cell.lastHeight = cell.terrain.height(x,z,type,height.getMinBuildHeight());
+                cell.lastHeightmap = type;
+                cell.lastIndex = index;
+            }
+            return cell.lastHeight;
+        }
         int[] heights=cell.heights.computeIfAbsent(type,t->cell.terrain.heights(t,height.getMinBuildHeight()));
-        return heights[Math.floorMod(x,width)*width+Math.floorMod(z,width)];
+        return heights[index];
+    }
+
+    /** The batch owns this cell. Use it immediately without closing it. */
+    public TerrainCell borrowCell(int x, int z) {
+        Cell cell = cell(x, z);
+        return cell == null ? null : cell.terrain;
     }
 
     public BlockState state(int x,int y,int z) {
@@ -103,6 +117,9 @@ public final class TerrainBatch implements AutoCloseable {
     private static final class Cell {
         final TerrainCell terrain;
         final EnumMap<Heightmap.Types,int[]> heights=new EnumMap<>(Heightmap.Types.class);
+        Heightmap.Types lastHeightmap;
+        int lastIndex;
+        int lastHeight;
         Cell(TerrainCell terrain) { this.terrain=terrain; }
     }
 }

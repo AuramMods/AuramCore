@@ -1,5 +1,6 @@
 package art.arcane.auram.mixin.minecraft;
 
+import art.arcane.auram.util.TerrainBatch;
 import art.arcane.auram.util.TerrainCell;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,8 +39,12 @@ public abstract class NetherFossilMixin {
             return;
         }
         if(context.chunkGenerator().getClass()!=NoiseBasedChunkGenerator.class) return;
-        try(TerrainCell cell=TerrainCell.open((NoiseBasedChunkGenerator)context.chunkGenerator(),x,z,
-                context.heightAccessor(),context.randomState())) {
+        var generator = (NoiseBasedChunkGenerator) context.chunkGenerator();
+        TerrainBatch batch = TerrainBatch.current(generator, context.heightAccessor(), context.randomState());
+        TerrainCell shared = batch == null ? null : batch.borrowCell(x, z);
+        try (TerrainCell owned = shared == null
+                ? TerrainCell.open(generator, x, z, context.heightAccessor(), context.randomState()) : null) {
+            TerrainCell cell = shared == null ? owned : shared;
             if(cell==null) return;
             // All states above maxY are air in the original NoiseColumn.
             int y=Math.min(sampledHeight,cell.maxY());

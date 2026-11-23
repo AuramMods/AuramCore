@@ -87,6 +87,29 @@ public final class TerrainCell implements AutoCloseable {
         return fallback;
     }
 
+    public SurfaceHeights surfaceHeights(int x, int z, int fallback) {
+        var surface = Heightmap.Types.WORLD_SURFACE_WG.isOpaque();
+        var floor = Heightmap.Types.OCEAN_FLOOR_WG.isOpaque();
+        int surfaceHeight = fallback;
+        int floorHeight = fallback;
+        boolean foundSurface = false;
+        boolean foundFloor = false;
+        for (int y = maxY - 1; y >= minY && !(foundSurface && foundFloor); y--) {
+            BlockState block = state(x, y, z);
+            if (!foundSurface && surface.test(block)) {
+                surfaceHeight = y + 1;
+                foundSurface = true;
+            }
+            if (!foundFloor && floor.test(block)) {
+                floorHeight = y + 1;
+                foundFloor = true;
+            }
+        }
+        return new SurfaceHeights(surfaceHeight, floorHeight);
+    }
+
+    public record SurfaceHeights(int worldSurface, int oceanFloor) {}
+
     /** A block at the cutoff already proves the surface is strictly above it. */
     public boolean heightExceeds(int x,int z,Heightmap.Types type,int cutoff,int fallback) {
         if(closed) throw new IllegalStateException("Terrain cell is closed");

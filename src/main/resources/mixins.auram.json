@@ -57,6 +57,7 @@
     "lithostitched.StructurePoolGeneratorMixin",
     "lithostitched.StructureStartTerrainMixin",
     "lithostitched.StartProjectionMixin",
+    "thaumaturge.ObeliskHeightMixin",
     "malum.WeepingWellMixin",
     "malum.WellProximityMixin",
     "zeta.EventHandlerMapMixin",
