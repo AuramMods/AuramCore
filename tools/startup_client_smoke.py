@@ -32,6 +32,7 @@ parser.add_argument('--disable-tooltip-search', action='store_true')
 parser.add_argument('--disable-distant-generation', action='store_true')
 parser.add_argument('--jfr', action='store_true', help='Record the client with Java Flight Recorder')
 parser.add_argument('--tooltip-layout', action='store_true', help='Render and check tooltips during startup smoke')
+parser.add_argument('--smooth-scroll', action='store_true', help='Run scroll interactions in the disposable world')
 parser.add_argument('--output', type=Path, required=True)
 args = parser.parse_args()
 version = next(line.split('=', 1)[1] for line in (ROOT/'gradle.properties').read_text().splitlines() if line.startswith('mod_version='))
@@ -62,6 +63,21 @@ shutil.copy2(args.pack/'mmc-pack.json', instance/'mmc-pack.json')
 settings = (args.pack/'instance.cfg').read_text()
 jvm_flags = ['-XX:+UseG1GC', f'-Dauram.smoke={args.mode}', '-Dauram.smoke.hiddenWindow=true',
              f'-Dauram.smoke.seed={args.seed}', f'-Dauram.worldgen.eagerStructureRings={str(args.eager_rings).lower()}']
+if world_test:
+    # A hidden Prism console can stop consuming the Java stdout pipe during
+    # synchronous integrated-server startup. Keep probe output in its fixture.
+    (game/'auram-smoke-log4j2.xml').write_text("""<Configuration>
+  <Appenders>
+    <File name="Latest" fileName="logs/latest.log">
+      <PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t/%p] [%c]: %m%n"/>
+    </File>
+  </Appenders>
+  <Loggers>
+    <Root level="info"><AppenderRef ref="Latest"/></Root>
+  </Loggers>
+</Configuration>
+""")
+    jvm_flags.append('-Dlog4j2.configurationFile=auram-smoke-log4j2.xml')
 if args.connect:
     jvm_flags.append(f'-Dauram.smoke.connect={args.connect}')
 if args.lan_port:
@@ -70,6 +86,8 @@ if args.verify_rings:
     jvm_flags.append('-Dauram.smoke.verifyRings=true')
 if args.tooltip_layout:
     jvm_flags.append('-Dauram.smoke.tooltipLayout=true')
+if args.smooth_scroll:
+    jvm_flags.append('-Dauram.smoke.smoothScroll=true')
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'
@@ -213,7 +231,7 @@ for run in range(1,args.runs+1):
     if log.exists():shutil.copy2(log,args.output/f'client-{run}.log')
     if world_test and (game/'logs/debug.log').exists():
         shutil.copy2(game/'logs/debug.log', args.output/f'client-{run}-debug.log')
-    for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr'):
+    for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr', 'auram-smooth-scroll-smoke.json'):
         path = game/artifact_name
         if path.exists():
             shutil.copy2(path, args.output/f'{run}-{artifact_name}')

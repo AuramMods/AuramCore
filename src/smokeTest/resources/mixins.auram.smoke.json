@@ -44,6 +44,7 @@
     "DhDeliveryProbeMixin"
   ],
   "client": [
+    "ClientTimerAccess",
     "HiddenWindowMixin",
     "FtbSurfaceClaimProbeMixin",
     "FtbSurfaceClaimShiftMixin",

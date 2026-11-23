@@ -66,6 +66,7 @@ public final class WorldStartupClientSmoke {
                 System.out.println("Auram world startup smoke fresh_ms=" + freshMillis);
                 System.out.println("Auram integrated scheduling: "
                         + client.getSingleplayerServer().getRunningThread().getPriority());
+                if (Boolean.getBoolean("auram.smoke.smoothScroll")) SmoothScrollSmoke.run(client);
                 int lanPort = Integer.getInteger("auram.smoke.lanPort", 0);
                 if (lanPort != 0) {
                     var server = client.getSingleplayerServer();
