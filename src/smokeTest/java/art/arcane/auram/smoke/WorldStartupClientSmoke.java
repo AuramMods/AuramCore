@@ -68,6 +68,13 @@ public final class WorldStartupClientSmoke {
                         + client.getSingleplayerServer().getRunningThread().getPriority());
                 if (Boolean.getBoolean("auram.smoke.smoothScroll")) SmoothScrollSmoke.run(client);
                 if (Boolean.getBoolean("auram.smoke.transitions")) TransitionSmoke.run(client);
+                if (Boolean.getBoolean("auram.smoke.anvilSounds")) {
+                    AnvilSoundsSmoke.start(client).whenComplete((unused, error) -> client.tell(() -> {
+                        if (error == null) reopen(client);
+                        else fail(client, error);
+                    }));
+                    return;
+                }
                 int lanPort = Integer.getInteger("auram.smoke.lanPort", 0);
                 if (lanPort != 0) {
                     var server = client.getSingleplayerServer();

@@ -35,6 +35,7 @@ parser.add_argument('--tooltip-layout', action='store_true', help='Render and ch
 parser.add_argument('--smooth-scroll', action='store_true', help='Run scroll interactions in the disposable world')
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--transitions', action='store_true', help='Check title, overlay and toast transitions in the disposable world')
+parser.add_argument('--anvil-sounds', action='store_true', help='Check anvil sound events in the disposable world')
 args = parser.parse_args()
 version = next(line.split('=', 1)[1] for line in (ROOT/'gradle.properties').read_text().splitlines() if line.startswith('mod_version='))
 artifact = args.baseline_jar or ROOT/f'build/libs/auram-{version}-all.jar'
@@ -91,6 +92,8 @@ if args.smooth_scroll:
     jvm_flags.append('-Dauram.smoke.smoothScroll=true')
 if args.transitions:
     jvm_flags.append('-Dauram.smoke.transitions=true')
+if args.anvil_sounds:
+    jvm_flags.append('-Dauram.smoke.anvilSounds=true')
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'
@@ -184,7 +187,7 @@ for run in range(1,args.runs+1):
     shutil.copy2(args.pack/'minecraft/options.txt',game/'options.txt')
     options = game/'options.txt'
     lines = [line for line in options.read_text().splitlines() if not line.startswith('soundCategory_master:')]
-    if args.lan_port:
+    if world_test:
         lines = ['pauseOnLostFocus:false' if line == 'pauseOnLostFocus:true' else line for line in lines]
     options.write_text('\n'.join([*lines, 'soundCategory_master:0.0'])+'\n')
     log=game/'logs/latest.log'
@@ -235,7 +238,7 @@ for run in range(1,args.runs+1):
     if world_test and (game/'logs/debug.log').exists():
         shutil.copy2(game/'logs/debug.log', args.output/f'client-{run}-debug.log')
     for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr', 'auram-smooth-scroll-smoke.json',
-                          'auram-transition-smoke.txt'):
+                          'auram-transition-smoke.txt', 'auram-anvil-sounds-smoke.txt'):
         path = game/artifact_name
         if path.exists():
             shutil.copy2(path, args.output/f'{run}-{artifact_name}')

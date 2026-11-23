@@ -84,6 +84,10 @@
     "tweak.DedicatedMainSchedulingMixin"
   ],
   "client": [
+    "tweak.AnvilSoundInteractionMixin",
+    "tweak.AnvilSoundOpenMixin",
+    "tweak.AnvilSoundTakeMixin",
+    "tweak.AnvilSoundPlaybackMixin",
     "tweak.TitleScreenTransitionMixin",
     "tweak.LoadingOverlayTransitionMixin",
     "tweak.ToastInstanceTransitionMixin",
