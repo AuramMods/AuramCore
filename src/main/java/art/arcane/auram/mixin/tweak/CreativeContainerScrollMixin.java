@@ -17,6 +17,13 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.COLUMNS;
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.GRID_BOTTOM;
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.GRID_LEFT;
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.GRID_RIGHT;
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.GRID_TOP;
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.SLOT_SIZE;
+
 @Mixin(AbstractContainerScreen.class)
 public abstract class CreativeContainerScrollMixin {
     @Shadow protected int leftPos;
@@ -44,7 +51,8 @@ public abstract class CreativeContainerScrollMixin {
         if (screen instanceof CreativeScrollViewport grid && grid.auram$pixelShift() > 0) {
             if (grid.auram$isGridSlot(slot)) {
                 if (!auram$gridClip) {
-                    SmoothScrolling.mask(graphics, leftPos + 8, topPos + 17, leftPos + 170, topPos + 107);
+                    SmoothScrolling.mask(graphics, leftPos + GRID_LEFT, topPos + GRID_TOP,
+                            leftPos + GRID_RIGHT, topPos + GRID_BOTTOM);
                     auram$gridClip = true;
                 }
                 graphics.pose().pushPose();
@@ -96,7 +104,7 @@ public abstract class CreativeContainerScrollMixin {
         graphics.pose().pushPose();
         graphics.pose().translate(0, -grid.auram$pixelShift(), 0);
         try {
-            for (int column = 0; column < 9; column++) {
+            for (int column = 0; column < COLUMNS; column++) {
                 Slot slot = grid.auram$previewSlot(column);
                 if (slot.hasItem()) renderSlot(graphics, slot);
             }
@@ -115,14 +123,15 @@ public abstract class CreativeContainerScrollMixin {
     private Slot auram$getPreview(CreativeScrollViewport grid, double x, double y) {
         if (grid.auram$pixelShift() == 0 || !auram$insideGrid(x, y)) return null;
         double adjustedY = y + grid.auram$pixelShift();
-        int column = (int) ((x - leftPos - 8) / 18);
+        int column = (int) ((x - leftPos - GRID_LEFT) / SLOT_SIZE);
         Slot preview = grid.auram$previewSlot(column);
         return isHovering(preview.x, preview.y, 16, 16, x, adjustedY) ? preview : null;
     }
 
     @Unique
     private boolean auram$insideGrid(double x, double y) {
-        return x >= leftPos + 8 && x < leftPos + 170 && y >= topPos + 17 && y < topPos + 107;
+        return x >= leftPos + GRID_LEFT && x < leftPos + GRID_RIGHT
+                && y >= topPos + GRID_TOP && y < topPos + GRID_BOTTOM;
     }
 
     @Unique

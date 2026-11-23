@@ -10,6 +10,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -32,7 +33,7 @@ public abstract class CreativeScrollMixin extends AbstractContainerScreen<Creati
     @Unique private double auram$thumb;
     @Unique private int auram$populatedRow = -1;
     @Unique private int auram$pixelShift;
-    @Unique private final Slot[] auram$preview = new Slot[9];
+    @Unique private final Slot[] auram$preview = new Slot[COLUMNS];
 
     protected CreativeScrollMixin(CreativeModeInventoryScreen.ItemPickerMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -48,7 +49,7 @@ public abstract class CreativeScrollMixin extends AbstractContainerScreen<Creati
             draw.call(graphics, tick, x, y);
             return;
         }
-        int maxRow = Mth.positiveCeilDiv(menu.items.size(), 9) - 5;
+        int maxRow = Mth.positiveCeilDiv(menu.items.size(), COLUMNS) - ROWS;
         int targetRow = Math.round(target * maxRow);
         if (!Double.isFinite(auram$row)) {
             auram$row = targetRow;
@@ -56,9 +57,9 @@ public abstract class CreativeScrollMixin extends AbstractContainerScreen<Creati
         }
         auram$row = Mth.clamp(SmoothScrolling.advance(auram$row, targetRow, smoothness), 0, maxRow);
         auram$thumb = SmoothScrolling.advance(auram$thumb, target, smoothness);
-        int pixels = (int) Math.round(auram$row * 18);
-        int row = pixels / 18;
-        auram$pixelShift = pixels % 18;
+        int pixels = (int) Math.round(auram$row * SLOT_SIZE);
+        int row = pixels / SLOT_SIZE;
+        auram$pixelShift = pixels % SLOT_SIZE;
         if (row != auram$populatedRow) {
             menu.scrollTo((float) row / maxRow);
             auram$populatedRow = row;
@@ -69,6 +70,33 @@ public abstract class CreativeScrollMixin extends AbstractContainerScreen<Creati
         } finally {
             scrollOffs = target;
         }
+    }
+
+    @WrapOperation(method = "renderBg", at = @At(value = "INVOKE", ordinal = 0, target =
+            "Lnet/minecraft/client/gui/GuiGraphics;blit(Lnet/minecraft/resources/ResourceLocation;IIIIII)V"))
+    private void auram$scrollGridTexture(GuiGraphics graphics, ResourceLocation texture, int x, int y,
+                                         int u, int v, int width, int height, Operation<Void> blit) {
+        int shift = auram$pixelShift;
+        if (shift == 0) {
+            blit.call(graphics, texture, x, y, u, v, width, height);
+            return;
+        }
+
+        // Draw the frame around the moving grid, then fill the viewport with the shifted rows.
+        blit.call(graphics, texture, x, y, u, v, width, GRID_TOP);
+        blit.call(graphics, texture, x, y + GRID_BOTTOM, u, v + GRID_BOTTOM, width, height - GRID_BOTTOM);
+        blit.call(graphics, texture, x, y + GRID_TOP, u, v + GRID_TOP, GRID_LEFT, GRID_HEIGHT);
+        blit.call(graphics, texture, x + GRID_RIGHT, y + GRID_TOP, u + GRID_RIGHT, v + GRID_TOP,
+                width - GRID_RIGHT, GRID_HEIGHT);
+
+        int gridX = x + GRID_LEFT;
+        int gridY = y + GRID_TOP;
+        int gridU = u + GRID_LEFT;
+        int gridV = v + GRID_TOP;
+        int shiftedHeight = GRID_HEIGHT - shift;
+        blit.call(graphics, texture, gridX, gridY, gridU, gridV + shift, GRID_WIDTH, shiftedHeight);
+        // Repeat the first slot row into the exposed strip at the bottom.
+        blit.call(graphics, texture, gridX, gridY + shiftedHeight, gridU, gridV, GRID_WIDTH, shift);
     }
 
     @WrapOperation(method = {"mouseScrolled", "mouseDragged"}, at = @At(value = "INVOKE", target =
@@ -112,7 +140,7 @@ public abstract class CreativeScrollMixin extends AbstractContainerScreen<Creati
         if (auram$preview[column] == null) {
             int offset = column;
             auram$preview[column] = new CreativePreviewSlot(CONTAINER, column, () -> {
-                int index = (auram$populatedRow + 5) * 9 + offset;
+                int index = (auram$populatedRow + ROWS) * COLUMNS + offset;
                 return index >= 0 && index < menu.items.size() ? menu.items.get(index) : ItemStack.EMPTY;
             });
         }

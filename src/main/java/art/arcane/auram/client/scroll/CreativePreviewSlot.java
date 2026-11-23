@@ -7,11 +7,15 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.function.Supplier;
 
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.GRID_BOTTOM;
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.GRID_LEFT;
+import static art.arcane.auram.client.scroll.CreativeScrollViewport.SLOT_SIZE;
+
 public final class CreativePreviewSlot extends Slot {
     private final Supplier<ItemStack> item;
 
     public CreativePreviewSlot(Container container, int column, Supplier<ItemStack> item) {
-        super(container, column, 9 + column * 18, 108);
+        super(container, column, GRID_LEFT + 1 + column * SLOT_SIZE, GRID_BOTTOM + 1);
         this.item = item;
         index = 36 + column;
     }
