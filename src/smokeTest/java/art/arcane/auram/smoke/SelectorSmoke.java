@@ -22,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
@@ -90,6 +91,7 @@ public final class SelectorSmoke {
             result.put("batch_ms",times);result.put("traced_serializations",tracedSaves);
             result.put("trace_by_function",trace.metrics);
             result.put("serializations_by_command", trace.serializationsByCommand);
+            result.put("global_scans_by_command", trace.globalScansByCommand);
             functions.add(result);
             LogUtils.getLogger().info("[AURAM SELECTORS] {} saves={} median={}ms",id,saves,sorted[12]);
         }
@@ -103,7 +105,38 @@ public final class SelectorSmoke {
         if (Boolean.getBoolean("auram.smoke.gunsOffhand")) {
             result.put("guns_offhand", GunsOffhandSmoke.run(player, source, actionBars));
         }
+        result.put("guns_arrow_selector", arrowSelector(player, source));
         Files.writeString(Path.of("selector-benchmark.json"),new GsonBuilder().setPrettyPrinting().create().toJson(result)+"\n");
+    }
+
+    private static Map<String, Long> arrowSelector(ServerPlayer player, CommandSourceStack source) throws Exception {
+        var arrows = new ArrayList<Arrow>();
+        try {
+            for (boolean grounded : new boolean[] {false, true}) {
+                for (double damage : new double[] {2.0, 15.0}) {
+                    var arrow = new Arrow(player.level(), player);
+                    CompoundTag data = arrow.saveWithoutId(new CompoundTag());
+                    data.putBoolean("inGround", grounded);
+                    data.putDouble("damage", damage);
+                    arrow.load(data);
+                    player.serverLevel().addFreshEntity(arrow);
+                    arrows.add(arrow);
+                }
+            }
+            String separate = "@e[type=minecraft:arrow,nbt={damage:15.0d},nbt={inGround:1b}]";
+            String combined = "@e[type=minecraft:arrow,nbt={damage:15.0d,inGround:1b}]";
+            SelectorProbe.start();
+            var original = new EntitySelectorParser(new StringReader(separate)).parse().findEntities(source);
+            long originalSaves = SelectorProbe.stop();
+            SelectorProbe.start();
+            var candidate = new EntitySelectorParser(new StringReader(combined)).parse().findEntities(source);
+            long candidateSaves = SelectorProbe.stop();
+            check(original.equals(List.of(arrows.get(3))) && original.equals(candidate), "combined arrow results and order");
+            check(candidateSaves < originalSaves, "combined arrow predicate avoids a repeated serialization");
+            return Map.of("original_serializations", originalSaves, "candidate_serializations", candidateSaves);
+        } finally {
+            for (Arrow arrow : arrows) arrow.discard();
+        }
     }
 
     private static int semantics(ServerPlayer player,CommandSourceStack source) throws Exception {
@@ -171,12 +204,14 @@ public final class SelectorSmoke {
     private static final class FunctionTrace implements ServerFunctionManager.TraceCallbacks {
         final Map<String,Map<String,Long>> metrics=new TreeMap<>();
         final Map<String, Long> serializationsByCommand = new TreeMap<>();
+        final Map<String, Long> globalScansByCommand = new TreeMap<>();
         final Map<Integer,String> names=new HashMap<>();
-        long start,before;String active, activeCommand;
+        long start,before, scansBefore;String active, activeCommand;
         FunctionTrace(ResourceLocation root) { names.put(0,root.toString()); }
         public void onCommand(int depth,String command) {
             active=names.getOrDefault(depth,"unknown");start=System.nanoTime();before=SelectorProbe.value();
             activeCommand = command;
+            scansBefore = SelectorProbe.globalScans();
         }
         private void finish(boolean error) {
             if(active==null) return;
@@ -185,6 +220,8 @@ public final class SelectorSmoke {
             long serializations = SelectorProbe.value() - before;
             stats.merge("entity_serializations", serializations, Long::sum);
             if (serializations > 0) serializationsByCommand.merge(active + " " + activeCommand, serializations, Long::sum);
+            long scans = SelectorProbe.globalScans() - scansBefore;
+            if (scans > 0) globalScansByCommand.merge(active + " " + activeCommand, scans, Long::sum);
             if(error) stats.merge("command_errors",1L,Long::sum);
             active=null;
         }
