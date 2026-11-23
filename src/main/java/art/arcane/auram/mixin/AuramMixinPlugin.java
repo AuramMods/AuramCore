@@ -35,6 +35,9 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.ftbchunks.")) {
             return "dev.ftb.mods.ftbchunks.client.FTBChunksClient";
         }
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.customnetherportals.")) {
+            return "com.leclowndu93150.custom_nether_portals.mixin.PortalForcerMixin";
+        }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
             case "art.arcane.auram.mixin.supplementaries.CartographerPreviewMixin",
