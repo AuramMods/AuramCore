@@ -31,6 +31,7 @@ parser.add_argument('--verify-rings', action='store_true')
 parser.add_argument('--disable-tooltip-search', action='store_true')
 parser.add_argument('--disable-distant-generation', action='store_true')
 parser.add_argument('--jfr', action='store_true', help='Record the client with Java Flight Recorder')
+parser.add_argument('--tooltip-layout', action='store_true', help='Render and check tooltips during startup smoke')
 parser.add_argument('--output', type=Path, required=True)
 args = parser.parse_args()
 version = next(line.split('=', 1)[1] for line in (ROOT/'gradle.properties').read_text().splitlines() if line.startswith('mod_version='))
@@ -67,6 +68,8 @@ if args.lan_port:
     jvm_flags.append(f'-Dauram.smoke.lanPort={args.lan_port}')
 if args.verify_rings:
     jvm_flags.append('-Dauram.smoke.verifyRings=true')
+if args.tooltip_layout:
+    jvm_flags.append('-Dauram.smoke.tooltipLayout=true')
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'

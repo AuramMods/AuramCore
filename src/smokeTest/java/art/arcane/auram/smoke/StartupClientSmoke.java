@@ -70,9 +70,13 @@ public final class StartupClientSmoke {
             var sprite = client.getTextureAtlas(TextureAtlas.LOCATION_BLOCKS).apply(ResourceLocation.parse(path));
             require(sprite.contents().name().toString().equals(path), "stitched sprite " + path);
         }
-        return Map.of("phase", phase, "mods", ModList.get().size(), "packs", packs, "textures", textures,
-                "map_class", map.getClass().getName(), "sprites_present", true,
-                "scheduling", SchedulingSmoke.capture());
+        var result = new LinkedHashMap<String, Object>(Map.of(
+                "phase", phase, "mods", ModList.get().size(), "packs", packs, "textures", textures,
+                "map_class", map.getClass().getName(), "sprites_present", true, "scheduling", SchedulingSmoke.capture()));
+        if (Boolean.getBoolean("auram.smoke.tooltipLayout")) {
+            result.put("tooltip_layout", TooltipLayoutSmoke.run(client));
+        }
+        return result;
     }
 
     private static void fail(Minecraft client, Throwable error) {
