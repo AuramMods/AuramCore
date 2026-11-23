@@ -8,10 +8,13 @@ import net.minecraft.world.level.levelgen.BitRandomSource;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.RandomSupport;
 
+import java.util.HashSet;
+import java.util.ServiceLoader;
 import java.util.random.RandomGenerator;
 import java.util.random.RandomGeneratorFactory;
 
 public class FasterRandom implements BitRandomSource {
+    private static final String ALGORITHM = "L64X128MixRandom";
     private static final RandomGeneratorFactory<RandomGenerator> FACTORY = loadFactory();
 
     private long seed;
@@ -42,19 +45,32 @@ public class FasterRandom implements BitRandomSource {
         if (!TweakConfig.read("faster-random.json", Settings.class, new Settings()).enabled) return null;
         Thread thread = Thread.currentThread();
         ClassLoader context = thread.getContextClassLoader();
-        try {
-            // ModLauncher's game loader may hide JDK services from the factory's first lookup.
-            thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
-            var factory = RandomGeneratorFactory.<RandomGenerator>of("L64X128MixRandom");
-            factory.create(0L);
-            return factory;
-        } catch (IllegalArgumentException unavailable) {
-            LogUtils.getLogger().warn("Using vanilla random sources because L64X128MixRandom is unavailable: {}",
-                    unavailable.getMessage());
-            return null;
-        } finally {
-            thread.setContextClassLoader(context);
+        for (ClassLoader loader : new ClassLoader[]{context, ClassLoader.getSystemClassLoader()}) {
+            try {
+                // Java 17 caches providers by simple name. Some launcher layers expose the same
+                // providers twice, which breaks that initializer for the entire JVM.
+                if (!hasLxmProvider(loader)) continue;
+                thread.setContextClassLoader(loader);
+                var factory = RandomGeneratorFactory.<RandomGenerator>of(ALGORITHM);
+                factory.create(0L);
+                return factory;
+            } catch (IllegalArgumentException | java.util.ServiceConfigurationError unavailable) {
+                LogUtils.getLogger().debug("Cannot load {} through {}", ALGORITHM, loader, unavailable);
+            } finally {
+                thread.setContextClassLoader(context);
+            }
         }
+        LogUtils.getLogger().warn("No usable {} provider found. Using vanilla random sources.", ALGORITHM);
+        return null;
+    }
+
+    private static boolean hasLxmProvider(ClassLoader loader) {
+        var names = new HashSet<String>();
+        var duplicate = ServiceLoader.load(RandomGenerator.class, loader).stream()
+                .map(ServiceLoader.Provider::type)
+                .filter(type -> !type.isInterface())
+                .anyMatch(type -> !names.add(type.getSimpleName()));
+        return !duplicate && names.contains(ALGORITHM);
     }
 
     @Override
