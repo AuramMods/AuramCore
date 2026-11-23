@@ -42,7 +42,7 @@ public abstract class NetherFossilMixin {
         var generator = (NoiseBasedChunkGenerator) context.chunkGenerator();
         TerrainBatch batch = TerrainBatch.current(generator, context.heightAccessor(), context.randomState());
         TerrainCell shared = batch == null ? null : batch.borrowCell(x, z);
-        try (TerrainCell owned = shared == null
+        try (TerrainCell owned = batch == null
                 ? TerrainCell.open(generator, x, z, context.heightAccessor(), context.randomState()) : null) {
             TerrainCell cell = shared == null ? owned : shared;
             if(cell==null) return;
