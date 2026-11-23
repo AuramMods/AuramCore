@@ -34,6 +34,7 @@ parser.add_argument('--jfr', action='store_true', help='Record the client with J
 parser.add_argument('--tooltip-layout', action='store_true', help='Render and check tooltips during startup smoke')
 parser.add_argument('--smooth-scroll', action='store_true', help='Run scroll interactions in the disposable world')
 parser.add_argument('--output', type=Path, required=True)
+parser.add_argument('--transitions', action='store_true', help='Check title, overlay and toast transitions in the disposable world')
 args = parser.parse_args()
 version = next(line.split('=', 1)[1] for line in (ROOT/'gradle.properties').read_text().splitlines() if line.startswith('mod_version='))
 artifact = args.baseline_jar or ROOT/f'build/libs/auram-{version}-all.jar'
@@ -88,6 +89,8 @@ if args.tooltip_layout:
     jvm_flags.append('-Dauram.smoke.tooltipLayout=true')
 if args.smooth_scroll:
     jvm_flags.append('-Dauram.smoke.smoothScroll=true')
+if args.transitions:
+    jvm_flags.append('-Dauram.smoke.transitions=true')
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'
@@ -231,7 +234,8 @@ for run in range(1,args.runs+1):
     if log.exists():shutil.copy2(log,args.output/f'client-{run}.log')
     if world_test and (game/'logs/debug.log').exists():
         shutil.copy2(game/'logs/debug.log', args.output/f'client-{run}-debug.log')
-    for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr', 'auram-smooth-scroll-smoke.json'):
+    for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr', 'auram-smooth-scroll-smoke.json',
+                          'auram-transition-smoke.txt'):
         path = game/artifact_name
         if path.exists():
             shutil.copy2(path, args.output/f'{run}-{artifact_name}')
