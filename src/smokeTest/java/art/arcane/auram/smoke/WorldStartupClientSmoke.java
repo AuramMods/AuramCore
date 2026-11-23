@@ -67,36 +67,14 @@ public final class WorldStartupClientSmoke {
                 System.out.println("Auram integrated scheduling: "
                         + client.getSingleplayerServer().getRunningThread().getPriority());
                 if (Boolean.getBoolean("auram.smoke.smoothScroll")) SmoothScrollSmoke.run(client);
-                if (Boolean.getBoolean("auram.smoke.transitions")) TransitionSmoke.run(client);
-                if (Boolean.getBoolean("auram.smoke.anvilSounds")) {
-                    AnvilSoundsSmoke.start(client).whenComplete((unused, error) -> client.tell(() -> {
-                        if (error == null) reopen(client);
-                        else fail(client, error);
-                    }));
-                    return;
-                }
-                int lanPort = Integer.getInteger("auram.smoke.lanPort", 0);
-                if (lanPort != 0) {
-                    var server = client.getSingleplayerServer();
-                    server.setUsesAuthentication(false);
-                    server.getConnection().startTcpServerListener(InetAddress.getLoopbackAddress(), lanPort);
-                    Files.writeString(Path.of("auram-lan-ready.txt"), Integer.toString(lanPort));
-                    return;
-                }
-                if (Boolean.getBoolean("auram.smoke.verifyRings")) {
-                    var server = client.getSingleplayerServer();
-                    CompletableFuture.runAsync(() -> {
-                        try {
-                            RingSearchSmoke.run(server.overworld());
-                        } catch (Exception error) {
-                            throw new CompletionException(error);
-                        }
-                    }, server).whenComplete((unused, error) -> client.tell(() -> {
-                        if (error == null) reopen(client);
+                if (Boolean.getBoolean("auram.smoke.transitions")) {
+                    TransitionSmoke.run(client);
+                    TransitionSmoke.reloadResourcePack(client).whenComplete((unused, error) -> client.tell(() -> {
+                        if (error == null) runWorldChecks(client);
                         else fail(client, error);
                     }));
                 } else {
-                    client.tell(() -> reopen(client));
+                    runWorldChecks(client);
                 }
             } else {
                 phase = 3;
@@ -105,6 +83,44 @@ public final class WorldStartupClientSmoke {
                 Files.writeString(Path.of("auram-world-startup-pass.txt"),
                         "fresh_ms=%d%nreopen_ms=%d%n".formatted(freshMillis, elapsedMillis));
                 client.stop();
+            }
+        } catch (Throwable error) {
+            fail(client, error);
+        }
+    }
+
+    private static void runWorldChecks(Minecraft client) {
+        try {
+            if (Boolean.getBoolean("auram.smoke.fastAnimations")) FastAnimationSmoke.run(client);
+            if (Boolean.getBoolean("auram.smoke.anvilSounds")) {
+                AnvilSoundsSmoke.start(client).whenComplete((unused, error) -> client.tell(() -> {
+                    if (error == null) reopen(client);
+                    else fail(client, error);
+                }));
+                return;
+            }
+            int lanPort = Integer.getInteger("auram.smoke.lanPort", 0);
+            if (lanPort != 0) {
+                var server = client.getSingleplayerServer();
+                server.setUsesAuthentication(false);
+                server.getConnection().startTcpServerListener(InetAddress.getLoopbackAddress(), lanPort);
+                Files.writeString(Path.of("auram-lan-ready.txt"), Integer.toString(lanPort));
+                return;
+            }
+            if (Boolean.getBoolean("auram.smoke.verifyRings")) {
+                var server = client.getSingleplayerServer();
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        RingSearchSmoke.run(server.overworld());
+                    } catch (Exception error) {
+                        throw new CompletionException(error);
+                    }
+                }, server).whenComplete((unused, error) -> client.tell(() -> {
+                    if (error == null) reopen(client);
+                    else fail(client, error);
+                }));
+            } else {
+                client.tell(() -> reopen(client));
             }
         } catch (Throwable error) {
             fail(client, error);

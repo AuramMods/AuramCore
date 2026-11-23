@@ -1,0 +1,327 @@
+{
+  "MathHelperMixin": {
+    "target": "net.minecraft.util.Mth",
+    "side": "mixins",
+    "expected": 1
+  },
+  "entity.AbstractHorseEntityMixin": {
+    "target": "net.minecraft.world.entity.animal.horse.AbstractHorse",
+    "side": "mixins",
+    "expected": 3
+  },
+  "entity.AllayEntityMixin": {
+    "target": "net.minecraft.world.entity.animal.allay.Allay",
+    "side": "mixins",
+    "expected": 2
+  },
+  "entity.BeeEntityMixin": {
+    "target": "net.minecraft.world.entity.animal.Bee",
+    "side": "mixins",
+    "expected": 1
+  },
+  "entity.GuardianEntityMixin": {
+    "target": "net.minecraft.world.entity.monster.Guardian",
+    "side": "mixins",
+    "expected": 1
+  },
+  "entity.LivingEntityMixin": {
+    "target": "net.minecraft.world.entity.LivingEntity",
+    "side": "mixins",
+    "expected": 1
+  },
+  "entity.PolarBearEntityMixin": {
+    "target": "net.minecraft.world.entity.animal.PolarBear",
+    "side": "mixins",
+    "expected": 1
+  },
+  "entity.ShulkerEntityMixin": {
+    "target": "net.minecraft.world.entity.monster.Shulker",
+    "side": "mixins",
+    "expected": 1
+  },
+  "entity.WardenEntityMixin": {
+    "target": "net.minecraft.world.entity.monster.warden.Warden",
+    "side": "mixins",
+    "expected": 2
+  },
+  "entity.WolfEntityMixin": {
+    "target": "net.minecraft.world.entity.animal.Wolf",
+    "side": "mixins",
+    "expected": 2
+  },
+  "AllayEntityModelMixin": {
+    "target": "net.minecraft.client.model.AllayModel",
+    "side": "client",
+    "expected": 2
+  },
+  "ArmorStandArmorEntityModelMixin": {
+    "target": "net.minecraft.client.model.ArmorStandArmorModel",
+    "side": "client",
+    "expected": 1
+  },
+  "ArmorStandEntityModelMixin": {
+    "target": "net.minecraft.client.model.ArmorStandModel",
+    "side": "client",
+    "expected": 1
+  },
+  "BatEntityModelMixin": {
+    "target": "net.minecraft.client.model.BatModel",
+    "side": "client",
+    "expected": 1
+  },
+  "BeeEntityModelMixin": {
+    "target": "net.minecraft.client.model.BeeModel",
+    "side": "client",
+    "expected": 2
+  },
+  "BipedEntityModelMixin": {
+    "target": "net.minecraft.client.model.HumanoidModel",
+    "side": "client",
+    "expected": 4
+  },
+  "BlazeEntityModelMixin": {
+    "target": "net.minecraft.client.model.BlazeModel",
+    "side": "client",
+    "expected": 1
+  },
+  "BoatEntityModelMixin": {
+    "target": "net.minecraft.client.model.BoatModel",
+    "side": "client",
+    "expected": 2
+  },
+  "ChickenEntityModelMixin": {
+    "target": "net.minecraft.client.model.ChickenModel",
+    "side": "client",
+    "expected": 1
+  },
+  "CodEntityModelMixin": {
+    "target": "net.minecraft.client.model.CodModel",
+    "side": "client",
+    "expected": 1
+  },
+  "CreeperEntityModelMixin": {
+    "target": "net.minecraft.client.model.CreeperModel",
+    "side": "client",
+    "expected": 1
+  },
+  "CrossbowPosingMixin": {
+    "target": "net.minecraft.client.model.AnimationUtils",
+    "side": "client",
+    "expected": 4
+  },
+  "DolphinEntityModelMixin": {
+    "target": "net.minecraft.client.model.DolphinModel",
+    "side": "client",
+    "expected": 1
+  },
+  "DragonEntityModelMixin": {
+    "target": "net.minecraft.client.renderer.entity.EnderDragonRenderer$DragonModel",
+    "side": "client",
+    "expected": 2
+  },
+  "DrownedEntityModelMixin": {
+    "target": "net.minecraft.client.model.DrownedModel",
+    "side": "client",
+    "expected": 1
+  },
+  "EndermanEntityModelMixin": {
+    "target": "net.minecraft.client.model.EndermanModel",
+    "side": "client",
+    "expected": 1
+  },
+  "EndermiteEntityModelMixin": {
+    "target": "net.minecraft.client.model.EndermiteModel",
+    "side": "client",
+    "expected": 1
+  },
+  "EvokerFangsEntityModelMixin": {
+    "target": "net.minecraft.client.model.EvokerFangsModel",
+    "side": "client",
+    "expected": 1
+  },
+  "FoxEntityModelMixin": {
+    "target": "net.minecraft.client.model.FoxModel",
+    "side": "client",
+    "expected": 2
+  },
+  "GhastEntityModelMixin": {
+    "target": "net.minecraft.client.model.GhastModel",
+    "side": "client",
+    "expected": 1
+  },
+  "GuardianEntityModelMixin": {
+    "target": "net.minecraft.client.model.GuardianModel",
+    "side": "client",
+    "expected": 1
+  },
+  "HoglinEntityModelMixin": {
+    "target": "net.minecraft.client.model.HoglinModel",
+    "side": "client",
+    "expected": 1
+  },
+  "HorseEntityModelMixin": {
+    "target": "net.minecraft.client.model.HorseModel",
+    "side": "client",
+    "expected": 1
+  },
+  "IllagerEntityModelMixin": {
+    "target": "net.minecraft.client.model.IllagerModel",
+    "side": "client",
+    "expected": 1
+  },
+  "IronGolemEntityModelMixin": {
+    "target": "net.minecraft.client.model.IronGolemModel",
+    "side": "client",
+    "expected": 2
+  },
+  "LargePufferfishEntityModelMixin": {
+    "target": "net.minecraft.client.model.PufferfishBigModel",
+    "side": "client",
+    "expected": 1
+  },
+  "LargeTropicalFishEntityModelMixin": {
+    "target": "net.minecraft.client.model.TropicalFishModelB",
+    "side": "client",
+    "expected": 1
+  },
+  "LlamaEntityModelMixin": {
+    "target": "net.minecraft.client.model.LlamaModel",
+    "side": "client",
+    "expected": 1
+  },
+  "MagmaCubeEntityModelMixin": {
+    "target": "net.minecraft.client.model.LavaSlimeModel",
+    "side": "client",
+    "expected": 0
+  },
+  "MediumPufferfishEntityModelMixin": {
+    "target": "net.minecraft.client.model.PufferfishMidModel",
+    "side": "client",
+    "expected": 1
+  },
+  "OcelotEntityModelMixin": {
+    "target": "net.minecraft.client.model.OcelotModel",
+    "side": "client",
+    "expected": 2
+  },
+  "PandaEntityModelMixin": {
+    "target": "net.minecraft.client.model.PandaModel",
+    "side": "client",
+    "expected": 1
+  },
+  "ParrotEntityModelMixin": {
+    "target": "net.minecraft.client.model.ParrotModel",
+    "side": "client",
+    "expected": 2
+  },
+  "PhantomEntityModelMixin": {
+    "target": "net.minecraft.client.model.PhantomModel",
+    "side": "client",
+    "expected": 1
+  },
+  "PiglinEntityModelMixin": {
+    "target": "net.minecraft.client.model.PiglinModel",
+    "side": "client",
+    "expected": 1
+  },
+  "PolarBearEntityModelMixin": {
+    "target": "net.minecraft.client.model.PolarBearModel",
+    "side": "client",
+    "expected": 1
+  },
+  "QuadEntityModelMixin": {
+    "target": "net.minecraft.client.model.QuadrupedModel",
+    "side": "client",
+    "expected": 1
+  },
+  "RabbitEntityModelMixin": {
+    "target": "net.minecraft.client.model.RabbitModel",
+    "side": "client",
+    "expected": 2
+  },
+  "RavagerEntityModelMixin": {
+    "target": "net.minecraft.client.model.RavagerModel",
+    "side": "client",
+    "expected": 2
+  },
+  "SalmonEntityModelMixin": {
+    "target": "net.minecraft.client.model.SalmonModel",
+    "side": "client",
+    "expected": 1
+  },
+  "ShulkerEntityModelMixin": {
+    "target": "net.minecraft.client.model.ShulkerModel",
+    "side": "client",
+    "expected": 1
+  },
+  "SilverfishEntityModelMixin": {
+    "target": "net.minecraft.client.model.SilverfishModel",
+    "side": "client",
+    "expected": 1
+  },
+  "SkeletonEntityModelMixin": {
+    "target": "net.minecraft.client.model.SkeletonModel",
+    "side": "client",
+    "expected": 1
+  },
+  "SmallPufferfishEntityModelMixin": {
+    "target": "net.minecraft.client.model.PufferfishSmallModel",
+    "side": "client",
+    "expected": 1
+  },
+  "SmallTropicalFishEntityModelMixin": {
+    "target": "net.minecraft.client.model.TropicalFishModelA",
+    "side": "client",
+    "expected": 1
+  },
+  "SnowGolemEntityModelMixin": {
+    "target": "net.minecraft.client.model.SnowGolemModel",
+    "side": "client",
+    "expected": 1
+  },
+  "SpiderEntityModelMixin": {
+    "target": "net.minecraft.client.model.SpiderModel",
+    "side": "client",
+    "expected": 1
+  },
+  "StriderEntityModelMixin": {
+    "target": "net.minecraft.client.model.StriderModel",
+    "side": "client",
+    "expected": 1
+  },
+  "TadpoleEntityModelMixin": {
+    "target": "net.minecraft.client.model.TadpoleModel",
+    "side": "client",
+    "expected": 1
+  },
+  "TurtleEntityModelMixin": {
+    "target": "net.minecraft.client.model.TurtleModel",
+    "side": "client",
+    "expected": 1
+  },
+  "VillagerResemblingModelMixin": {
+    "target": "net.minecraft.client.model.VillagerModel",
+    "side": "client",
+    "expected": 1
+  },
+  "WardenEntityModelMixin": {
+    "target": "net.minecraft.client.model.WardenModel",
+    "side": "client",
+    "expected": 2
+  },
+  "WitchEntityModelMixin": {
+    "target": "net.minecraft.client.model.WitchModel",
+    "side": "client",
+    "expected": 1
+  },
+  "WitherEntityModelMixin": {
+    "target": "net.minecraft.client.model.WitherBossModel",
+    "side": "client",
+    "expected": 3
+  },
+  "WolfEntityModelMixin": {
+    "target": "net.minecraft.client.model.WolfModel",
+    "side": "client",
+    "expected": 1
+  }
+}

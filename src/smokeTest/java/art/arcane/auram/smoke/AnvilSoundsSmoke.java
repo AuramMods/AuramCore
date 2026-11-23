@@ -143,7 +143,6 @@ public final class AnvilSoundsSmoke {
             case INVALID -> {
                 var menu = (AnvilMenu) client.player.containerMenu;
                 if (!menu.getSlot(2).hasItem() && menu.getSlot(1).getItem().is(Items.ENCHANTED_BOOK)) {
-                    take(ClickType.PICKUP);
                     client.level.levelEvent(1030, anvil, 0);
                     requireSounds(SoundEvents.ANVIL_USE.getLocation());
                     sounds.ids.clear();

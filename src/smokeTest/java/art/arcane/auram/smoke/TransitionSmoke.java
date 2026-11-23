@@ -2,14 +2,14 @@ package art.arcane.auram.smoke;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import art.arcane.auram.smoke.mixin.WidgetAlphaAccess;
+import art.arcane.auram.smoke.mixin.TitleFadeAccess;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
 import net.minecraft.client.gui.screens.LoadingOverlay;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ReloadInstance;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraftforge.client.event.sound.PlaySoundEvent;
@@ -33,15 +33,10 @@ final class TransitionSmoke {
         GuiGraphics graphics = new GuiGraphics(client, client.renderBuffers().bufferSource());
         var title = new TitleScreen(true);
         title.init(client, graphics.guiWidth(), graphics.guiHeight());
-        for (var child : title.children()) {
-            if (child instanceof AbstractWidget widget) widget.setAlpha(0.0F);
-        }
         title.render(graphics, 0, 0, 0);
-        boolean visible = title.children().stream()
-                .filter(AbstractWidget.class::isInstance)
-                .map(widget -> (AbstractWidget) widget)
-                .anyMatch(widget -> ((WidgetAlphaAccess) widget).auram$getAlpha() == 1.0F);
-        require(visible == setting(config, "removeTitleScreenFade"), "title button fade");
+        // Menu mods can replace all vanilla widgets. Check whether vanilla started its fade.
+        require((((TitleFadeAccess) title).auram$getFadeInStart() == 0)
+                == setting(config, "removeTitleScreenFade"), "title fade timer");
         try {
             verifyReload(client, graphics, setting(config, "removeSplashFade"), false);
             verifyReload(client, graphics, setting(config, "removeSplashFade"), true);
@@ -50,7 +45,22 @@ final class TransitionSmoke {
             client.setOverlay(null);
             graphics.flush();
         }
-        Files.writeString(Path.of("auram-transition-smoke.txt"), "Passed title, successful and failed reload, toast position and sound\n");
+    }
+
+    static CompletableFuture<Void> reloadResourcePack(Minecraft client) {
+        var repository = client.getResourcePackRepository();
+        repository.reload();
+        require(repository.addPack("file/auram-transition-qa"), "select transition QA resource pack");
+        return client.reloadResourcePacks().thenRun(() -> {
+            require(client.getResourceManager().getResource(new ResourceLocation("auram", "reload-probe.txt"))
+                    .isPresent(), "new pack loaded");
+            try {
+                Files.writeString(Path.of("auram-transition-smoke.txt"),
+                        "Passed title, real resource pack reload, reload failure, toast position and sound\n");
+            } catch (java.io.IOException error) {
+                throw new java.io.UncheckedIOException(error);
+            }
+        });
     }
 
     private static void verifyReload(Minecraft client, GuiGraphics graphics, boolean skipFade, boolean failed) {

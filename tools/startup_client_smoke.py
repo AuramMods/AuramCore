@@ -33,15 +33,17 @@ parser.add_argument('--disable-distant-generation', action='store_true')
 parser.add_argument('--jfr', action='store_true', help='Record the client with Java Flight Recorder')
 parser.add_argument('--tooltip-layout', action='store_true', help='Render and check tooltips during startup smoke')
 parser.add_argument('--smooth-scroll', action='store_true', help='Run scroll interactions in the disposable world')
-parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--transitions', action='store_true', help='Check title, overlay and toast transitions in the disposable world')
 parser.add_argument('--anvil-sounds', action='store_true', help='Check anvil sound events in the disposable world')
+parser.add_argument('--fast-animations', action='store_true', help='Record entity poses in the disposable world')
+parser.add_argument('--output', type=Path, required=True)
 args = parser.parse_args()
 version = next(line.split('=', 1)[1] for line in (ROOT/'gradle.properties').read_text().splitlines() if line.startswith('mod_version='))
 artifact = args.baseline_jar or ROOT/f'build/libs/auram-{version}-all.jar'
 smoke = ROOT/f'build/libs/auram-{version}-smoke-test.jar'
 instance_id = 'Auram-Startup-QA-' + uuid.uuid4().hex[:8]
 world_test = args.mode == 'world-startup'
+use_file_log = world_test or args.mode == 'forge-remote'
 marker_prefix = {'startup':'auram-startup-client', 'world-startup':'auram-world-startup',
                  'forge-remote':'auram-forge-remote'}[args.mode]
 pass_marker = marker_prefix + '-pass.txt'
@@ -65,7 +67,7 @@ shutil.copy2(args.pack/'mmc-pack.json', instance/'mmc-pack.json')
 settings = (args.pack/'instance.cfg').read_text()
 jvm_flags = ['-XX:+UseG1GC', f'-Dauram.smoke={args.mode}', '-Dauram.smoke.hiddenWindow=true',
              f'-Dauram.smoke.seed={args.seed}', f'-Dauram.worldgen.eagerStructureRings={str(args.eager_rings).lower()}']
-if world_test:
+if use_file_log:
     # A hidden Prism console can stop consuming the Java stdout pipe during
     # synchronous integrated-server startup. Keep probe output in its fixture.
     (game/'auram-smoke-log4j2.xml').write_text("""<Configuration>
@@ -92,8 +94,15 @@ if args.smooth_scroll:
     jvm_flags.append('-Dauram.smoke.smoothScroll=true')
 if args.transitions:
     jvm_flags.append('-Dauram.smoke.transitions=true')
+    probe_pack = game/'resourcepacks/auram-transition-qa'
+    resources = probe_pack/'assets/auram'
+    resources.mkdir(parents=True)
+    (probe_pack/'pack.mcmeta').write_text('{"pack":{"pack_format":15,"description":"Auram reload probe"}}\n')
+    (resources/'reload-probe.txt').write_text('Transition resource reload probe\n')
 if args.anvil_sounds:
     jvm_flags.append('-Dauram.smoke.anvilSounds=true')
+if args.fast_animations:
+    jvm_flags.append('-Dauram.smoke.fastAnimations=true')
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'
@@ -201,7 +210,7 @@ for run in range(1,args.runs+1):
         launcher = subprocess.Popen(command, stdout=console, stderr=subprocess.STDOUT)
     seen=False; reason=None
     try:
-        while time.monotonic()-start < (900 if world_test else 360):
+        while time.monotonic()-start < (900 if use_file_log else 360):
             alive = java_pids()
             seen = seen or bool(alive)
             if launcher.poll() not in (None, 0) and not alive:
@@ -238,7 +247,8 @@ for run in range(1,args.runs+1):
     if world_test and (game/'logs/debug.log').exists():
         shutil.copy2(game/'logs/debug.log', args.output/f'client-{run}-debug.log')
     for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr', 'auram-smooth-scroll-smoke.json',
-                          'auram-transition-smoke.txt', 'auram-anvil-sounds-smoke.txt'):
+                          'auram-transition-smoke.txt', 'auram-anvil-sounds-smoke.txt', 'auram-fastanim-smoke.json',
+                          'auram-fastanim-hooks.json'):
         path = game/artifact_name
         if path.exists():
             shutil.copy2(path, args.output/f'{run}-{artifact_name}')
