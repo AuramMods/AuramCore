@@ -40,13 +40,20 @@ public class FasterRandom implements BitRandomSource {
 
     private static RandomGeneratorFactory<RandomGenerator> loadFactory() {
         if (!TweakConfig.read("faster-random.json", Settings.class, new Settings()).enabled) return null;
+        Thread thread = Thread.currentThread();
+        ClassLoader context = thread.getContextClassLoader();
         try {
+            // ModLauncher's game loader may hide JDK services from the factory's first lookup.
+            thread.setContextClassLoader(ClassLoader.getSystemClassLoader());
             var factory = RandomGeneratorFactory.<RandomGenerator>of("L64X128MixRandom");
             factory.create(0L);
             return factory;
         } catch (IllegalArgumentException unavailable) {
-            LogUtils.getLogger().warn("L64X128MixRandom is unavailable. Using vanilla random sources.");
+            LogUtils.getLogger().warn("Using vanilla random sources because L64X128MixRandom is unavailable: {}",
+                    unavailable.getMessage());
             return null;
+        } finally {
+            thread.setContextClassLoader(context);
         }
     }
 
