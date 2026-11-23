@@ -32,6 +32,7 @@ parser.add_argument('--xmx', default='4G', help='Maximum JVM heap')
 parser.add_argument('--runtime-parent', type=Path, help='Directory for disposable fixture servers')
 parser.add_argument('--no-mixin-export', action='store_true', help='Disable class-file export during throughput measurements')
 parser.add_argument('--server-template', type=Path, help='Copy a complete exported server pack instead of a minimal mod set')
+parser.add_argument('--world-template', type=Path, help='Copy a saved world for a continuation run')
 parser.add_argument('--threadtweak-workers', type=int, help='Override main workers in this disposable fixture only')
 parser.add_argument('--identity-candidate', action='store_true', help='Enable the experimental identity shortcut in the test mod only')
 args = parser.parse_args()
@@ -62,6 +63,8 @@ if args.server_template:
             shutil.copytree(entry, target, copy_function=copy_private)
         else:
             copy_private(entry, target)
+if args.world_template:
+    shutil.copytree(args.world_template, runtime/'world', copy_function=copy_private)
 (runtime/'mods').mkdir(exist_ok=True)
 # Remove the distributed core by mod ID; renamed/versioned jars must not leave
 # a second auram mod in a full-server fixture.

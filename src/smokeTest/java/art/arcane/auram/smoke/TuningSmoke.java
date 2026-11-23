@@ -62,6 +62,7 @@ public final class TuningSmoke {
         final int batchSize=Integer.getInteger("auram.tuning.batchSize",4);
         final int warmupBatches=Integer.getInteger("auram.tuning.warmupBatches",5);
         final int measuredBatches=Integer.getInteger("auram.tuning.measuredBatches",20);
+        final int measuredOrigin=Integer.getInteger("auram.tuning.measuredOrigin",80);
         final int entities=Integer.getInteger("auram.tuning.entities",128);
         final List<Job> pending=new ArrayList<>();
         final Map<Long,ChunkAccess> generated=new TreeMap<>();
@@ -113,7 +114,8 @@ public final class TuningSmoke {
             }
             int total=(phase==1?warmupBatches:measuredBatches)*batchSize;
             while(pending.size()<batchSize && queued<total) {
-                int x=(phase==1?20:80)+queued%10,z=(phase==1?20:80)+queued/10;
+                int origin = phase == 1 ? 20 : measuredOrigin;
+                int x = origin + queued % 10, z = origin + queued / 10;
                 pending.add(new Job(new ChunkPos(x,z),level.getChunkSource().getChunkFuture(x,z,ChunkStatus.FULL,true)));
                 queued++;
             }
@@ -184,6 +186,8 @@ public final class TuningSmoke {
             result.put("available_processors",Runtime.getRuntime().availableProcessors());result.put("max_heap_bytes",Runtime.getRuntime().maxMemory());
             result.put("scheduling_at_start", schedulingAtStart);
             result.put("scheduling_at_finish", SchedulingSmoke.capture());
+            if (Boolean.getBoolean("auram.smoke.randomParity")) result.put("random_vectors", RandomParitySmoke.capture());
+            if (Boolean.getBoolean("auram.smoke.sharedRandom")) result.put("shared_random_draws", RandomParitySmoke.verifyShared());
             result.put("java_version",System.getProperty("java.runtime.version"));result.put("os",System.getProperty("os.name")+" "+System.getProperty("os.arch"));
             result.put("jvm_arguments",ManagementFactory.getRuntimeMXBean().getInputArguments());
             Object executor=Util.backgroundExecutor();result.put("background_executor",executor.getClass().getName());
