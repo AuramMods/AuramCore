@@ -3,6 +3,8 @@ package art.arcane.auram.smoke;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
@@ -25,6 +27,8 @@ import java.util.concurrent.CompletionException;
 public final class WorldStartupClientSmoke {
     private static final String SAVE = "auram-world-startup-smoke";
     private static final String MODE = "world-startup";
+    private static final int DH_SECONDS = Integer.getInteger("auram.smoke.dhSeconds", 0);
+    private static final String DH_DIMENSION = System.getProperty("auram.smoke.dhDimension", "minecraft:overworld");
     private static int phase;
     private static long start;
     private static long freshMillis;
@@ -40,6 +44,10 @@ public final class WorldStartupClientSmoke {
             System.out.println("Auram world startup smoke opening from " + client.screen.getClass().getSimpleName());
             phase = 1;
             start = System.nanoTime();
+            if (Boolean.getBoolean("auram.smoke.worldTemplate")) {
+                client.createWorldOpenFlows().loadLevel(client.screen, SAVE);
+                return;
+            }
             boolean lan = Integer.getInteger("auram.smoke.lanPort", 0) != 0;
             var settings = new LevelSettings("Auram Startup QA", GameType.CREATIVE, false,
                     Difficulty.PEACEFUL, true, new GameRules(), WorldDataConfiguration.DEFAULT);
@@ -55,17 +63,61 @@ public final class WorldStartupClientSmoke {
     @SubscribeEvent
     public static void render(TickEvent.RenderTickEvent event) {
         if (!MODE.equals(System.getProperty("auram.smoke")) || event.phase != TickEvent.Phase.END
-                || (phase != 1 && phase != 2)) return;
+                || (phase != 1 && phase != 2 && phase != 4 && phase != 5)) return;
         Minecraft client = Minecraft.getInstance();
         if (client.level == null || client.player == null || client.screen != null || client.getOverlay() != null) return;
         long elapsedMillis = (System.nanoTime() - start) / 1_000_000;
         try {
+            if (phase == 5) {
+                if (client.level.dimension().location().toString().equals(DH_DIMENSION)) beginDhMeasurement(client);
+                return;
+            }
+            if (phase == 4) {
+                if (elapsedMillis >= 1000L * DH_SECONDS) {
+                    phase = 3;
+                    DhInternalBenchSmoke.finish(client.getSingleplayerServer()).whenComplete((unused, error) ->
+                            client.tell(() -> {
+                                if (error != null) {
+                                    fail(client, error);
+                                    return;
+                                }
+                                try {
+                                    Files.writeString(Path.of("auram-world-startup-pass.txt"), "dh_seconds=" + DH_SECONDS + "\n");
+                                    client.stop();
+                                } catch (Exception failure) {
+                                    fail(client, failure);
+                                }
+                            }));
+                }
+                return;
+            }
             if (phase == 1) {
                 freshMillis = elapsedMillis;
                 phase = 3;
                 System.out.println("Auram world startup smoke fresh_ms=" + freshMillis);
                 System.out.println("Auram integrated scheduling: "
                         + client.getSingleplayerServer().getRunningThread().getPriority());
+                if (DH_SECONDS > 0) {
+                    if (client.level.dimension().location().toString().equals(DH_DIMENSION)) {
+                        beginDhMeasurement(client);
+                    } else {
+                        phase = 5;
+                        var server = client.getSingleplayerServer();
+                        var playerId = client.player.getUUID();
+                        server.submit(() -> {
+                            var destination = server.getLevel(ResourceKey.create(Registries.DIMENSION,
+                                    ResourceLocation.parse(DH_DIMENSION)));
+                            var player = server.getPlayerList().getPlayer(playerId);
+                            if (destination == null || player == null) throw new IllegalStateException("Missing benchmark dimension or player");
+                            player.teleportTo(destination, 4096.5, 200.0, 4096.5, 0.0F, 0.0F);
+                            player.getAbilities().flying = true;
+                            player.onUpdateAbilities();
+                        }).whenComplete((unused, error) -> {
+                            if (error != null) client.tell(() -> fail(client, error));
+                        });
+                    }
+                    return;
+                }
                 if (Boolean.getBoolean("auram.smoke.smoothScroll")) SmoothScrollSmoke.run(client);
                 if (Boolean.getBoolean("auram.smoke.transitions")) {
                     TransitionSmoke.run(client);
@@ -87,6 +139,12 @@ public final class WorldStartupClientSmoke {
         } catch (Throwable error) {
             fail(client, error);
         }
+    }
+
+    private static void beginDhMeasurement(Minecraft client) {
+        DhInternalBenchSmoke.start(client.getSingleplayerServer());
+        start = System.nanoTime();
+        phase = 4;
     }
 
     private static void runWorldChecks(Minecraft client) {

@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import signal
 import subprocess
@@ -30,6 +31,12 @@ parser.add_argument('--eager-rings', action='store_true')
 parser.add_argument('--verify-rings', action='store_true')
 parser.add_argument('--disable-tooltip-search', action='store_true')
 parser.add_argument('--disable-distant-generation', action='store_true')
+parser.add_argument('--dh-seconds', type=int, default=0, help='Capture ticks during a fixed integrated DH interval')
+parser.add_argument('--dh-companion', type=Path, help='Use a candidate DH 3.3.3 companion jar in the fixture')
+parser.add_argument('--dh-preset', choices=('balanced', 'aggressive'))
+parser.add_argument('--dh-overworld-batches', type=int, default=0)
+parser.add_argument('--dh-dimension', default='minecraft:overworld')
+parser.add_argument('--world-template', type=Path, help='Copy the same disposable integrated save into each run')
 parser.add_argument('--jfr', action='store_true', help='Record the client with Java Flight Recorder')
 parser.add_argument('--tooltip-layout', action='store_true', help='Render and check tooltips during startup smoke')
 parser.add_argument('--smooth-scroll', action='store_true', help='Run scroll interactions in the disposable world')
@@ -103,6 +110,12 @@ if args.anvil_sounds:
     jvm_flags.append('-Dauram.smoke.anvilSounds=true')
 if args.fast_animations:
     jvm_flags.append('-Dauram.smoke.fastAnimations=true')
+if args.dh_seconds:
+    jvm_flags.extend([f'-Dauram.smoke.dhSeconds={args.dh_seconds}', '-Dauram.dh.trace=true',
+                      f'-Dauram.smoke.dhDimension={args.dh_dimension}',
+                      f'-Dauram.dh.overworldBatches={args.dh_overworld_batches}'])
+if args.world_template:
+    jvm_flags.append('-Dauram.smoke.worldTemplate=true')
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'
@@ -127,6 +140,10 @@ if args.minimal_network:
             mod.unlink()
 shutil.copy2(artifact, game/'mods'/f'AuramCore-{version}.jar')
 shutil.copy2(smoke, game/'mods/auram-startup-smoke.jar')
+if args.dh_companion:
+    for existing in (game/'mods').glob('auramphoton-compat-*.jar'):
+        existing.unlink()
+    shutil.copy2(args.dh_companion, game/'mods'/args.dh_companion.name)
 fml=game/'config/fml.toml'
 text=fml.read_text()
 text='\n'.join('earlyWindowControl = false' if line.startswith('earlyWindowControl =') else line for line in text.splitlines())+'\n'
@@ -134,9 +151,19 @@ fml.write_text(text)
 if args.disable_tooltip_search:
     jei = game/'config/jei/jei-client.ini'
     jei.write_text(jei.read_text().replace('TooltipSearchMode = ENABLED', 'TooltipSearchMode = DISABLED'))
-if args.disable_distant_generation:
+if args.disable_distant_generation or args.dh_preset:
     dh = game/'config/DistantHorizons.toml'
-    dh.write_text(dh.read_text().replace('generatorPlan = "SURFACE_THEN_CHUNKS"', 'generatorPlan = "DISABLED"'))
+    config = dh.read_text()
+    if args.disable_distant_generation:
+        config = re.sub(r'(?m)^(\s*generatorPlan = )"[^"]+"', r'\1"DISABLED"', config)
+    if args.dh_preset:
+        # DH 3.3.3 uses ceil(CPUs * 0.5) and ceil(CPUs * 0.75), both at full duty.
+        cpus = os.cpu_count() or 1
+        threads = (cpus + 1) // 2 if args.dh_preset == 'balanced' else (3 * cpus + 3) // 4
+        config = re.sub(r'(?m)^(\s*numberOfThreads = )\d+', rf'\g<1>{threads}', config)
+        config = re.sub(r'(?m)^(\s*threadRunTimeRatio = )"[^"]+"', r'\1"1.0"', config)
+        config = re.sub(r'(?m)^(\s*lodChunkRenderDistanceRadius = )\d+', r'\g<1>64', config)
+    dh.write_text(config)
 
 def java_pids():
     processes = subprocess.check_output(['ps', '-axo', 'pid=,ucomm=,args='], text=True)
@@ -190,7 +217,10 @@ summary={'instance':str(instance),'artifact_sha256':hashlib.sha256(artifact.read
 print('Fixture: '+str(instance),flush=True)
 for run in range(1,args.runs+1):
     if world_test:
-        shutil.rmtree(game/'saves/auram-world-startup-smoke', ignore_errors=True)
+        world = game/'saves/auram-world-startup-smoke'
+        shutil.rmtree(world, ignore_errors=True)
+        if args.world_template:
+            shutil.copytree(args.world_template, world, copy_function=copy_private)
     for marker in [pass_marker, fail_marker, 'startup-client-results.json']:
         (game/marker).unlink(missing_ok=True)
     shutil.copy2(args.pack/'minecraft/options.txt',game/'options.txt')
@@ -198,6 +228,8 @@ for run in range(1,args.runs+1):
     lines = [line for line in options.read_text().splitlines() if not line.startswith('soundCategory_master:')]
     if world_test:
         lines = ['pauseOnLostFocus:false' if line == 'pauseOnLostFocus:true' else line for line in lines]
+    if args.dh_seconds:
+        lines = ['maxFps:60' if line.startswith('maxFps:') else line for line in lines]
     options.write_text('\n'.join([*lines, 'soundCategory_master:0.0'])+'\n')
     log=game/'logs/latest.log'
     if log.exists(): log.unlink()
@@ -246,7 +278,7 @@ for run in range(1,args.runs+1):
     if log.exists():shutil.copy2(log,args.output/f'client-{run}.log')
     if world_test and (game/'logs/debug.log').exists():
         shutil.copy2(game/'logs/debug.log', args.output/f'client-{run}-debug.log')
-    for artifact_name in ('auram-ring-search-pass.txt', 'auram-world-startup.jfr', 'auram-smooth-scroll-smoke.json',
+    for artifact_name in ('auram-dh-ticks.csv', 'auram-ring-search-pass.txt', 'auram-world-startup.jfr', 'auram-smooth-scroll-smoke.json',
                           'auram-transition-smoke.txt', 'auram-anvil-sounds-smoke.txt', 'auram-fastanim-smoke.json',
                           'auram-fastanim-hooks.json'):
         path = game/artifact_name

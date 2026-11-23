@@ -25,6 +25,7 @@ def summarize(runtime):
     chunks = rows(runtime / 'worldgen-chunks.csv')
     elapsed = int(ticks[-1]['elapsed_ns']) / 1e9
     latency = [int(chunk['ready_ns']) / 1e6 for chunk in chunks]
+    tick_ms = [int(tick['tick_ns']) / 1e6 for tick in ticks]
     stages = runtime / 'worldgen-stage-cpu.csv'
     targets = runtime / 'worldgen-targets.csv'
     level_to_spawn = runtime / 'worldgen-level-ready-ns.txt'
@@ -43,7 +44,9 @@ def summarize(runtime):
         'cold_full_chunks_per_s': len(chunks) / elapsed,
         'chunk_ready_p50_ms': percentile(latency, .50),
         'chunk_ready_p95_ms': percentile(latency, .95),
-        'tick_p95_ms': percentile([int(tick['tick_ns']) / 1e6 for tick in ticks], .95),
+        'tick_p95_ms': percentile(tick_ms, .95),
+        'tick_p99_ms': percentile(tick_ms, .99),
+        'tick_max_ms': max(tick_ms),
         'stages': [{key: value if key in {'phase', 'stage'} else int(value) for key, value in row.items()}
                    for row in rows(stages)] if stages.exists() else [],
         'targets': [{key: value if key in {'phase', 'target'} else int(value) for key, value in row.items()}
