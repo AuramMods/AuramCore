@@ -1,0 +1,11 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "#forge:tools/paxels", "required": false },
+    { "id": "allthemodium:alloy_paxel", "required": false },
+    { "id": "gobber2:gobber2_paxel", "required": false },
+    { "id": "gobber2:gobber2_paxel_nether", "required": false },
+    { "id": "gobber2:gobber2_paxel_end", "required": false },
+    { "id": "gobber2:gobber2_paxel_stars", "required": false }
+  ]
+}

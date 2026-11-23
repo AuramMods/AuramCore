@@ -57,6 +57,11 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (smokeMode.equals("veinst")) {
+                VeinstToolSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-veinst-pass.txt"), "PASS Veinst tool checks\n");
+                return;
+            }
             if (smokeMode.equals("ring-search")) {
                 RingSearchSmoke.run(event.getServer().overworld());
                 return;

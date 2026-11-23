@@ -61,6 +61,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
             case "art.arcane.auram.mixin.ftbessentials.RtpBiomeWaitMixin" -> "dev.ftb.mods.ftbessentials.command.TeleportCommands";
             case "art.arcane.auram.mixin.lithostitched.StructureStartTerrainMixin" ->
                     "dev.worldgen.lithostitched.worldgen.structure.AlternateJigsawGenerator";
+            case "art.arcane.auram.mixin.veinst.VeinstToolMixin" ->
+                    "net.mcreator.oreminer.procedures.IsSneakingProcedure";
             default -> null;
         };
     }

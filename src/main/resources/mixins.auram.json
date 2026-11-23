@@ -21,6 +21,7 @@
     "forge.LocalConfigSyncMixin",
     "worldedit.ForgePropertyCacheMixin",
     "verdant.WoodRecipeGenerationMixin",
+    "veinst.VeinstToolMixin",
     "minecraft.EntitySupportMixin",
     "minecraft.StructureRingSearchMixin",
     "minecraft.ConcentricPlacementMixin",
