@@ -247,6 +247,8 @@ Main settings include:
 
 ## Build Instructions
 
+Build AuramCore, run its tests, and produce release jars locally with the Gradle wrapper. Use the local machine's CPU cores and Gradle cache. Do not add or run GitHub Actions workflows for this mod. When publishing a GitHub release, upload the jar built locally.
+
 ### Prerequisites
 
 - JDK 17 (toolchain target is Java 17)
