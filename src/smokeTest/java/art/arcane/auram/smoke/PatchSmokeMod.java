@@ -140,6 +140,15 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-selectors-pass.txt"), "PASS selector equivalence and installed function attribution\n");
                 return;
             }
+            if (System.getProperty("auram.smoke", "").equals("weathering-growth")) {
+                try {
+                    WeatheringGrowthSmoke.run(event.getServer().overworld());
+                } catch (Throwable failure) {
+                    throw new IllegalStateException("Immersive Weathering growth fixture failed", failure);
+                }
+                Files.writeString(Path.of("auram-weathering-growth-pass.txt"), "PASS empty path and original rule order\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("bettercaves-lookup")) {
                 try {
                     BetterCavesLookupSmoke.run();

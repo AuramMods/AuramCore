@@ -75,6 +75,7 @@
     "bettercaves.LiquidRegionsCacheMixin",
     "dreamtinker.ScatterReplaceOreMixin",
     "relics.FluidCollisionMixin",
+    "immersiveweathering.BlockGrowthFastPathMixin",
     "immersiveweathering.LeafPileBlockMixin",
     "immersiveweathering.LeafPileSpeedMixin",
     "psychedelicraft.MashTubFluidReadinessMixin",
