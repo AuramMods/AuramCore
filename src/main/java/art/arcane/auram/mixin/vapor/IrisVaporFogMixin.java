@@ -21,7 +21,7 @@ abstract class IrisVaporFogMixin {
         var keys = options.getOptionSet();
         var values = options.getOptionValues();
         if (!keys.isBooleanOption("VOLUMETRIC_VAPOR") || !keys.isBooleanOption("TOGGLE_VL_FOG")
-                || !values.getBooleanValueOrDefault("TOGGLE_VL_FOG")) {
+                || !values.getBooleanValueOrDefault("VOLUMETRIC_VAPOR") || !values.getBooleanValueOrDefault("TOGGLE_VL_FOG")) {
             VaporAtmosphere.clearBliss();
             return;
         }
