@@ -167,6 +167,7 @@
     "vapor.IrisVaporBindingsMixin",
     "vapor.IrisVaporUniformsMixin",
     "vapor.IrisVaporDefinesMixin",
+    "vapor.IrisVaporFogMixin",
     "vapor.IrisVaporFrameMixin",
     "tweak.AnvilSoundInteractionMixin",
     "tweak.AnvilSoundOpenMixin",

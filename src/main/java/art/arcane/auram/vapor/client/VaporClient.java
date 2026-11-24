@@ -8,6 +8,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static art.arcane.auram.vapor.client.VaporVolume.SECTION;
 import static art.arcane.auram.vapor.client.VaporVolume.SIDE;
@@ -141,6 +144,7 @@ public final class VaporClient {
 
     private static final class Session {
         private final ClientLevel level;
+        private final String dimension;
         private final VaporWorker worker = new VaporWorker();
         private final Map<VaporVolume.Position, VaporVolume.SectionOccupancy> sections = new HashMap<>();
         private final Map<VaporVolume.Position, LevelChunk> knownChunks = new LinkedHashMap<>();
@@ -149,16 +153,21 @@ public final class VaporClient {
         private List<VaporVolume.Source> emitters = List.of();
         private VaporVolume.Position origin;
         private VaporVolume.Occupancy input;
+        private VaporVolume.Erosion erosion = VaporVolume.Erosion.CLEAR;
+        private VaporAtmosphere atmosphere;
+        private VaporAtmosphere.Sample weather;
+        private boolean refreshWeather = true;
         private boolean changed;
         private int ticks;
 
         private Session(ClientLevel level) {
             this.level = level;
+            this.dimension = level.dimension().location().toString();
         }
 
         private void tick(BlockPos camera, boolean paused) {
             if (paused) {
-                worker.submit(input, emitters, true, List.of());
+                worker.submit(input, erosion, emitters, true, List.of());
                 return;
             }
             ticks++;
@@ -180,11 +189,43 @@ public final class VaporClient {
                     pending.remove();
                 }
             }
-            worker.submit(input, emitters, false, ready);
+            if (!emitters.isEmpty() || !ready.isEmpty() || worker.frames().current() != null) updateErosion();
+            worker.submit(input, erosion, emitters, false, ready);
+        }
+
+        private void updateErosion() {
+            VaporAtmosphere configured = VaporAtmosphere.current();
+            if (!refreshWeather && atmosphere == configured && ticks % 5 != 0) return;
+            VaporAtmosphere.Sample local = configured == null ? null
+                    : configured.sample(dimension, level.getDayTime(), level.getRainLevel(1.0f));
+            if (!refreshWeather && atmosphere == configured && Objects.equals(weather, local)) return;
+
+            if (local == null || local.clear()) {
+                erosion = VaporVolume.Erosion.CLEAR;
+            } else {
+                BlockPos.MutableBlockPos sample = new BlockPos.MutableBlockPos();
+                erosion = VaporVolume.Erosion.sample((x, y, z) -> {
+                    int worldX = origin.x() + x;
+                    int worldY = origin.y() + y;
+                    int worldZ = origin.z() + z;
+                    boolean precipitation = false;
+                    if (local.rain() > 0.0f && sections.containsKey(sectionAt(new VaporVolume.Position(worldX, worldY, worldZ)))) {
+                        // Weather outside applies beneath roofs and underground as well.
+                        int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, worldX, worldZ);
+                        sample.set(worldX, Math.max(worldY, surface), worldZ);
+                        precipitation = level.getBiome(sample).value().hasPrecipitation();
+                    }
+                    return configured.lingering(local, worldX, worldY, worldZ, precipitation);
+                });
+            }
+            atmosphere = configured;
+            weather = local;
+            refreshWeather = false;
         }
 
         private void moveWindow(VaporVolume.Position next, BlockPos camera) {
             origin = next;
+            refreshWeather = true;
             int x0 = next.x() / SECTION;
             int y0 = next.y() / SECTION;
             int z0 = next.z() / SECTION;
@@ -215,6 +256,7 @@ public final class VaporClient {
                 sections.put(section, blocks.hasOnlyAir() ? EMPTY_SECTION : readSection(section, blocks));
                 knownChunks.put(section, chunk);
                 changed = true;
+                refreshWeather = true;
                 if (++reads == SECTION_READS_PER_TICK) return;
             }
         }
@@ -228,7 +270,7 @@ public final class VaporClient {
                         var state = blocks.getBlockState(x, y, z);
                         if (state.isAir()) continue;
                         pos.set(section.x() * SECTION + x, section.y() * SECTION + y, section.z() * SECTION + z);
-                        if (!state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos)) {
+                        if (blocksVapor(state, pos)) {
                             occupied.set(VaporVolume.sectionIndex(x, y, z));
                         }
                     }
@@ -244,6 +286,7 @@ public final class VaporClient {
                 sections.remove(section);
                 knownChunks.remove(section);
                 changed = true;
+                refreshWeather = true;
             }
         }
 
@@ -252,13 +295,18 @@ public final class VaporClient {
             VaporVolume.SectionOccupancy previous = sections.get(section);
             if (previous == null) return;
             var state = level.getBlockState(pos);
-            boolean blocked = !state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos);
+            boolean blocked = blocksVapor(state, pos);
             var updated = previous.with(pos.getX() & (SECTION - 1), pos.getY() & (SECTION - 1),
                     pos.getZ() & (SECTION - 1), blocked);
             if (previous != updated) {
                 sections.put(section, updated);
                 changed = true;
             }
+        }
+
+        private boolean blocksVapor(BlockState state, BlockPos pos) {
+            // Partial shapes leave the entire cell available for transport.
+            return !state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos);
         }
 
         private boolean pulseReady(VaporVolume.Source pulse) {

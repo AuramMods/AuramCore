@@ -26,6 +26,7 @@ final class VaporWorker implements AutoCloseable {
         return thread;
     });
     private VaporVolume.Occupancy input;
+    private VaporVolume.Erosion erosion = VaporVolume.Erosion.CLEAR;
     private List<VaporVolume.Source> emitters = List.of();
     private boolean paused;
     private volatile boolean closed;
@@ -36,10 +37,11 @@ final class VaporWorker implements AutoCloseable {
         scheduler.execute(this::run);
     }
 
-    synchronized void submit(VaporVolume.Occupancy occupancy, List<VaporVolume.Source> sources, boolean paused,
-                             List<VaporVolume.Source> additions) {
+    synchronized void submit(VaporVolume.Occupancy occupancy, VaporVolume.Erosion erosion,
+                             List<VaporVolume.Source> sources, boolean paused, List<VaporVolume.Source> additions) {
         if (closed) return;
         this.input = occupancy;
+        this.erosion = erosion;
         this.emitters = sources;
         this.paused = paused;
         for (VaporVolume.Source pulse : additions) {
@@ -65,16 +67,18 @@ final class VaporWorker implements AutoCloseable {
 
     private void tick() {
         VaporVolume.Occupancy occupancy;
+        VaporVolume.Erosion atmosphere;
         List<VaporVolume.Source> pending;
         List<VaporVolume.Source> continuous;
         synchronized (this) {
             if (closed || paused || input == null) return;
             occupancy = input;
+            atmosphere = erosion;
             pending = List.copyOf(pulses);
             continuous = emitters;
             pulses.clear();
         }
-        VaporVolume.Snapshot snapshot = volume.step(occupancy, pending, continuous);
+        VaporVolume.Snapshot snapshot = volume.step(occupancy, atmosphere, pending, continuous);
         synchronized (this) {
             if (!closed) {
                 VaporVolume.Snapshot previous = frames.current;

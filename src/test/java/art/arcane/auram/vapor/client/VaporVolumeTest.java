@@ -2,6 +2,7 @@ package art.arcane.auram.vapor.client;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
@@ -14,18 +15,19 @@ public class VaporVolumeTest {
     private static final Position SOURCE = new Position(7, 5, 7);
     private static final Source PULSE = new Source(SOURCE, 1.0f, 0);
     private static final Source EMITTER = new Source(SOURCE, 0.11f, 0);
+    private static final Erosion NO_EROSION = Erosion.sample((x, y, z) -> 1.0f);
 
     @Test
     public void pulseRisesAndDissipatesAfterTheSourceStops() {
         VaporVolume volume = new VaporVolume();
         Occupancy air = occupancy(new BitSet());
-        Snapshot first = volume.step(air, List.of(PULSE), List.of());
+        Snapshot first = volume.step(air, Erosion.CLEAR, List.of(PULSE), List.of());
         assertTrue(density(first, 7, 5, 7) > 0);
         assertTrue(density(first, 7, 5, 7) < 64);
-        Snapshot snapshot = volume.step(air, List.of(), List.of());
+        Snapshot snapshot = volume.step(air, Erosion.CLEAR, List.of(), List.of());
         assertTrue(density(snapshot, 7, 6, 7) > density(snapshot, 7, 4, 7));
         assertTrue(density(snapshot, 8, 5, 7) > 0);
-        for (int i = 0; i < 400; i++) snapshot = volume.step(air, List.of(), List.of());
+        for (int i = 0; i < 400; i++) snapshot = volume.step(air, Erosion.CLEAR, List.of(), List.of());
         assertNull(snapshot);
         assertTrue(density(first, 7, 5, 7) > 0);
     }
@@ -39,12 +41,79 @@ public class VaporVolumeTest {
         Occupancy roof = occupancy(blocked);
         VaporVolume volume = new VaporVolume();
         Snapshot snapshot = null;
-        for (int i = 0; i < 40; i++) snapshot = volume.step(roof, List.of(), List.of(EMITTER));
+        for (int i = 0; i < 40; i++) snapshot = volume.step(roof, Erosion.CLEAR, List.of(), List.of(EMITTER));
         assertTrue(density(snapshot, 7, 5, 7) > density(snapshot, 8, 5, 7));
         assertTrue(density(snapshot, 8, 5, 7) > 0);
         assertFalse(snapshot.open(index(7, 6, 7)));
         assertEquals(0, density(snapshot, 7, 7, 7));
-        assertNull(volume.step(new Occupancy(ORIGIN, Map.of()), List.of(), List.of()));
+        assertNull(volume.step(new Occupancy(ORIGIN, Map.of()), Erosion.CLEAR, List.of(), List.of()));
+    }
+
+    @Test
+    public void transferAcceptsOnlyTheDestinationsFreeCapacity() {
+        float accepted = acceptedTransfer(0.3f, 0.8f);
+        assertEquals(0.2f, accepted, 1e-6f);
+        assertEquals(0.1f, 0.3f - accepted, 1e-6f);
+        assertEquals(0.0f, acceptedTransfer(0.3f, 1.0f), 0.0f);
+        assertEquals(0.3f, acceptedTransfer(0.3f, 0.4f), 0.0f);
+    }
+
+    @Test
+    public void excessRisingVaporStaysInTheLowerCell() {
+        BitSet sealed = new BitSet();
+        sealed.set(0, SECTION * SECTION * SECTION);
+        sealed.clear(sectionIndex(7, 5, 7));
+        sealed.clear(sectionIndex(7, 6, 7));
+        Occupancy room = occupancy(sealed);
+        VaporVolume volume = new VaporVolume();
+        volume.step(room, NO_EROSION, List.of(
+                new Source(SOURCE, 0.3f, 0), new Source(new Position(7, 6, 7), 0.98f, 0)), List.of());
+
+        Snapshot snapshot = volume.step(room, NO_EROSION, List.of(), List.of());
+        // The upper cell holds 1.0, leaving 0.28 below after both transfers.
+        assertEquals(18, density(snapshot, 7, 5, 7));
+        assertEquals(61, density(snapshot, 7, 6, 7));
+    }
+
+    @Test
+    public void aFullRoomStaysFullUntilErosionMakesSpace() {
+        BitSet sealed = new BitSet();
+        sealed.set(0, SECTION * SECTION * SECTION);
+        VaporVolume volume = new VaporVolume();
+        var initial = new ArrayList<Source>();
+        for (int y = 4; y <= 7; y++) {
+            sealed.clear(sectionIndex(7, y, 7));
+            initial.add(new Source(new Position(7, y, 7), 1.0f, 0));
+        }
+        Occupancy room = occupancy(sealed);
+        Snapshot snapshot = volume.step(room, NO_EROSION, initial, List.of());
+        for (int i = 0; i < 60; i++) snapshot = volume.step(room, NO_EROSION, List.of(), List.of());
+        for (int y = 4; y <= 7; y++) assertEquals(255, density(snapshot, 7, y, 7));
+
+        for (int i = 0; i < 400; i++) snapshot = volume.step(room, Erosion.CLEAR, List.of(), List.of());
+        assertNull(snapshot);
+    }
+
+    @Test
+    public void aSteadyEmitterFillsTheCeilingBeforeTheFloor() {
+        BitSet sealed = new BitSet();
+        sealed.set(0, SECTION * SECTION * SECTION);
+        for (int y = 4; y <= 10; y++) {
+            for (int z = 7; z <= 8; z++) {
+                for (int x = 7; x <= 8; x++) sealed.clear(sectionIndex(x, y, z));
+            }
+        }
+        Occupancy room = occupancy(sealed);
+        VaporVolume volume = new VaporVolume();
+        var source = new Source(new Position(7, 4, 7), 0.32f, 0);
+        Snapshot snapshot = null;
+        for (int i = 0; i < 40; i++) snapshot = volume.step(room, NO_EROSION, List.of(), List.of(source));
+        assertTrue(density(snapshot, 8, 10, 8) > 220);
+        assertTrue(density(snapshot, 8, 4, 8) < 80);
+
+        for (int i = 0; i < 120; i++) snapshot = volume.step(room, NO_EROSION, List.of(), List.of(source));
+        assertEquals(255, density(snapshot, 8, 10, 8));
+        assertTrue(density(snapshot, 8, 4, 8) > 150);
     }
 
     @Test
@@ -54,11 +123,46 @@ public class VaporVolumeTest {
         sealed.clear(sectionIndex(7, 5, 7));
         Occupancy wall = occupancy(sealed);
         VaporVolume volume = new VaporVolume();
-        Snapshot snapshot = volume.step(wall, List.of(PULSE), List.of());
+        Snapshot snapshot = volume.step(wall, Erosion.CLEAR, List.of(PULSE), List.of());
         assertTrue(density(snapshot, 7, 5, 7) < 40);
-        for (int i = 1; i < 20; i++) snapshot = volume.step(wall, List.of(), List.of(EMITTER));
+        for (int i = 1; i < 20; i++) snapshot = volume.step(wall, Erosion.CLEAR, List.of(), List.of(EMITTER));
         assertTrue(density(snapshot, 7, 5, 7) > 225);
-        for (int i = 0; i < 500; i++) snapshot = volume.step(wall, List.of(), List.of());
+        for (int i = 0; i < 500; i++) snapshot = volume.step(wall, Erosion.CLEAR, List.of(), List.of());
+        assertNull(snapshot);
+    }
+
+    @Test
+    public void lingeringControlsErosionTimeAndClampsAtNoErosion() {
+        float clear = Erosion.retentionFor(0.0f);
+        float rain = Erosion.retentionFor(0.5f);
+        assertEquals(clear, rain * rain, 1e-7f);
+        assertEquals(clear, Erosion.retentionFor(-1.0f), 0.0f);
+        assertEquals(1.0f, Erosion.retentionFor(1.0f), 0.0f);
+        assertEquals(1.0f, Erosion.retentionFor(2.0f), 0.0f);
+    }
+
+    @Test
+    public void vaporOutlastsClearWeatherInAnEnclosedFoggyCell() {
+        BitSet sealed = new BitSet();
+        sealed.set(0, SECTION * SECTION * SECTION);
+        sealed.clear(sectionIndex(7, 5, 7));
+        sealed.clear(sectionIndex(10, 5, 7));
+        Occupancy room = occupancy(sealed);
+        Erosion fog = Erosion.sample((x, y, z) -> x >= 8 ? 0.5f : 0.0f);
+        VaporVolume volume = new VaporVolume();
+        Source foggy = new Source(new Position(10, 5, 7), 1.0f, 0);
+        Snapshot snapshot = volume.step(room, fog, List.of(PULSE, foggy), List.of());
+        for (int i = 0; i < 80; i++) snapshot = volume.step(room, fog, List.of(), List.of());
+        assertTrue(density(snapshot, 10, 5, 7) > density(snapshot, 7, 5, 7) * 2);
+
+        Erosion saturated = Erosion.sample((x, y, z) -> 1.0f);
+        for (int i = 0; i < 400; i++) snapshot = volume.step(room, saturated, List.of(), List.of());
+        int held = density(snapshot, 10, 5, 7);
+        assertTrue(held > 0);
+        for (int i = 0; i < 400; i++) snapshot = volume.step(room, saturated, List.of(), List.of());
+        assertEquals(held, density(snapshot, 10, 5, 7));
+
+        for (int i = 0; i < 400; i++) snapshot = volume.step(room, Erosion.CLEAR, List.of(), List.of());
         assertNull(snapshot);
     }
 
@@ -69,7 +173,7 @@ public class VaporVolumeTest {
             for (int y = 0; y < SECTION; y++) blocked.set(sectionIndex(8, y, z));
         }
         VaporVolume volume = new VaporVolume();
-        Snapshot snapshot = volume.step(occupancy(blocked), List.of(new Source(SOURCE, 1.0f, 5)), List.of());
+        Snapshot snapshot = volume.step(occupancy(blocked), Erosion.CLEAR, List.of(new Source(SOURCE, 1.0f, 5)), List.of());
         assertTrue(density(snapshot, 7, 5, 7) > density(snapshot, 5, 5, 7));
         assertTrue(density(snapshot, 5, 5, 7) > density(snapshot, 2, 5, 7));
         assertEquals(0, density(snapshot, 9, 5, 7));
@@ -81,14 +185,14 @@ public class VaporVolumeTest {
         Position emitter = new Position(21, 5, 7);
         SectionOccupancy air = new SectionOccupancy(new BitSet());
         VaporVolume volume = new VaporVolume();
-        Snapshot before = volume.step(new Occupancy(ORIGIN, Map.of(section, air)),
+        Snapshot before = volume.step(new Occupancy(ORIGIN, Map.of(section, air)), Erosion.CLEAR,
                 List.of(new Source(emitter, 1.0f, 0)), List.of());
         assertTrue(density(before, 21, 5, 7) > 0);
         Position shifted = new Position(16, 0, 0);
-        Snapshot after = volume.step(new Occupancy(shifted, Map.of(section, air)), List.of(), List.of());
+        Snapshot after = volume.step(new Occupancy(shifted, Map.of(section, air)), Erosion.CLEAR, List.of(), List.of());
         assertTrue(density(after, 5, 5, 7) > 0);
         SectionOccupancy newWall = air.with(5, 5, 7, true);
-        Snapshot blocked = volume.step(new Occupancy(shifted, Map.of(section, newWall)), List.of(), List.of());
+        Snapshot blocked = volume.step(new Occupancy(shifted, Map.of(section, newWall)), Erosion.CLEAR, List.of(), List.of());
         assertEquals(0, density(blocked, 5, 5, 7));
         assertTrue(before.open(index(21, 5, 7)));
         assertEquals(new Position(-48, -32, -32), Position.originAround(-1, 0, 0));

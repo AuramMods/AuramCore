@@ -5,6 +5,21 @@ lifetimes and sends source updates to nearby clients. Each client transports
 the density upward and outward through its loaded terrain and lets it fade.
 Use an open cell for the emission point, such as the air above a furnace.
 
+AuramBliss uses local fog to slow erosion. Clear air uses the original decay
+rate. Full rain at Auram's default fog setting gives a lingering value of
+0.5 in areas with precipitation, including indoors. A value of 0.5 doubles
+the decay time, and 1.0 stops erosion while transport continues. The
+simulation samples Bliss's fog settings, time-of-day density, rain, and
+dimensional haze in world space. Lighting and camera exposure never affect
+the emission rate.
+
+Each cell holds up to 1.0 density. A transfer that meets a full cell leaves
+the excess in its source cell. Continued emission can therefore fill the air
+under a ceiling and build downward as the upper cells fill.
+Full collision cubes and fluid-filled cells block transport. Partial collision
+shapes, including doors, trapdoors, levers, and ladders, have the same capacity
+and transfer rates as air.
+
 ## Typed API
 
 Call on the logical server thread. Density is normalized from 0 to 1. Zero is
