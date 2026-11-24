@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 public final class DhInternalBenchSmoke {
     private static MinecraftServer active;
     private static long started;
+    private static long startedMillis;
     private static long tickStarted;
     private static final List<String> ticks = new ArrayList<>();
 
@@ -25,7 +26,9 @@ public final class DhInternalBenchSmoke {
     public static void start(MinecraftServer server) {
         server.execute(() -> {
             active = server;
+            AquiferReuseProbe.beginColdRun();
             started = System.nanoTime();
+            startedMillis = System.currentTimeMillis();
             LogUtils.getLogger().info("Auram DH benchmark start");
         });
     }
@@ -45,7 +48,11 @@ public final class DhInternalBenchSmoke {
     public static CompletableFuture<Void> finish(MinecraftServer server) {
         return server.submit(() -> {
             active = null;
+            long finishedMillis = System.currentTimeMillis();
             try {
+                AquiferReuseProbe.write(Path.of("worldgen-stage-cpu.csv"));
+                Files.writeString(Path.of("worldgen-cold-window.csv"), "start_epoch_ms,end_epoch_ms\n"
+                        + startedMillis + "," + finishedMillis + "\n");
                 var lines = new ArrayList<String>(ticks.size() + 1);
                 lines.add("elapsed_ns,tick_ns");
                 lines.addAll(ticks);
