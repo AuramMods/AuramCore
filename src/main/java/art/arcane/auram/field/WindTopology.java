@@ -1,5 +1,6 @@
 package art.arcane.auram.field;
 
+import java.nio.IntBuffer;
 import java.util.Arrays;
 
 import static art.arcane.auram.field.VoxelGrid.BLOCKS;
@@ -91,12 +92,12 @@ public final class WindTopology {
         return nodes[node];
     }
 
-    public int[] descriptors() {
-        return nodes.clone();
+    public void writeDescriptors(IntBuffer target) {
+        target.put(nodes);
     }
 
-    public int[] labels() {
-        return labels.clone();
+    public void writeLabels(IntBuffer target) {
+        target.put(labels);
     }
 
     public static int adjacent(int node, int face, int slot) {

@@ -104,9 +104,7 @@ final class VaporVolume {
     }
 
     private final float[] windVector = new float[3];
-    private final int[] pulseQueue = new int[CELLS];
-    private final int[] pulseVisits = new int[CELLS];
-    private int pulseId;
+    private final VaporPulse pulse = new VaporPulse();
     private VoxelOccupancy occupancy;
     private boolean[] open = new boolean[CELLS];
     private float[] density = new float[CELLS];
@@ -196,51 +194,11 @@ final class VaporVolume {
     }
 
     private void inject(Source source) {
-        Position origin = occupancy.origin();
-        int x = source.position.x() - origin.x();
-        int y = source.position.y() - origin.y();
-        int z = source.position.z() - origin.z();
-        if (source.density == 0.0f || !inside(x, y, z) || !open[index(x, y, z)]) return;
-        if (source.radius == 0) {
-            add(x, y, z, source.density);
-            return;
-        }
-
-        // Visit only cells connected to the pulse center within its radius.
-        if (++pulseId == 0) {
-            Arrays.fill(pulseVisits, 0);
-            pulseId = 1;
-        }
-        int center = index(x, y, z);
-        int tail = visit(center, 0);
-        int radiusSquared = source.radius * source.radius;
-        for (int head = 0; head < tail; head++) {
-            int offset = pulseQueue[head];
-            int px = offset % SIDE;
-            int py = offset / SIDE % SIDE;
-            int pz = offset / PLANE;
-            int dx = px - x, dy = py - y, dz = pz - z;
-            int distanceSquared = dx * dx + dy * dy + dz * dz;
-            float fade = 1.0f - (float) Math.sqrt(distanceSquared) / (source.radius + 1);
-            add(px, py, pz, source.density * fade * fade);
-            if (px > 0 && distanceSquared - 2 * dx + 1 <= radiusSquared) tail = visit(offset - 1, tail);
-            if (px + 1 < SIDE && distanceSquared + 2 * dx + 1 <= radiusSquared) tail = visit(offset + 1, tail);
-            if (py > 0 && distanceSquared - 2 * dy + 1 <= radiusSquared) tail = visit(offset - SIDE, tail);
-            if (py + 1 < SIDE && distanceSquared + 2 * dy + 1 <= radiusSquared) tail = visit(offset + SIDE, tail);
-            if (pz > 0 && distanceSquared - 2 * dz + 1 <= radiusSquared) tail = visit(offset - PLANE, tail);
-            if (pz + 1 < SIDE && distanceSquared + 2 * dz + 1 <= radiusSquared) tail = visit(offset + PLANE, tail);
-        }
+        pulse.visit(source, occupancy.origin(), open, this::add);
     }
 
-    private int visit(int offset, int tail) {
-        if (!open[offset] || pulseVisits[offset] == pulseId) return tail;
-        pulseVisits[offset] = pulseId;
-        pulseQueue[tail] = offset;
-        return tail + 1;
-    }
-
-    private void add(int x, int y, int z, float amount) {
-        int index = index(x, y, z);
+    private void add(int index, float amount) {
+        int x = index % SIDE, y = index / SIDE % SIDE, z = index / PLANE;
         density[index] = Math.min(MAX_DENSITY, density[index] + amount);
         active = active.include(x, y, z);
     }

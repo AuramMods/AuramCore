@@ -3,6 +3,9 @@ package art.arcane.auram.vapor.client;
 import art.arcane.auram.field.FieldFrames;
 import art.arcane.auram.field.FieldTicker;
 import art.arcane.auram.field.VoxelGrid.Bounds;
+import art.arcane.auram.field.VoxelGrid.Position;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.logging.LogUtils;
 import net.irisshaders.iris.gl.uniform.UniformHolder;
 import net.irisshaders.iris.uniforms.CameraUniforms;
 import org.joml.Vector3f;
@@ -31,6 +34,7 @@ public final class VaporTexture {
     private static final Vector3f maximum = new Vector3f();
     private static double blend;
     private static boolean active;
+    private static VaporCompute compute;
 
     private VaporTexture() {
     }
@@ -59,7 +63,54 @@ public final class VaporTexture {
         return texture;
     }
 
+    static boolean computeActive() {
+        return compute != null && compute.hasVapor();
+    }
+
+    static void releaseWorld() {
+        if (!RenderSystem.isOnRenderThread()) {
+            RenderSystem.recordRenderCall(VaporTexture::releaseWorld);
+            return;
+        }
+        if (compute != null) {
+            compute.close();
+            compute = null;
+        }
+        uploaded = FieldFrames.empty();
+        bounds = Bounds.EMPTY;
+        active = false;
+    }
+
+    static void pumpCompute() {
+        var worker = VaporClient.worker();
+        if (worker == null || !worker.usesCompute() || !RenderSystem.isOnRenderThread()) return;
+        for (int i = 0; i < 2; i++) {
+            var input = worker.takeCompute();
+            if (input == null) return;
+            try {
+                if (compute == null) {
+                    if (input.pulses().isEmpty() && input.emitters().isEmpty()
+                            && input.gusts().isEmpty() && input.windEmitters().isEmpty()) continue;
+                    compute = new VaporCompute();
+                }
+                compute.step(input, texture());
+            } catch (RuntimeException failure) {
+                LogUtils.getLogger().warn("OpenGL voxel field update failed. Switching to the CPU solver.", failure);
+                worker.fallBack(input);
+                releaseWorld();
+                return;
+            }
+        }
+    }
+
     public static void prepareFrame() {
+        pumpCompute();
+        var worker = VaporClient.worker();
+        if (worker != null && worker.usesCompute()) {
+            active = computeActive();
+            if (active) updateUniforms(compute.origin(), compute.bounds(), compute.publishedAt());
+            return;
+        }
         FieldFrames<VaporVolume.Snapshot> frames = VaporClient.frames();
         var current = frames.current();
         var previous = frames.previous();
@@ -75,11 +126,15 @@ public final class VaporTexture {
             bounds = next;
         }
 
+        updateUniforms(reference.origin, bounds, frames.publishedAt());
+    }
+
+    private static void updateUniforms(Position reference, Bounds region, long publishedAt) {
         var camera = CameraUniforms.getUnshiftedCameraPosition();
-        origin.set(reference.origin.x() - camera.x, reference.origin.y() - camera.y, reference.origin.z() - camera.z);
-        minimum.set(origin).add(bounds.minX(), bounds.minY(), bounds.minZ());
-        maximum.set(origin).add(bounds.maxX(), bounds.maxY(), bounds.maxZ());
-        blend = Math.max(0.0, Math.min(1.0, (System.nanoTime() - frames.publishedAt()) / TICK_NANOS));
+        origin.set(reference.x() - camera.x, reference.y() - camera.y, reference.z() - camera.z);
+        minimum.set(origin).add(region.minX(), region.minY(), region.minZ());
+        maximum.set(origin).add(region.maxX(), region.maxY(), region.maxZ());
+        blend = Math.max(0.0, Math.min(1.0, (System.nanoTime() - publishedAt) / TICK_NANOS));
     }
 
     private static void upload(Bounds region, VaporVolume.Snapshot previous,

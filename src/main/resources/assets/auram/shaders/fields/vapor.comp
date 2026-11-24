@@ -1,0 +1,174 @@
+#version 430 core
+
+layout(local_size_x = 4, local_size_y = 4, local_size_z = 4) in;
+
+layout(std430, binding = 0) readonly buffer Labels { int labels[]; };
+layout(std430, binding = 1) readonly buffer Wind { vec4 wind[]; };
+layout(std430, binding = 2) readonly buffer Current { vec2 currentVapor[]; };
+layout(std430, binding = 3) writeonly buffer Next { vec2 nextVapor[]; };
+
+struct Proposal {
+    vec4 positive; // Density after erosion, then the three positive offers.
+    vec4 negative; // Display density, then the three negative offers.
+};
+
+layout(std430, binding = 4) buffer Proposals { Proposal proposals[]; };
+layout(std430, binding = 5) buffer Capacity { float capacity[]; };
+layout(std430, binding = 6) readonly buffer Inputs { float retention[512]; uvec2 additions[]; };
+layout(std430, binding = 7) buffer Telemetry { int minimum[3]; int maximum[3]; int outgoing; int incoming; };
+layout(rgba8, binding = 0) writeonly uniform image3D volume;
+
+uniform int phase;
+uniform int additionCount;
+uniform bool hasWind;
+uniform ivec3 shift;
+uniform ivec3 regionMin;
+uniform ivec3 regionMax;
+uniform ivec3 previousMin;
+uniform ivec3 previousMax;
+uniform int outletInside;
+uniform int outletOutside;
+
+const float MIN_DENSITY = 0.001;
+const float MIN_WIND = 0.004;
+const vec3 POSITIVE = vec3(0.09, 0.36, 0.09);
+const vec3 NEGATIVE = vec3(0.09, 0.025, 0.09);
+const float TRANSPORT_RATE = 0.745;
+const ivec3 DIRECTIONS[3] = ivec3[3](ivec3(1, 0, 0), ivec3(0, 1, 0), ivec3(0, 0, 1));
+shared uint groupVisible;
+
+bool inside(ivec3 pos) {
+    return all(greaterThanEqual(pos, ivec3(0))) && all(lessThan(pos, ivec3(64)));
+}
+
+bool inRegion(ivec3 pos, ivec3 low, ivec3 high) {
+    return all(greaterThanEqual(pos, low)) && all(lessThan(pos, high));
+}
+
+int indexOf(ivec3 pos) {
+    return pos.x + 64 * (pos.y + 64 * pos.z);
+}
+
+int nodeAt(ivec3 pos) {
+    return inside(pos) ? labels[indexOf(pos)] : -1;
+}
+
+vec3 sampleWind(ivec3 pos, int center) {
+    vec3 base = wind[center].xyz;
+    vec3 nearby = vec3(0);
+    for (int axis = 0; axis < 3; ++axis) {
+        int sign = ((pos[axis] & 1) == 0) ? -1 : 1;
+        int neighbor = nodeAt(pos + sign * DIRECTIONS[axis]);
+        if (neighbor >= 0) nearby += wind[neighbor].xyz - base;
+    }
+    return base + 0.25 * nearby;
+}
+
+void propose(ivec3 pos, int index) {
+    vec2 previous = vec2(0);
+    if (labels[index] >= 0 && inRegion(pos + shift, previousMin, previousMax)) previous = currentVapor[indexOf(pos + shift)];
+    ivec3 weather = pos >> 3;
+    float amount = previous.x * retention[weather.x + 8 * (weather.y + 8 * weather.z)];
+    if (amount < MIN_DENSITY) amount = 0.0;
+
+    vec3 directed = vec3(0);
+    float base = amount;
+    if (hasWind && amount > 0.0) {
+        vec3 vector = sampleWind(pos, labels[index]);
+        float speed = length(vector);
+        if (speed >= MIN_WIND) {
+            float bias = min(0.98, 5.0 * speed);
+            float total = dot(abs(vector), vec3(1.0));
+            directed = vector * (amount * bias * (TRANSPORT_RATE + 0.24 * bias) / total);
+            base *= 1.0 - bias;
+        }
+    }
+    proposals[index].positive = vec4(amount, base * POSITIVE + max(vec3(0), directed));
+    proposals[index].negative = vec4(previous.y, base * NEGATIVE + max(vec3(0), -directed));
+}
+
+float offeredInto(ivec3 pos) {
+    float total = 0;
+    for (int axis = 0; axis < 3; ++axis) {
+        ivec3 lower = pos - DIRECTIONS[axis];
+        ivec3 upper = pos + DIRECTIONS[axis];
+        if (inRegion(lower, regionMin, regionMax)) total += proposals[indexOf(lower)].positive[axis + 1];
+        if (inRegion(upper, regionMin, regionMax)) total += proposals[indexOf(upper)].negative[axis + 1];
+    }
+    return total;
+}
+
+float injection(int index) {
+    int low = 0, high = additionCount - 1;
+    while (low <= high) {
+        int middle = (low + high) / 2;
+        int at = int(additions[middle].x);
+        if (at == index) return uintBitsToFloat(additions[middle].y);
+        if (at < index) low = middle + 1;
+        else high = middle - 1;
+    }
+    return 0.0;
+}
+
+void meter(int from, int to, float amount) {
+    if (from == outletInside && to == outletOutside) atomicAdd(outgoing, int(round(amount * 16777216.0)));
+    if (from == outletOutside && to == outletInside) atomicAdd(incoming, int(round(amount * 16777216.0)));
+}
+
+void apply(ivec3 pos, int index) {
+    if (gl_LocalInvocationIndex == 0u) groupVisible = 0u;
+    barrier();
+
+    int node = labels[index];
+    if (node < 0) {
+        nextVapor[index] = vec2(0);
+        imageStore(volume, pos, vec4(0));
+    } else {
+        Proposal proposed = proposals[index];
+        float amount = proposed.positive.x;
+        float accepted = capacity[index];
+
+        for (int axis = 0; axis < 3; ++axis) {
+            ivec3 lower = pos - DIRECTIONS[axis];
+            ivec3 upper = pos + DIRECTIONS[axis];
+            if (inRegion(lower, regionMin, regionMax)) {
+                int neighbor = indexOf(lower);
+                float outflow = proposed.negative[axis + 1] * capacity[neighbor];
+                amount += proposals[neighbor].positive[axis + 1] * accepted - outflow;
+                if (outletInside >= 0) meter(index, neighbor, outflow);
+            }
+            if (inRegion(upper, regionMin, regionMax)) {
+                int neighbor = indexOf(upper);
+                float outflow = proposed.positive[axis + 1] * capacity[neighbor];
+                amount += proposals[neighbor].negative[axis + 1] * accepted - outflow;
+                if (outletInside >= 0) meter(index, neighbor, outflow);
+            }
+        }
+
+        amount = clamp(amount + injection(index), 0.0, 1.0);
+        float previous = proposed.negative.x;
+        float shown = previous + (amount - previous) * (amount > previous ? 0.13 : 0.25);
+        if (shown < MIN_DENSITY) shown = 0.0;
+        nextVapor[index] = vec2(amount, shown);
+        imageStore(volume, pos, vec4(previous, shown, 1, 0));
+        if (shown > 0 || previous > 0 || amount >= MIN_DENSITY) atomicOr(groupVisible, 1u);
+    }
+    barrier();
+    if (gl_LocalInvocationIndex == 0u && groupVisible != 0u) {
+        ivec3 base = regionMin + ivec3(gl_WorkGroupID) * 4;
+        for (int axis = 0; axis < 3; ++axis) {
+            atomicMin(minimum[axis], base[axis]);
+            atomicMax(maximum[axis], base[axis] + 4);
+        }
+    }
+}
+
+void main() {
+    ivec3 pos = regionMin + ivec3(gl_GlobalInvocationID);
+    int index = indexOf(pos);
+    if (phase == 0) propose(pos, index);
+    else if (phase == 1) {
+        float inFlow = labels[index] < 0 ? 0.0 : offeredInto(pos);
+        capacity[index] = inFlow > 0.0 ? min(1.0, (1.0 - proposals[index].positive.x) / inFlow) : 0.0;
+    } else apply(pos, index);
+}

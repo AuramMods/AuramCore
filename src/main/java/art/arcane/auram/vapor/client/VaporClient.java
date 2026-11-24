@@ -107,6 +107,11 @@ public final class VaporClient {
         sessionFor(level).emitters = List.copyOf(emitters);
     }
 
+    static VaporWorker worker() {
+        Session current = session;
+        return current == null || current.level != Minecraft.getInstance().level ? null : current.worker;
+    }
+
     static FieldFrames<VaporVolume.Snapshot> frames() {
         Session current = session;
         return current == null || current.level != Minecraft.getInstance().level
@@ -125,6 +130,7 @@ public final class VaporClient {
         if (session != null) {
             session.worker.close();
             session = null;
+            VaporTexture.releaseWorld();
         }
     }
 
@@ -141,7 +147,10 @@ public final class VaporClient {
         BlockPos center = camera.blockPosition();
         VaporAmbient.Sources local = paused || VaporAtmosphere.current() == null
                 ? VaporAmbient.Sources.EMPTY : VaporAmbient.sample(level, center);
-        if (session != null || !local.empty()) sessionFor(level).tick(center, paused, local);
+        if (session != null || !local.empty()) {
+            sessionFor(level).tick(center, paused, local);
+            VaporTexture.pumpCompute();
+        }
     }
 
     @SubscribeEvent
@@ -233,7 +242,7 @@ public final class VaporClient {
                 continuous = new ArrayList<>(emitters);
                 continuous.addAll(local.burning());
             }
-            if (!continuous.isEmpty() || !ready.isEmpty() || worker.frames().current() != null) updateErosion();
+            if (!continuous.isEmpty() || !ready.isEmpty() || worker.frames().current() != null || VaporTexture.computeActive()) updateErosion();
             List<WindField.Source> readyGusts = List.of();
             if (!gusts.isEmpty()) {
                 readyGusts = new ArrayList<>();

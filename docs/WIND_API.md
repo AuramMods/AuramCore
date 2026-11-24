@@ -53,3 +53,36 @@ static void update(ServerLevel level, BlockPos pos, double x, double z, float po
 
 Use operation `gust` for a single impulse. It uses the position, direction, and
 magnitude fields and requires no emitter ID.
+
+## Backends and replay
+
+The renderer uses the 20 Hz OpenGL compute solver when the context supports
+OpenGL 4.3. macOS OpenGL 4.1 and other older contexts use the CPU worker.
+`-Dauram.vapor.forceCpu=true` selects the CPU solver on a compute-capable
+context. Both publish through Bliss's existing `auramVaporVolume` sampler.
+
+Wind uses the same connected-air topology and recurrence in both backends.
+Vapor's GPU passes compute directional offers, then give each destination a
+fraction of its incoming offers based on available capacity. The CPU worker
+can also use capacity freed earlier in its top-down iteration, so saturated
+cells may differ locally. Rejected offers remain at their source in both
+solvers. Compare steady throughput and density distributions between backends
+with the same terrain and sources, allowing for those ordering differences.
+
+For an opt-in, 40-tick diagnostics log, set
+`-Dauram.fields.probe=wx,wy,wz,ix,iy,iz,ox,oy,oz` using integer world
+coordinates. Supply a Wind sample point and the two neighboring cells spanning
+an outlet, inside first. The log reports the local Wind vector and the net
+Vapor transferred across the outlet in density units per tick. Set only
+`-Dauram.fields.probe` to collect timing without an outlet. The CPU number
+measures the worker step. The compute number measures render-thread submission.
+
+The matched clear-weather room test measures net crossings over 200 settled
+ticks. In the OpenGL 4.5 Mesa replay, the side vent moved 0.067416 density per
+tick at 0.30 Wind and the open ceiling moved 0.063983. CPU results were
+0.067404 and 0.063983. The comparison allowed 0.002 maximum component error
+for Wind, 0.012 density per tick for outlet throughput, and 0.08 mean density
+error across active cells. The measured Wind component error was about
+0.00000001 and the mean active-cell density difference was 0.003709 in the
+powered fixture. The largest per-cell difference was 0.251104 near saturated
+transport. The headless run also exercised Wind rebase and gust dispatch.
