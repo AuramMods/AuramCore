@@ -11,6 +11,7 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -74,7 +75,9 @@ public final class VaporClient {
     }
 
     static VaporWorker.Frames frames() {
-        return session == null ? VaporWorker.Frames.EMPTY : session.worker.frames();
+        Session current = session;
+        return current == null || current.level != Minecraft.getInstance().level
+                ? VaporWorker.Frames.EMPTY : current.worker.frames();
     }
 
     private static Session sessionFor(ClientLevel level) {
@@ -102,6 +105,12 @@ public final class VaporClient {
         }
         var camera = client.getCameraEntity();
         if (camera != null) session.tick(camera.blockPosition(), client.isPaused());
+    }
+
+    @SubscribeEvent
+    public static void levelUnloaded(LevelEvent.Unload event) {
+        Session current = session;
+        if (current != null && event.getLevel() == current.level) reset();
     }
 
     @SubscribeEvent

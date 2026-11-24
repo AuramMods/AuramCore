@@ -1,18 +1,17 @@
 package art.arcane.auram.mixin.vapor;
 
 import com.google.common.collect.ImmutableList;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import net.irisshaders.iris.gl.shader.StandardMacros;
 import net.irisshaders.iris.helpers.StringPair;
-import net.irisshaders.iris.shaderpack.IrisDefines;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(value = IrisDefines.class, remap = false)
+@Mixin(value = StandardMacros.class, remap = false)
 abstract class IrisVaporDefinesMixin {
-    @Inject(method = "createIrisReplacements", at = @At("RETURN"), cancellable = true)
-    private static void auram$vaporDefine(CallbackInfoReturnable<ImmutableList<StringPair>> callback) {
-        callback.setReturnValue(ImmutableList.<StringPair>builder().addAll(callback.getReturnValue())
-                .add(new StringPair("AURAM_VAPOR_BACKEND", "")).build());
+    @ModifyReturnValue(method = "createStandardEnvironmentDefines", at = @At("RETURN"))
+    private static ImmutableList<StringPair> auram$vaporDefine(ImmutableList<StringPair> defines) {
+        return ImmutableList.<StringPair>builder().addAll(defines)
+                .add(new StringPair("AURAM_VAPOR_BACKEND", "")).build();
     }
 }
