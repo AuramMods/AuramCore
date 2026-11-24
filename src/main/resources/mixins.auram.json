@@ -156,6 +156,7 @@
     "fastanim.WitchEntityModelMixin",
     "fastanim.WitherEntityModelMixin",
     "fastanim.WolfEntityModelMixin",
+    "minecraft.VaporBlockUpdateMixin",
     "tweak.AnvilSoundInteractionMixin",
     "tweak.AnvilSoundOpenMixin",
     "tweak.AnvilSoundTakeMixin",
