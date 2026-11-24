@@ -32,6 +32,12 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.vapor.")) {
             return "net.irisshaders.iris.api.v0.IrisApi";
         }
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.thaumaturge.") && mixinClassName.endsWith("VaporMixin")) {
+            return "com.leclowndu93150.thaumaturge.content.crucible.BlockEntityCrucible";
+        }
+        if (mixinClassName.equals("art.arcane.auram.mixin.tconstruct.BlissCastingPreviewMixin")) {
+            return "net.irisshaders.iris.uniforms.CapturedRenderingState";
+        }
         if (mixinClassName.startsWith("art.arcane.auram.mixin.tconstruct.")) {
             return "slimeknights.tconstruct.smeltery.block.entity.HeaterBlockEntity";
         }

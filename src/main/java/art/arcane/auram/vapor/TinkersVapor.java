@@ -18,6 +18,7 @@ public final class TinkersVapor {
     private static final float HEAT_RATE = 0.12f;
     private static final float CONTROLLER_RATE = 0.08f;
     private static final float CASTING_RATE = 0.02f;
+    private static final float CHANNEL_RATE = 0.005f;
     private static final int BOILING_WATER_KELVIN = 373;
 
     private TinkersVapor() {}
@@ -50,12 +51,12 @@ public final class TinkersVapor {
         emit(level, FAUCET, pos, pos, CASTING_RATE);
     }
 
-    public static void casting(ServerLevel level, BlockPos pos) {
-        emit(level, CASTING, pos, pos, CASTING_RATE);
+    public static void casting(ServerLevel level, BlockPos pos, float heat) {
+        if (heat > 0.0f) emit(level, CASTING, pos, pos, CASTING_RATE * heat);
     }
 
     public static void channel(ServerLevel level, BlockPos pos) {
-        emit(level, CHANNEL, pos, pos, CASTING_RATE);
+        emit(level, CHANNEL, pos, pos, CHANNEL_RATE);
     }
 
     private static void emit(ServerLevel level, ResourceLocation id, BlockPos anchor, BlockPos outlet, float rate) {

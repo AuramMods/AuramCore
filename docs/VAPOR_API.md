@@ -29,6 +29,8 @@ and transfer rates as air.
 | Machine accepting energy through an observed RF route or shared Ender IO, Thermal, or Titanium energy storage | 0.05 per tick at half the logarithmic scale (about 10,000 RF/t), rising to 0.15 at 100,000,000 RF/t |
 | Fire | 0.32 per tick |
 | Lit campfire or soul campfire | 0.65 per tick |
+| Lava cauldron | 0.07 per tick above the cauldron |
+| Exposed lava | 0.10 per sampled puff in the air above it |
 | Exposed magma block | 0.25 per sampled puff in the air above it |
 | Regular or soul torch, including wall torches | 0.03 per sampled puff |
 | Explosion | Density and spread scale with blast radius. Standard TNT produces 1.0 at the center with a 7-block falloff. Larger blasts spread up to 12 blocks. |
@@ -37,14 +39,20 @@ and transfer rates as air.
 | Tinkers' seared heater | 0.12 per tick from its front while burning fuel |
 | Tinkers' smeltery or foundry | 0.12 per tick per open interior floor cell while the tank holds fluid |
 | Tinkers' drain faucet | 0.02 per tick while it transfers fluid |
-| Tinkers' casting table, basin, or channel | 0.02 per tick while casting fills or cools, or while the channel holds fluid |
+| Tinkers' casting table or basin | 0.02 per tick while filling, tapering to zero during cooling |
+| Tinkers' casting channel | 0.005 per tick while the channel holds fluid |
 | Tinkers' melter or alloyer | 0.08 per tick above it while fueled or holding hot fluid |
+| Thaumaturge Nitor, any color | 0.05 per tick |
+| Thaumaturge boiling crucible | 0.05 per tick plus a puff of 0.03 per essentia unit in each accepted item, capped at 1.0 per puff |
+| Thaumaturge active infusion matrix | 0.05 per tick at stability 0 or higher, rising linearly to 1.0 at −100 stability |
+| Thaumaturge lit essentia smelters and advanced alchemical furnace, operating infernal furnace, thaumatorium, essentia crystalizer, centrifuge, focal manipulator, golem press, arcane bore, flux scrubber, flux condenser, and void siphon | 0.10 per operating tick |
 | Ender IO SAG Mill, Alloy Smelter, Slice'N'Splice, Painting Machine, Soul Engine, Farming Station, Vat, Fluid Drain, Vacuum Chest, and XP Vacuum | 0.08 per operating tick |
 | Ender IO Crafter, Impulse Hopper, and Niard | One 0.08 puff per successful operation |
 
 The client tries 32 random block positions per tick within eight blocks
-horizontally and four blocks vertically of the camera. It also samples nearby
-burning entities from their synced fire state.
+horizontally and four blocks vertically of the camera. It uses another 128
+candidate positions to check exposed lava and torches out to a 16-block radius.
+It also samples nearby burning entities from their synced fire state.
 
 RF intake uses a four-tick average of committed transfers at the receiving
 block. Add additional transport blocks to `auram:rf_transport` to exclude

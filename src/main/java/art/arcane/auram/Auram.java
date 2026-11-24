@@ -3,6 +3,7 @@ package art.arcane.auram;
 import art.arcane.auram.commands.AuramCommands;
 import art.arcane.auram.enchantment.ChiselEnchantment;
 import art.arcane.auram.item.*;
+import art.arcane.auram.light.LightNetwork;
 import art.arcane.auram.loot.RockLootModifier;
 import art.arcane.auram.map.SurfaceMapNetwork;
 import art.arcane.auram.tweak.LogRetention;
@@ -99,6 +100,7 @@ public class Auram {
         SurfaceMapNetwork.register();
         VaporNetwork.register();
         WindNetwork.register();
+        LightNetwork.register();
         RfNetwork.register();
         MinecraftForge.EVENT_BUS.register(new AuramCommands());
     } 

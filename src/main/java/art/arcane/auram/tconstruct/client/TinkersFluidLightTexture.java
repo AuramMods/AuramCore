@@ -4,6 +4,8 @@ import art.arcane.auram.field.VoxelGrid;
 import art.arcane.auram.field.VoxelGrid.Bounds;
 import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.client.VoxelTextureUpload;
+import art.arcane.auram.light.LightClient;
+import art.arcane.auram.vapor.client.VanillaEntityEffects;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.api.v0.IrisApi;
@@ -11,6 +13,7 @@ import net.irisshaders.iris.gl.uniform.UniformHolder;
 import net.irisshaders.iris.uniforms.CameraUniforms;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraftforge.fml.ModList;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.system.MemoryUtil;
@@ -31,6 +34,7 @@ public final class TinkersFluidLightTexture {
     private static final Vector3f origin = new Vector3f();
     private static final Vector3f minimum = new Vector3f();
     private static final Vector3f maximum = new Vector3f();
+    private static final Int2IntOpenHashMap ambientLights = new Int2IntOpenHashMap();
     private static Int2IntOpenHashMap uploaded = new Int2IntOpenHashMap();
     private static Int2IntOpenHashMap scan = new Int2IntOpenHashMap();
     private static ClientLevel level;
@@ -39,6 +43,7 @@ public final class TinkersFluidLightTexture {
     private static int texture;
     private static ByteBuffer staging;
     private static boolean active;
+    private static boolean hadApiLights;
 
     private TinkersFluidLightTexture() {}
 
@@ -85,12 +90,22 @@ public final class TinkersFluidLightTexture {
         Position nextBase = VoxelGrid.originAround((int) Math.floor(camera.x), (int) Math.floor(camera.y),
                 (int) Math.floor(camera.z));
         long now = current.getGameTime();
-        if (level != current || !nextBase.equals(base) || now < scannedAt || now - scannedAt >= SCAN_INTERVAL) {
+        boolean scanAmbient = level != current || !nextBase.equals(base) || now < scannedAt
+                || now - scannedAt >= SCAN_INTERVAL;
+        if (scanAmbient) {
             level = current;
             base = nextBase;
             scannedAt = now;
+            ambientLights.clear();
+            if (ModList.get().isLoaded("tconstruct")) TinkersFluidLights.collect(current, base, ambientLights);
+            VanillaEntityEffects.collectLights(current, base, ambientLights);
+        }
+
+        boolean apiLights = LightClient.hasSources(current);
+        if (scanAmbient || apiLights || hadApiLights) {
             scan.clear();
-            TinkersFluidLights.collect(current, base, scan);
+            scan.putAll(ambientLights);
+            if (apiLights) LightClient.collect(current, base, scan);
             if (!scan.equals(uploaded)) {
                 upload(scan);
                 var previous = uploaded;
@@ -98,6 +113,7 @@ public final class TinkersFluidLightTexture {
                 scan = previous;
             }
         }
+        hadApiLights = apiLights;
         active = !uploaded.isEmpty();
         if (active) {
             origin.set(base.x() - camera.x, base.y() - camera.y, base.z() - camera.z);

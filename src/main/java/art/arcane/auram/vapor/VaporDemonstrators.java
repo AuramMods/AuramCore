@@ -19,11 +19,23 @@ import net.minecraftforge.fml.common.Mod;
 public final class VaporDemonstrators {
     private static final ResourceLocation FURNACE = ResourceLocation.fromNamespaceAndPath(Auram.MODID, "furnace");
     private static final ResourceLocation FIRE = ResourceLocation.fromNamespaceAndPath(Auram.MODID, "fire");
+    private static final ResourceLocation LAVA_CAULDRON = ResourceLocation.fromNamespaceAndPath(Auram.MODID, "lava_cauldron");
+    private static final ResourceLocation NITOR = ResourceLocation.fromNamespaceAndPath(Auram.MODID, "thaumaturge/nitor");
     private static final float FURNACE_RATE = 0.14f;
-    private static final float FIRE_RATE = 0.32f;
-    private static final float CAMPFIRE_RATE = 0.65f;
+    private static final BlockEmitter FIRE_EMITTER = new BlockEmitter(FIRE, 0.32f, false);
+    private static final BlockEmitter CAMPFIRE_EMITTER = new BlockEmitter(FIRE, 0.65f, false);
+    private static final BlockEmitter LAVA_CAULDRON_EMITTER = new BlockEmitter(LAVA_CAULDRON, 0.07f, true);
+    private static final BlockEmitter NITOR_EMITTER = new BlockEmitter(NITOR, 0.05f, false);
     private static final float TNT_BLAST_RADIUS = 4.0f;
     private static final int TNT_VAPOR_RADIUS = 7;
+
+    private record BlockEmitter(ResourceLocation id, float rate, boolean ventAbove) {
+        void start(ServerLevel level, BlockPos pos) {
+            BlockPos anchor = pos.immutable();
+            BlockPos vent = ventAbove ? anchor.above() : anchor;
+            VaporSources.set(level, anchor, new VaporNetwork.Emitter(id, vent, rate));
+        }
+    }
 
     private VaporDemonstrators() {
     }
@@ -49,42 +61,49 @@ public final class VaporDemonstrators {
     }
 
     public static void blockChanged(ServerLevel level, BlockPos pos, BlockState before, BlockState after) {
-        float rate = fireRate(after);
-        if (rate != fireRate(before)) {
-            Vapor.setEmitter(level, FIRE, pos, rate);
+        BlockEmitter previous = blockEmitter(before);
+        BlockEmitter current = blockEmitter(after);
+        if (previous != current) {
+            if (previous != null && (current == null || !previous.id().equals(current.id()))) {
+                VaporSources.stop(level, previous.id(), pos);
+            }
+            if (current != null) current.start(level, pos);
         }
         if (before.getBlock() instanceof AbstractFurnaceBlock && before.getBlock() != after.getBlock()) {
             Vapor.stopEmitter(level, FURNACE, pos);
         }
     }
 
-    private static float fireRate(BlockState state) {
-        if (state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE)) return FIRE_RATE;
-        return state.getBlock() instanceof CampfireBlock && state.getValue(CampfireBlock.LIT) ? CAMPFIRE_RATE : 0.0f;
+    private static BlockEmitter blockEmitter(BlockState state) {
+        if (state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE)) return FIRE_EMITTER;
+        if (state.getBlock() instanceof CampfireBlock && state.getValue(CampfireBlock.LIT)) return CAMPFIRE_EMITTER;
+        if (state.is(Blocks.LAVA_CAULDRON)) return LAVA_CAULDRON_EMITTER;
+        ResourceLocation block = state.getBlock().builtInRegistryHolder().key().location();
+        if (block.getNamespace().equals("thaumaturge") && block.getPath().startsWith("nitor_")) return NITOR_EMITTER;
+        return null;
     }
 
     @SubscribeEvent
-    public static void loadFires(ChunkEvent.Load event) {
+    public static void loadEmitters(ChunkEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) return;
-        if (level.getServer().isSameThread()) readFires(level, chunk);
-        else level.getServer().execute(() -> readFires(level, chunk));
+        if (level.getServer().isSameThread()) readEmitters(level, chunk);
+        else level.getServer().execute(() -> readEmitters(level, chunk));
     }
 
-    private static void readFires(ServerLevel level, LevelChunk chunk) {
+    private static void readEmitters(ServerLevel level, LevelChunk chunk) {
         // Read the provided sections directly. Looking up neighboring chunks in a load event can block promotion.
         var pos = chunk.getPos();
         var sections = chunk.getSections();
         for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
             var section = sections[sectionIndex];
-            if (!section.maybeHas(state -> fireRate(state) > 0.0f)) continue;
+            if (!section.maybeHas(state -> blockEmitter(state) != null)) continue;
             int baseY = (chunk.getMinSection() + sectionIndex) << 4;
             for (int y = 0; y < 16; y++) {
                 for (int z = 0; z < 16; z++) {
                     for (int x = 0; x < 16; x++) {
-                        float rate = fireRate(section.getBlockState(x, y, z));
-                        if (rate > 0.0f) {
-                            Vapor.setEmitter(level, FIRE, new BlockPos(pos.getMinBlockX() + x, baseY + y,
-                                    pos.getMinBlockZ() + z), rate);
+                        BlockEmitter source = blockEmitter(section.getBlockState(x, y, z));
+                        if (source != null) {
+                            source.start(level, new BlockPos(pos.getMinBlockX() + x, baseY + y, pos.getMinBlockZ() + z));
                         }
                     }
                 }
@@ -97,6 +116,8 @@ public final class VaporDemonstrators {
         if (event.getLevel() instanceof ServerLevel level) {
             var pos = event.getChunk().getPos();
             VaporSources.stopInChunk(level, FIRE, pos);
+            VaporSources.stopInChunk(level, LAVA_CAULDRON, pos);
+            VaporSources.stopInChunk(level, NITOR, pos);
             VaporSources.stopInChunk(level, FURNACE, pos);
         }
     }

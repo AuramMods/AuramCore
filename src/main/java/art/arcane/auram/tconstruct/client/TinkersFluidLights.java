@@ -1,6 +1,7 @@
 package art.arcane.auram.tconstruct.client;
 
 import art.arcane.auram.field.VoxelGrid.Position;
+import art.arcane.auram.tconstruct.CastingCooling;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -38,6 +39,7 @@ final class TinkersFluidLights {
     private static final int SIDE = BLOCKS.side();
     // The render model uses a 5 mB inset for each end of the heating structure.
     private static final float FLUID_INSET = 0.005f;
+    private static final float SMELTERY_LIGHT_STRENGTH = 0.25f;
     // Reloading the atlas replaces the sprite objects, so old palette entries can be collected.
     private static final Map<TextureAtlasSprite, Integer> SPRITE_COLORS = new WeakHashMap<>();
 
@@ -80,12 +82,7 @@ final class TinkersFluidLights {
                     } else if (inside && entity instanceof CastingBlockEntity casting && hasFluidModel(casting)) {
                         var tank = casting.getTank();
                         FluidStack fluid = tank.getFluid();
-                        float fill = fill(fluid, tank.getCapacity());
-                        if (fluid.getAmount() == tank.getCapacity() && casting.getCoolingTime() > 0) {
-                            fill *= Math.max(0f, Math.min(1f,
-                                    4f * (1f - (float) casting.getTimer() / casting.getCoolingTime())));
-                        }
-                        put(pos, fluid, fill, base, colors);
+                        put(pos, fluid, fill(fluid, tank.getCapacity()), CastingCooling.remainingHeat(casting), base, colors);
                     } else if (inside && (entity instanceof ITankBlockEntity
                             || entity instanceof GaugeBlockEntity || entity instanceof ProxyTankBlockEntity)) {
                         collectTank(entity, base, colors);
@@ -158,7 +155,7 @@ final class TinkersFluidLights {
                 float filled = Math.min(top, row + 1f) - Math.max(bottom, row);
                 for (int z = z0; z < z1; z++) {
                     for (int x = x0; x < x1; x++) {
-                        put(x, y, z, color, filled, base, colors);
+                        put(x, y, z, color, filled, SMELTERY_LIGHT_STRENGTH, base, colors);
                     }
                 }
             }
@@ -171,18 +168,28 @@ final class TinkersFluidLights {
     }
 
     private static void put(BlockPos pos, FluidStack fluid, float strength, Position base, Int2IntOpenHashMap colors) {
-        if (!fluid.isEmpty() && strength > 0f) {
-            put(pos.getX(), pos.getY(), pos.getZ(), color(fluid), strength, base, colors);
+        put(pos, fluid, strength, 1f, base, colors);
+    }
+
+    private static void put(BlockPos pos, FluidStack fluid, float strength, float lightScale, Position base,
+                            Int2IntOpenHashMap colors) {
+        if (!fluid.isEmpty() && strength > 0f && lightScale > 0f) {
+            put(pos.getX(), pos.getY(), pos.getZ(), color(fluid), strength, lightScale, base, colors);
         }
     }
 
     private static void put(int x, int y, int z, int color, float strength, Position base,
                             Int2IntOpenHashMap colors) {
+        put(x, y, z, color, strength, 1f, base, colors);
+    }
+
+    private static void put(int x, int y, int z, int color, float strength, float lightScale, Position base,
+                            Int2IntOpenHashMap colors) {
         x -= base.x();
         y -= base.y();
         z -= base.z();
         if (strength <= 0f || !BLOCKS.contains(x, y, z)) return;
-        int intensity = Math.round((color >>> 24) * (float) Math.sqrt(strength));
+        int intensity = Math.round((color >>> 24) * (float) Math.sqrt(strength) * lightScale);
         int index = BLOCKS.index(x, y, z);
         int previous = colors.get(index);
         // Layers can share a cell. Prefer the dominant one at this grid's resolution.
