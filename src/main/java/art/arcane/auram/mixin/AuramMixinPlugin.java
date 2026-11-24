@@ -41,6 +41,9 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.tconstruct.")) {
             return "slimeknights.tconstruct.smeltery.block.entity.HeaterBlockEntity";
         }
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.mekanism.Rf")) {
+            return "mekanism.common.content.network.EnergyNetwork";
+        }
         if (mixinClassName.startsWith("art.arcane.auram.mixin.journeymap.")) {
             return "journeymap.client.JourneymapClient";
         }

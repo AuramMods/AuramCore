@@ -20,13 +20,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.IntConsumer;
+import java.util.function.LongConsumer;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID)
 public final class RfFlow {
     private static final int SAMPLE_TICKS = 4;
     private static final int RANGE = 48;
     private static final boolean PROBE = Boolean.getBoolean("auram.rf.probe");
-    private static final IntConsumer DISCARD = amount -> {};
+    private static final LongConsumer DISCARD = amount -> {};
     private static final Map<ServerLevel, LevelFlow> LEVELS = new HashMap<>();
 
     /** Canonical block-to-neighbor edge in the positive X, Y or Z direction. */
@@ -81,6 +82,10 @@ public final class RfFlow {
      * Report the result of committed transfers with the returned consumer.
      */
     public static IntConsumer observeRoute(ServerLevel level, long[] positions) {
+        return observeLongRoute(level, positions)::accept;
+    }
+
+    public static LongConsumer observeLongRoute(ServerLevel level, long[] positions) {
         if (positions.length < 2) return DISCARD;
         var hops = new ArrayList<Hop>(positions.length - 1);
         BlockPos previous = BlockPos.of(positions[0]);
