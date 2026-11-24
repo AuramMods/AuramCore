@@ -5,6 +5,7 @@ import art.arcane.auram.mixin.minecraft.ShiftedNoiseYScaleAccess;
 import net.minecraft.util.CubicSpline;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
+import net.minecraft.world.level.levelgen.NoiseRouter;
 import net.minecraft.world.level.levelgen.synth.BlendedNoise;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 
@@ -27,6 +28,20 @@ public final class PreliminaryDensity {
     public static boolean canShare(DensityFunction function, MethodHandles.Lookup lookup) {
         try {
             return new PreliminaryDensity(lookup).axes(function) != Axes.UNSUPPORTED;
+        } catch (ReflectiveOperationException | LinkageError | SecurityException exception) {
+            return false;
+        }
+    }
+
+    public static boolean canShareClimate(NoiseRouter router, MethodHandles.Lookup lookup) {
+        try {
+            var graph = new PreliminaryDensity(lookup);
+            return graph.axes(router.temperature()) != Axes.UNSUPPORTED
+                    && graph.axes(router.vegetation()) != Axes.UNSUPPORTED
+                    && graph.axes(router.continents()) != Axes.UNSUPPORTED
+                    && graph.axes(router.erosion()) != Axes.UNSUPPORTED
+                    && graph.axes(router.depth()) != Axes.UNSUPPORTED
+                    && graph.axes(router.ridges()) != Axes.UNSUPPORTED;
         } catch (ReflectiveOperationException | LinkageError | SecurityException exception) {
             return false;
         }
