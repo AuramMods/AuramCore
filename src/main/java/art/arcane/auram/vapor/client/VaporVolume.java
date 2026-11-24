@@ -54,6 +54,50 @@ final class VaporVolume {
         }
     }
 
+    static final class Erosion {
+        private static final int SHIFT = 3;
+        private static final int SIDE_SAMPLES = SIDE >> SHIFT;
+        static final Erosion CLEAR = new Erosion(null);
+        private final float[] retention;
+
+        private Erosion(float[] retention) {
+            this.retention = retention;
+        }
+
+        @FunctionalInterface
+        interface Lingering {
+            float at(int x, int y, int z);
+        }
+
+        static Erosion sample(Lingering lingering) {
+            float[] retention = new float[SIDE_SAMPLES * SIDE_SAMPLES * SIDE_SAMPLES];
+            int halfCell = 1 << (SHIFT - 1);
+            for (int z = 0; z < SIDE_SAMPLES; z++) {
+                for (int y = 0; y < SIDE_SAMPLES; y++) {
+                    for (int x = 0; x < SIDE_SAMPLES; x++) {
+                        float value = lingering.at((x << SHIFT) + halfCell, (y << SHIFT) + halfCell, (z << SHIFT) + halfCell);
+                        retention[index(x, y, z)] = retentionFor(value);
+                    }
+                }
+            }
+            return new Erosion(retention);
+        }
+
+        static float retentionFor(float lingering) {
+            float clamped = Math.max(0.0f, Math.min(lingering, 1.0f));
+            // A half-strength erosion rate doubles the original exponential decay time.
+            return (float) Math.pow(RETENTION, 1.0f - clamped);
+        }
+
+        float at(int x, int y, int z) {
+            return retention == null ? RETENTION : retention[index(x >> SHIFT, y >> SHIFT, z >> SHIFT)];
+        }
+
+        private static int index(int x, int y, int z) {
+            return x + SIDE_SAMPLES * (y + SIDE_SAMPLES * z);
+        }
+    }
+
     record Source(Position position, float density, int radius) {
         Source {
             if (!Float.isFinite(density) || density < 0.0f || density > 1.0f || radius < 0 || radius > 12) {
@@ -122,23 +166,23 @@ final class VaporVolume {
     private float[] next = new float[CELLS];
     private Bounds active = Bounds.EMPTY;
 
-    Snapshot step(Occupancy updated, List<Source> pulses, List<Source> emitters) {
+    Snapshot step(Occupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters) {
         if (updated != occupancy) replaceOccupancy(updated);
-        if (!active.empty()) spread();
+        if (!active.empty()) spread(erosion);
         for (Source pulse : pulses) inject(pulse);
         for (Source emitter : emitters) inject(emitter);
         if (active.empty()) return null;
         return capture();
     }
 
-    private void spread() {
+    private void spread(Erosion erosion) {
         Arrays.fill(next, 0.0f);
         Bounds area = active;
         for (int z = area.minZ; z < area.maxZ; z++) {
             for (int y = area.minY; y < area.maxY; y++) {
                 for (int x = area.minX; x < area.maxX; x++) {
                     int index = index(x, y, z);
-                    float amount = density[index] * RETENTION;
+                    float amount = density[index] * erosion.at(x, y, z);
                     if (amount < MIN_DENSITY) continue;
                     float outgoing = 0.0f;
                     if (y + 1 < SIDE) outgoing += transfer(index + SIDE, amount * 0.36f);
