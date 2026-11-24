@@ -22,17 +22,22 @@ Memoizing all binary operands doubled the median time for a warmed 16-column Ove
 
 ## Integrated Distant Horizons
 
-The fixture is a frozen copy of a new full-pack save with seed 104729. It runs Forge 47.4.10 on Java 17 with a fixed 60 FPS cap, shaders off, render and simulation distance 5, and a 64-chunk DH radius. It uses the production `INTERNAL_SERVER` chunk pipeline and DH's native health guard.
+The fixture is a frozen copy of a new full-pack save with seed 104729. It runs Forge 47.4.10 on Java 17 with a fixed 60 FPS cap, shaders off, render and simulation distance 5, and a 64-chunk DH radius. The clone contains Distant Horizons 3.3.3, AuramCore 1.0.33 and Thaumaturge 1.1.4. It uses the production `INTERNAL_SERVER` chunk pipeline and DH's native health guard.
 
 The first 100-second Balanced run used eight workers and reached nine in-flight batches. It completed 15 existing FULL chunks and zero fresh FULL chunks in the measured window. Its tick p95 was 89.54 ms, p99 was 148.15 ms, and longest tick was 7,732.03 ms. A thread dump during the plateau showed all eight DH workers waiting for their futures while Minecraft workers were still filling terrain, aquifers and features.
 
-The Aggressive pair used twelve workers in both runs. Rates use the interval between the first and last ten-second diagnostic reports. Tick percentiles cover the full 145-second measurement.
+The matched Overworld runs use eight workers on Balanced and twelve on Aggressive. Rates use the interval between the first and last ten-second diagnostic reports. Tick percentiles cover the full 145-second measurement.
 
-| Overworld Aggressive | Peak in-flight batches | Fresh FULL/s | LOD source chunks/s | Tick p95 | Tick p99 | Longest tick |
+| Overworld mode | Peak in-flight batches | Fresh FULL/s | LOD source chunks/s | Tick p95 | Tick p99 | Longest tick |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Native capacity | 13 | 3.05 | 2.85 | 25.76 ms | 54.85 ms | 162.84 ms |
-| Two-batch limit | 2 | 1.18 | 1.83 | 21.93 ms | 47.18 ms | 144.07 ms |
+| Balanced, native capacity | 9 | 1.15 | 0.91 | 80.92 ms | 156.23 ms | 345.46 ms |
+| Aggressive, native capacity | 13 | 3.05 | 2.85 | 25.76 ms | 54.85 ms | 162.84 ms |
+| Aggressive, two-batch limit | 2 | 1.18 | 1.83 | 21.93 ms | 47.18 ms | 144.07 ms |
+
+The Balanced repeat completed 161 fresh FULL chunks, 55 existing FULL chunks and 128 chunks of LOD source data in 140.10 seconds. The repeat progressed further than the initial 100-second Balanced run, in which the startup plateau occupied the entire measurement.
 
 Native capacity finished 427 fresh FULL chunks, 55 existing FULL chunks and 400 chunks of LOD source data over 140.15 seconds. The cap finished 165 fresh FULL chunks, 91 existing FULL chunks and 256 chunks of LOD source data over 140.21 seconds. The cap reduced p95 by 15% and p99 by 14%, with 61% lower fresh throughput and 36% lower LOD source throughput. The pack keeps native capacity by default. Set `-Dauram.dh.overworldBatches=2` to favor lower tick latency in the integrated Overworld.
 
 At shutdown, the capped run still had 32 observed FULL requests pending. DH reported zero incomplete generator tasks after closing the queues. The cap only gates new submissions. DH retains ownership of ticket creation, completion and cancellation.
+
+The Aether Balanced trial crossed into fresh terrain at block (4096, 200, 4096) with eight workers. Over 90.07 seconds of diagnostics it finished 3,582 fresh FULL chunks and 225 existing FULL chunks, equivalent to 39.77 fresh chunks/s and 2.50 existing chunks/s. It completed LOD source data for 3,760 chunks at 41.74/s. Its tick p95 was 38.95 ms, p99 was 66.75 ms, and longest tick was 128.51 ms. The mean observed FULL latency was 0.76 seconds in the Aether and 27.49 seconds in the uncapped Aggressive Overworld. These rates describe different terrain workloads. Existing chunks alone account for only a small part of the Aether rate.
