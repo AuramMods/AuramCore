@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -55,7 +56,11 @@ public final class VaporSources {
 
     /** A machine ticker refreshes the source each active tick. Stopped and unloaded machines expire automatically. */
     static void refresh(ServerLevel level, BlockPos anchor, VaporNetwork.Emitter emitter) {
-        set(level, anchor, emitter, level.getGameTime() + 1);
+        refresh(level, anchor, emitter, 1);
+    }
+
+    static void refresh(ServerLevel level, BlockPos anchor, VaporNetwork.Emitter emitter, int ticks) {
+        set(level, anchor, emitter, level.getGameTime() + ticks);
     }
 
     private static boolean set(ServerLevel level, BlockPos anchor, VaporNetwork.Emitter emitter, long expiresAt) {
@@ -83,7 +88,7 @@ public final class VaporSources {
         if (event.getLevel() instanceof ServerLevel level) LEVELS.remove(level);
     }
 
-    @SubscribeEvent
+    @SubscribeEvent(priority = EventPriority.LOW)
     public static void tick(TickEvent.LevelTickEvent event) {
         if (event.phase != TickEvent.Phase.END || !(event.level instanceof ServerLevel level)) return;
         LevelSources sources = LEVELS.get(level);

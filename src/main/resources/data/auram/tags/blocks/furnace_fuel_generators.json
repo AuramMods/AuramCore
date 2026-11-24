@@ -1,0 +1,8 @@
+{
+  "values": [
+    { "id": "thermal:dynamo_stirling", "required": false },
+    { "id": "extrautilitiesrebirth:furnace_generator", "required": false },
+    { "id": "extrautilitiesrebirth:overclocked_generator", "required": false },
+    { "id": "extrautilitiesrebirth:survival_generator", "required": false }
+  ]
+}

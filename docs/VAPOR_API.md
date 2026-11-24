@@ -25,6 +25,8 @@ and transfer rates as air.
 | Source | Density |
 | --- | --- |
 | Furnace, blast furnace, or smoker while cooking | 0.14 per tick |
+| Modded furnace blocks using the vanilla burn ticker, Ender IO Stirling generator and primitive alloy smelter, Thermal Stirling dynamo, Extra Utilities furnace-fuel generators, and Titanium generators actively burning Forge furnace fuel | 0.12 per burning tick |
+| Machine accepting energy through an observed RF route or shared Ender IO, Thermal, or Titanium energy storage | 0.05 per tick at half the logarithmic scale (about 10,000 RF/t), rising to 0.15 at 100,000,000 RF/t |
 | Fire | 0.32 per tick |
 | Lit campfire or soul campfire | 0.65 per tick |
 | Exposed magma block | 0.25 per sampled puff in the air above it |
@@ -37,12 +39,21 @@ and transfer rates as air.
 | Tinkers' drain faucet | 0.08 per tick while it transfers fluid |
 | Tinkers' casting table, basin, or channel | 0.08 per tick while casting fills or cools, or while the channel holds fluid |
 | Tinkers' melter or alloyer | 0.08 per tick above it while fueled or holding hot fluid |
-| Ender IO SAG Mill, Alloy Smelters, Slice'N'Splice, Painting Machine, Stirling Generator, Soul Engine, Farming Station, Vat, Fluid Drain, Vacuum Chest, and XP Vacuum | 0.08 per operating tick |
+| Ender IO SAG Mill, Alloy Smelter, Slice'N'Splice, Painting Machine, Soul Engine, Farming Station, Vat, Fluid Drain, Vacuum Chest, and XP Vacuum | 0.08 per operating tick |
 | Ender IO Crafter, Impulse Hopper, and Niard | One 0.08 puff per successful operation |
 
 The client tries 32 random block positions per tick within eight blocks
 horizontally and four blocks vertically of the camera. It also samples nearby
 burning entities from their synced fire state.
+
+RF intake uses a four-tick average of committed transfers at the receiving
+block. Add additional transport blocks to `auram:rf_transport` to exclude
+them from intake Vapor. Forge fuel queries report the burn value of an item.
+The Titanium integration looks for that query during actual fuel consumption
+and uses the generator's burn callback for the lifetime of the fuel.
+
+Integrations can call `RfFlow.recordAcceptedInput(machine, accepted)` after a
+committed receive or `MachineVapor.burning(machine)` on each burning server tick.
 
 ## Typed API
 

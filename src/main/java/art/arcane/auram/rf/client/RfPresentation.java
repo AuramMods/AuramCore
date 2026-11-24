@@ -1,6 +1,7 @@
 package art.arcane.auram.rf.client;
 
 import art.arcane.auram.rf.RfFlow;
+import art.arcane.auram.rf.RfPower;
 import net.minecraft.core.BlockPos;
 
 import java.util.ArrayList;
@@ -111,7 +112,7 @@ final class RfPresentation {
     }
 
     private static int encodeRate(long amount) {
-        return (int) Math.round(Math.log10(1.0 + Math.min(amount, 100_000_000L)) * 31.0);
+        return (int) Math.round(RfPower.intensity(amount) * 248.0);
     }
 
     private static double approach(double value, double target, double dt, double timeConstant) {

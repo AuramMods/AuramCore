@@ -1,0 +1,24 @@
+{
+  "values": [
+    { "id": "enderio:conduit", "required": false },
+    { "id": "mekanism:basic_universal_cable", "required": false },
+    { "id": "mekanism:advanced_universal_cable", "required": false },
+    { "id": "mekanism:elite_universal_cable", "required": false },
+    { "id": "mekanism:ultimate_universal_cable", "required": false },
+    { "id": "evolvedmekanism:overclocked_universal_cable", "required": false },
+    { "id": "evolvedmekanism:quantum_universal_cable", "required": false },
+    { "id": "evolvedmekanism:dense_universal_cable", "required": false },
+    { "id": "evolvedmekanism:multiversal_universal_cable", "required": false },
+    { "id": "evolvedmekanism:creative_universal_cable", "required": false },
+    { "id": "thermal:energy_duct", "required": false },
+    { "id": "immersiveengineering:connector_lv", "required": false },
+    { "id": "immersiveengineering:connector_lv_relay", "required": false },
+    { "id": "immersiveengineering:connector_mv", "required": false },
+    { "id": "immersiveengineering:connector_mv_relay", "required": false },
+    { "id": "immersiveengineering:connector_hv", "required": false },
+    { "id": "immersiveengineering:connector_hv_relay", "required": false },
+    { "id": "cyclic:energy_pipe", "required": false },
+    { "id": "createaddition:connector", "required": false },
+    { "id": "createaddition:large_connector", "required": false }
+  ]
+}

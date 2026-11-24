@@ -1,9 +1,11 @@
 package art.arcane.auram.rf;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.vapor.MachineVapor;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -50,16 +52,25 @@ public final class RfFlow {
 
     private static final class Route {
         final List<Hop> hops;
+        final long destination;
         long accepted;
 
-        Route(List<Hop> hops) {
+        Route(List<Hop> hops, long destination) {
             this.hops = hops;
+            this.destination = destination;
         }
+    }
+
+    private static final class MachineInput {
+        long routed;
+        long received;
     }
 
     private static final class LevelFlow {
         final List<Route> pending = new ArrayList<>();
         final Map<Edge, Counter> edges = new HashMap<>();
+        final Map<Long, MachineInput> machineInputs = new HashMap<>();
+        final Map<Long, Long> sampledInputs = new HashMap<>();
         final Set<UUID> sent = new HashSet<>();
     }
 
@@ -86,12 +97,21 @@ public final class RfFlow {
         }
 
         LevelFlow flow = LEVELS.computeIfAbsent(level, ignored -> new LevelFlow());
-        var route = new Route(List.copyOf(hops));
+        var route = new Route(List.copyOf(hops), positions[positions.length - 1]);
         return amount -> {
             if (amount <= 0) return;
             if (route.accepted == 0) flow.pending.add(route);
             route.accepted = sum(route.accepted, amount);
         };
+    }
+
+    /** Reports RF accepted by a machine's input during a committed transfer. */
+    public static void recordAcceptedInput(BlockEntity machine, long amount) {
+        if (amount <= 0 || machine.isRemoved() || !(machine.getLevel() instanceof ServerLevel level)
+                || !level.getServer().isSameThread()) return;
+        var input = LEVELS.computeIfAbsent(level, ignored -> new LevelFlow()).machineInputs
+                .computeIfAbsent(machine.getBlockPos().asLong(), ignored -> new MachineInput());
+        input.received = sum(input.received, amount);
     }
 
     @SubscribeEvent
@@ -104,10 +124,21 @@ public final class RfFlow {
             for (Hop hop : route.hops) {
                 flow.edges.computeIfAbsent(hop.edge, ignored -> new Counter()).add(hop.forward, route.accepted);
             }
+            var input = flow.machineInputs.computeIfAbsent(route.destination, ignored -> new MachineInput());
+            input.routed = sum(input.routed, route.accepted);
             route.accepted = 0;
         }
         flow.pending.clear();
-        if ((level.getGameTime() % SAMPLE_TICKS) == 0) publish(level, flow);
+        // A receive hook can observe the same delivery as the route observer.
+        flow.machineInputs.forEach((pos, input) -> flow.sampledInputs.merge(pos,
+                Math.max(input.routed, input.received), RfFlow::sum));
+        flow.machineInputs.clear();
+        if ((level.getGameTime() % SAMPLE_TICKS) == 0) {
+            flow.sampledInputs.forEach((pos, amount) ->
+                    MachineVapor.rfInput(level, BlockPos.of(pos), RfPower.vaporRate(average(amount)), SAMPLE_TICKS));
+            flow.sampledInputs.clear();
+            publish(level, flow);
+        }
     }
 
     private static void publish(ServerLevel level, LevelFlow flow) {
