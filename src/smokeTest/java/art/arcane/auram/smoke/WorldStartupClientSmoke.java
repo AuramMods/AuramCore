@@ -65,7 +65,8 @@ public final class WorldStartupClientSmoke {
         if (!MODE.equals(System.getProperty("auram.smoke")) || event.phase != TickEvent.Phase.END
                 || (phase != 1 && phase != 2 && phase != 4 && phase != 5)) return;
         Minecraft client = Minecraft.getInstance();
-        if (client.level == null || client.player == null || client.screen != null || client.getOverlay() != null) return;
+        if (client.level == null || client.player == null) return;
+        if (phase != 4 && (client.screen != null || client.getOverlay() != null)) return;
         long elapsedMillis = (System.nanoTime() - start) / 1_000_000;
         try {
             if (phase == 5) {
