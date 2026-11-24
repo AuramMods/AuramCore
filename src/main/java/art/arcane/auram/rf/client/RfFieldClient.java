@@ -20,6 +20,7 @@ public final class RfFieldClient {
     private static ClientLevel level;
     private static List<RfFlow.Sample> samples = EMPTY;
     private static long expiresAt;
+    private static int session;
 
     private RfFieldClient() {}
 
@@ -34,7 +35,11 @@ public final class RfFieldClient {
     private static void accept(RfNetwork.Frame frame) {
         ClientLevel current = Minecraft.getInstance().level;
         if (current == null || !frame.dimension().equals(current.dimension().location())) return;
-        level = current;
+        if (level != current) {
+            level = current;
+            samples = EMPTY;
+            session++;
+        }
         expiresAt = level.getGameTime() + 20;
         if (!samples.equals(frame.edges())) {
             samples = frame.edges();
@@ -49,6 +54,11 @@ public final class RfFieldClient {
         if (event.getLevel() != level) return;
         level = null;
         samples = EMPTY;
+        session++;
+    }
+
+    static int session() {
+        return session;
     }
 
     static List<RfFlow.Sample> samples() {
