@@ -35,3 +35,13 @@ The isolated comparison used the four-CPU cold fixture above in both run orders.
 | A2 released jar | 582.83 MB | 2,363.07 MB | 10.20 s |
 
 The allocation figures are estimates from weighted samples. Throughput varied with run order. The repeatable improvement is the removal of nearly all sampled allocations at that site during noise fill.
+
+## Empty structure density modifiers
+
+The full-pack recording showed boxing and callback allocations inside Beardifier during noise fill. Vanilla, Lithostitched, Integrated API and YUNG's API build the structure terrain contributions before sampling a chunk. AuramCore uses a stateless zero-density modifier when the vanilla and enhanced iterators are all empty and the chunk has no active terrain blending. The replacement keeps the original density bounds and default array fill. Nonempty or unrecognized modifiers use the original implementation.
+
+The 32-target fixture loaded both terrain-adaptation APIs. All 32 targets referenced an ancient city. Both run orders matched 8,912,896 blocks, biome palettes, structure starts and fluid ticks across the saved worlds. NOISE CPU for 96 fills varied from 11.45 to 12.48 seconds in the controls and 11.65 to 12.50 seconds in the candidates. Sampled Beardifier allocation weights fell from 598.57 to 496.86 MB in the first pair and from 555.53 to 532.42 MB in the reverse pair. Host contention varied and the wall rates in this round cannot isolate the effect of the patch.
+
+A second pair kept both APIs loaded and disabled structure generation in the disposable fixture to isolate empty modifiers. Each arm completed 72 noise fills and the same 16 requested chunks. All 4,456,448 saved block states, biome palettes, structure starts and fluid ticks matched. JFR attributed 522.17 MB of weighted NOISE allocations to Beardifier in the control and sampled none in the candidate. Total weighted allocations in NOISE fell from 1,721.40 MB to 1,296.38 MB. CPU was 8.27 and 8.36 seconds, respectively. These tests support an allocation reduction, with the largest effect in terrain without nearby contributing structures.
+
+The first injection used a generated Mixin argument class and failed on the Forge class loader. The tested single-argument injection avoids that generated class.

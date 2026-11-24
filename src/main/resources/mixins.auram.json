@@ -51,6 +51,8 @@
     "minecraft.SplinePointMixin",
     "minecraft.NoiseChunkSliceRangeMixin",
     "minecraft.NoiseInterpolatorSliceAccess",
+    "minecraft.BeardifierContentsAccess",
+    "minecraft.EmptyBeardifierMixin",
     "minecraft.RandomStateSurfaceCacheMixin",
     "minecraft.PreliminarySurfaceCacheMixin",
     "minecraft.NoiseYScaleAccess",
