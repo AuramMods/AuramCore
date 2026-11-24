@@ -104,7 +104,7 @@ final class VaporVolume {
     private Bounds active = Bounds.EMPTY;
 
     Snapshot step(VoxelOccupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters) {
-        if (updated != occupancy) replaceOccupancy(updated);
+        updateOccupancy(updated);
         if (!active.empty()) spread(erosion);
         for (Source pulse : pulses) inject(pulse);
         for (Source emitter : emitters) inject(emitter);
@@ -234,6 +234,11 @@ final class VaporVolume {
         }
         active = live;
         return pixels == null ? null : new Snapshot(occupancy.origin(), visible.expand(SIDE), pixels, open);
+    }
+
+    boolean[] updateOccupancy(VoxelOccupancy updated) {
+        if (updated != occupancy) replaceOccupancy(updated);
+        return open;
     }
 
     private void replaceOccupancy(VoxelOccupancy updated) {

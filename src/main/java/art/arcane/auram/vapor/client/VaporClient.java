@@ -6,7 +6,9 @@ import art.arcane.auram.field.VoxelGrid;
 import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.VoxelOccupancy;
 import art.arcane.auram.field.VoxelOccupancy.SectionOccupancy;
+import art.arcane.auram.field.WindField;
 import art.arcane.auram.vapor.VaporNetwork;
+import art.arcane.auram.wind.WindNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -54,7 +56,10 @@ public final class VaporClient {
     public static final class Setup {
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
-            event.enqueueWork(() -> VaporNetwork.setReceiver(VaporClient::scheduleFrame));
+            event.enqueueWork(() -> {
+                VaporNetwork.setReceiver(VaporClient::scheduleFrame);
+                WindNetwork.setReceiver(frame -> Minecraft.getInstance().execute(() -> receiveWind(frame)));
+            });
         }
     }
 
@@ -70,6 +75,22 @@ public final class VaporClient {
         for (var pulse : frame.pulses()) {
             submitPulse(level, new VaporVolume.Source(position(pulse.position()), pulse.density(), pulse.radius()));
         }
+    }
+
+    private static void receiveWind(WindNetwork.Frame frame) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || !level.dimension().location().equals(frame.dimension())) return;
+        if (frame.emitters().isEmpty() && frame.gusts().isEmpty() && (session == null || session.level != level)) return;
+        Session current = sessionFor(level);
+        current.windEmitters = frame.emitters().stream().map(emitter -> windSource(emitter.flow())).toList();
+        for (var gust : frame.gusts()) {
+            if (current.gusts.size() == MAX_WAITING_PULSES) break;
+            current.gusts.addLast(new WaitingGust(windSource(gust), current.ticks + PULSE_WAIT_TICKS));
+        }
+    }
+
+    private static WindField.Source windSource(WindNetwork.Flow flow) {
+        return new WindField.Source(position(flow.position()), flow.x(), flow.y(), flow.z());
     }
 
     static Position position(BlockPos pos) {
@@ -151,6 +172,8 @@ public final class VaporClient {
     private record WaitingPulse(VaporVolume.Source source, int expiresAt) {
     }
 
+    private record WaitingGust(WindField.Source source, int expiresAt) {}
+
     private static final class Session {
         private final ClientLevel level;
         private final String dimension;
@@ -159,6 +182,8 @@ public final class VaporClient {
         private final Map<Position, LevelChunk> knownChunks = new LinkedHashMap<>();
         private final List<Position> window = new ArrayList<>();
         private final ArrayDeque<WaitingPulse> pulses = new ArrayDeque<>();
+        private final ArrayDeque<WaitingGust> gusts = new ArrayDeque<>();
+        private List<WindField.Source> windEmitters = List.of();
         private List<VaporVolume.Source> emitters = List.of();
         private Position origin;
         private VoxelOccupancy input;
@@ -180,7 +205,7 @@ public final class VaporClient {
 
         private void tick(BlockPos camera, boolean paused, VaporAmbient.Sources local) {
             if (paused) {
-                worker.submit(input, erosion, emitters, true, List.of());
+                worker.submit(input, erosion, emitters, true, List.of(), windEmitters, List.of());
                 return;
             }
             ticks++;
@@ -209,7 +234,22 @@ public final class VaporClient {
                 continuous.addAll(local.burning());
             }
             if (!continuous.isEmpty() || !ready.isEmpty() || worker.frames().current() != null) updateErosion();
-            worker.submit(input, erosion, continuous, false, ready);
+            List<WindField.Source> readyGusts = List.of();
+            if (!gusts.isEmpty()) {
+                readyGusts = new ArrayList<>();
+                var iterator = gusts.iterator();
+                while (iterator.hasNext()) {
+                    WaitingGust gust = iterator.next();
+                    Position section = gust.source.position().section();
+                    if (ticks - gust.expiresAt >= 0 || !inWindow(section)) {
+                        iterator.remove();
+                    } else if (sections.containsKey(section)) {
+                        readyGusts.add(gust.source);
+                        iterator.remove();
+                    }
+                }
+            }
+            worker.submit(input, erosion, continuous, false, ready, windEmitters, readyGusts);
         }
 
         private void updateErosion() {

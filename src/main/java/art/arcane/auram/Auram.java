@@ -8,6 +8,7 @@ import art.arcane.auram.map.SurfaceMapNetwork;
 import art.arcane.auram.tweak.LogRetention;
 import art.arcane.auram.util.RecipeCache;
 import art.arcane.auram.vapor.VaporNetwork;
+import art.arcane.auram.wind.WindNetwork;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.registries.Registries;
@@ -96,6 +97,7 @@ public class Auram {
         context.registerConfig(ModConfig.Type.SERVER, AuramConfig.SERVER_SPEC);
         SurfaceMapNetwork.register();
         VaporNetwork.register();
+        WindNetwork.register();
         MinecraftForge.EVENT_BUS.register(new AuramCommands());
     } 
 
