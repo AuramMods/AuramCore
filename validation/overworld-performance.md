@@ -45,3 +45,38 @@ The 32-target fixture loaded both terrain-adaptation APIs. All 32 targets refere
 A second pair kept both APIs loaded and disabled structure generation in the disposable fixture to isolate empty modifiers. Each arm completed 72 noise fills and the same 16 requested chunks. All 4,456,448 saved block states, biome palettes, structure starts and fluid ticks matched. JFR attributed 522.17 MB of weighted NOISE allocations to Beardifier in the control and sampled none in the candidate. Total weighted allocations in NOISE fell from 1,721.40 MB to 1,296.38 MB. CPU was 8.27 and 8.36 seconds, respectively. These tests support an allocation reduction, with the largest effect in terrain without nearby contributing structures.
 
 The first injection used a generated Mixin argument class and failed on the Forge class loader. The tested single-argument injection avoids that generated class.
+
+## Combined headless comparison
+
+All three changes were enabled in the combined build. The baseline was the published AuramCore 1.0.35 jar (SHA-256 `4e6efa9a9b813f0e1b0b6d0855ff33f2461a530d3206b39af217629a815da18d`). Runs used the 32-target fixture with Integrated API and YUNG's API loaded. Each arm completed 736 structure-start tasks, 96 noise fills, 96 carver tasks, 140 biome tasks and 96 surface tasks.
+
+| Run order | Fresh FULL/s | Chunk ready p50 | Chunk ready p95 | Tick p95 / p99 | Structure starts CPU/task | NOISE CPU/fill | Weighted NOISE allocations |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Combined B1 | 1.74 | 3.13 s | 14.25 s | 1.55 / 34.74 ms | 5.89 ms | 129.21 ms | 1,714.85 MB |
+| Released A | 2.13 | 3.10 s | 11.20 s | 2.89 / 34.57 ms | 5.50 ms | 119.02 ms | 2,488.31 MB |
+| Combined B2 | 3.69 | 1.70 s | 6.10 s | 2.69 / 24.45 ms | 3.30 ms | 69.59 ms | 1,936.88 MB |
+
+Both comparisons against the release matched all 8,912,896 block states, biome palettes, structure starts and fluid ticks. Sampled noise allocation weight was 31.1% and 22.2% lower in the two combined runs. Spline wrapper allocations accounted for approximately 482 MB in the release and produced no samples in either combined arm. Stage CPU and wall times varied with run order. The combined headless result supports less allocation per fixed workload.
+
+## Full-pack Distant Horizons replay
+
+The first recorded run in the complete pack pointed to feature decoration as a large cost alongside terrain noise. Before the first fresh FULL results, the recording contained 1,667 FEATURES samples and 909 NOISE samples. Sculk patch placement was present in 184 of the feature stacks. A run with the normal DH health throttle completed a four-minute window with no fresh FULL chunks and no completed noise fills while the queue deferred work.
+
+The matched replay restored the same existing seed 104729 save before each run and used the 539-jar pack snapshot on Forge 47.4.10. It used DH 3.3.3 internal generation in Aggressive mode, two Overworld batches, and the DH health throttle disabled in both disposable fixtures. Shaders were off. The candidate was cumulative build `8db0ee3`. Runs completed about four minutes of measured game time, with 230 seconds between their first and last DH trace samples.
+
+| Measure | Published 1.0.35 | Combined |
+| --- | ---: | ---: |
+| Fresh FULL chunks reported | 160 | 456 |
+| Fresh FULL chunks/s over the trace window | 0.69 | 1.98 |
+| LOD chunks reported | 224 | 544 |
+| Mean full-request time, including existing results | 16.61 s | 9.86 s |
+| Server tick p50 / p95 / p99 | 11.62 / 71.00 / 132.76 ms | 7.54 / 19.88 / 57.97 ms |
+| Structure-start CPU/task | 50.44 ms | 33.41 ms |
+| NOISE CPU/fill | 127.33 ms | 105.66 ms |
+| Decoration CPU/task | 111.84 ms | 97.93 ms |
+
+The integrated runs completed different numbers of supporting tasks, and host contention varied. The numbers describe these replay runs. The targeted CPU and fixed-workload allocation comparisons above provide the stronger evidence for individual changes. The candidate replay still had 1,276 of 3,150 full NOISE samples in the aquifer computation stack. A Forge NightConfig type-cast error appeared after successful save on shutdown in the candidate and in an earlier released-jar run.
+
+The saved Overworld comparison covered 198 common fresh FULL chunks. Every structure start matched. Comparing the control and candidate gave 332,433 different block states out of 55,148,544, with biome differences in 61 chunks. An earlier replay of the same released jar and frozen save, using a different DH queue limit, differed by 923,682 block states and had biome differences in 116 of those same 198 chunks. Of the 228,973 individual biome cells that differed in the matched candidate pair, 227,625 matched the earlier released-jar replay at the same coordinates (99.4%). The remaining 1,348 cells differed from both sampled released worlds. The full-pack replay therefore exercises real generation and documents repeatability limits. The fixed headless and targeted probe tests provide the exact-output checks.
+
+A second control using the same two-batch settings completed its timed window without a fresh FULL result. The original release could progress or stall under the same fixture settings on this host. The integrated figures describe an observed replay and should not be used as a reproducible throughput multiplier.
