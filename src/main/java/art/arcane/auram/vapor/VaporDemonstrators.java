@@ -1,12 +1,10 @@
 package art.arcane.auram.vapor;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.mixin.minecraft.ExplosionRadiusAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.projectile.LargeFireball;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CampfireBlock;
@@ -24,6 +22,8 @@ public final class VaporDemonstrators {
     private static final float FURNACE_RATE = 0.14f;
     private static final float FIRE_RATE = 0.32f;
     private static final float CAMPFIRE_RATE = 0.65f;
+    private static final float TNT_BLAST_RADIUS = 4.0f;
+    private static final int TNT_VAPOR_RADIUS = 7;
 
     private VaporDemonstrators() {
     }
@@ -104,9 +104,17 @@ public final class VaporDemonstrators {
     @SubscribeEvent
     public static void explosion(ExplosionEvent.Detonate event) {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
-        Entity source = event.getExplosion().getDirectSourceEntity();
-        if (!(source instanceof PrimedTnt) && !(source instanceof LargeFireball)) return;
+        var blast = event.getExplosion();
+        var pulse = explosionPulse(BlockPos.containing(blast.getPosition()), ((ExplosionRadiusAccess) blast).auram$getRadius());
         // Delivery is deferred to the level tick end, after the explosion updates the terrain.
-        Vapor.pulse(level, BlockPos.containing(event.getExplosion().getPosition()), 1.0f, 7);
+        if (pulse != null) VaporSources.pulse(level, pulse);
+    }
+
+    static VaporNetwork.Pulse explosionPulse(BlockPos center, float blastRadius) {
+        if (!Float.isFinite(blastRadius) || blastRadius <= 0.0f) return null;
+        float scale = blastRadius / TNT_BLAST_RADIUS;
+        float density = Math.min(1.0f, scale);
+        int spread = Math.round(Math.min(Vapor.MAX_RADIUS, TNT_VAPOR_RADIUS * scale));
+        return new VaporNetwork.Pulse(center, density, spread);
     }
 }

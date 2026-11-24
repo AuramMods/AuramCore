@@ -31,7 +31,7 @@ and transfer rates as air.
 | Lit campfire or soul campfire | 0.65 per tick |
 | Exposed magma block | 0.25 per sampled puff in the air above it |
 | Regular or soul torch, including wall torches | 0.03 per sampled puff |
-| TNT or large ghast fireball explosion | 1.0 at the center, with a 7-block falloff |
+| Explosion | Density and spread scale with blast radius. Standard TNT produces 1.0 at the center with a 7-block falloff. Larger blasts spread up to 12 blocks. |
 | Living entity death | 1.0 per open floor cell, with 1–4 attempts based on maximum HP. For example, 5, 20, 40, and 100 HP get 1, 2, 3, and 4 attempts respectively. |
 | Burning entity | 0.15 per tick |
 | Tinkers' seared heater | 0.12 per tick from its front while burning fuel |
