@@ -66,14 +66,13 @@ public final class VaporClient {
         }
     }
 
-    private static VaporVolume.Position position(BlockPos pos) {
+    static VaporVolume.Position position(BlockPos pos) {
         return new VaporVolume.Position(pos.getX(), pos.getY(), pos.getZ());
     }
 
     // Called only on the client game thread, including after packet scheduling.
     static void submitPulse(ClientLevel level, VaporVolume.Source pulse) {
-        Session current = sessionFor(level);
-        if (current.pulses.size() < MAX_WAITING_PULSES) current.pulses.addLast(new WaitingPulse(pulse, current.ticks + PULSE_WAIT_TICKS));
+        sessionFor(level).queuePulse(pulse);
     }
 
     static void submitEmitters(ClientLevel level, List<VaporVolume.Source> emitters) {
@@ -104,14 +103,18 @@ public final class VaporClient {
 
     @SubscribeEvent
     public static void tick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || session == null) return;
+        if (event.phase != TickEvent.Phase.END) return;
         Minecraft client = Minecraft.getInstance();
-        if (client.level != session.level) {
-            reset();
-            return;
-        }
+        ClientLevel level = client.level;
+        if (session != null && level != session.level) reset();
         var camera = client.getCameraEntity();
-        if (camera != null) session.tick(camera.blockPosition(), client.isPaused());
+        if (level == null || camera == null) return;
+
+        boolean paused = client.isPaused();
+        BlockPos center = camera.blockPosition();
+        VaporAmbient.Sources local = paused || VaporAtmosphere.current() == null
+                ? VaporAmbient.Sources.EMPTY : VaporAmbient.sample(level, center);
+        if (session != null || !local.empty()) sessionFor(level).tick(center, paused, local);
     }
 
     @SubscribeEvent
@@ -165,7 +168,11 @@ public final class VaporClient {
             this.dimension = level.dimension().location().toString();
         }
 
-        private void tick(BlockPos camera, boolean paused) {
+        private void queuePulse(VaporVolume.Source pulse) {
+            if (pulses.size() < MAX_WAITING_PULSES) pulses.addLast(new WaitingPulse(pulse, ticks + PULSE_WAIT_TICKS));
+        }
+
+        private void tick(BlockPos camera, boolean paused, VaporAmbient.Sources local) {
             if (paused) {
                 worker.submit(input, erosion, emitters, true, List.of());
                 return;
@@ -178,6 +185,7 @@ public final class VaporClient {
                 input = new VaporVolume.Occupancy(origin, sections);
                 changed = false;
             }
+            for (var pulse : local.puffs()) queuePulse(pulse);
             List<VaporVolume.Source> ready = new ArrayList<>();
             var pending = pulses.iterator();
             while (pending.hasNext()) {
@@ -189,8 +197,13 @@ public final class VaporClient {
                     pending.remove();
                 }
             }
-            if (!emitters.isEmpty() || !ready.isEmpty() || worker.frames().current() != null) updateErosion();
-            worker.submit(input, erosion, emitters, false, ready);
+            List<VaporVolume.Source> continuous = emitters;
+            if (!local.burning().isEmpty()) {
+                continuous = new ArrayList<>(emitters);
+                continuous.addAll(local.burning());
+            }
+            if (!continuous.isEmpty() || !ready.isEmpty() || worker.frames().current() != null) updateErosion();
+            worker.submit(input, erosion, continuous, false, ready);
         }
 
         private void updateErosion() {
