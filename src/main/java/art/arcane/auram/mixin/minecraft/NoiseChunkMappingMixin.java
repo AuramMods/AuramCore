@@ -1,6 +1,6 @@
 package art.arcane.auram.mixin.minecraft;
 
-import art.arcane.auram.util.ClimateMappingAccess;
+import art.arcane.auram.util.NoiseRouterCapabilities;
 import art.arcane.auram.util.NoiseMappingScope;
 import art.arcane.auram.util.VanillaDensity;
 import net.minecraft.world.level.biome.Climate;
@@ -63,7 +63,7 @@ public abstract class NoiseChunkMappingMixin {
         auram$sharedTerrainGraph = router.depth().minValue() != router.depth().maxValue();
         NoiseRouter mapped = auram$sharedTerrainGraph ? NoiseMappingScope.map(router,visitor) : router.mapAll(visitor);
         if (auram$sharedTerrainGraph && cellsXZ > 1 && blender == Blender.empty()
-                && ((ClimateMappingAccess) (Object) random).auram$canReuseClimateMapping(AURAM_NOISE_LOOKUP)) {
+                && ((NoiseRouterCapabilities) (Object) random).auram$canReuseClimateMapping(AURAM_NOISE_LOOKUP)) {
             auram$originalClimateRouter = router;
             auram$mappedClimateRouter = mapped;
         }

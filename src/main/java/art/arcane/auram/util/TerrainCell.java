@@ -25,6 +25,7 @@ public final class TerrainCell implements AutoCloseable {
     private final NoiseChunk noise;
     private final BlockState defaultBlock;
     private final int minY, maxY, width, cellHeight, baseCellY, originX, originZ;
+    private final int preparedTopY;
     private int selectedY = Integer.MIN_VALUE;
     private boolean closed;
 
@@ -34,8 +35,13 @@ public final class TerrainCell implements AutoCloseable {
 
     public static TerrainCell open(NoiseBasedChunkGenerator generator, int x, int z,
                                    LevelHeightAccessor height, RandomState state) {
+        return open(generator, x, z, height, state, Integer.MAX_VALUE);
+    }
+
+    public static TerrainCell open(NoiseBasedChunkGenerator generator, int x, int z,
+                                   LevelHeightAccessor height, RandomState state, int topY) {
         var settings = generator.generatorSettings().value().noiseSettings().clampToHeightAccessor(height);
-        return hasCompleteCells(settings) ? new TerrainCell(generator,x,z,state,settings) : null;
+        return hasCompleteCells(settings) ? new TerrainCell(generator, x, z, state, settings, topY) : null;
     }
 
     private static boolean hasCompleteCells(NoiseSettings settings) {
@@ -46,7 +52,7 @@ public final class TerrainCell implements AutoCloseable {
     }
 
     private TerrainCell(NoiseBasedChunkGenerator generator,int x,int z,RandomState state,
-                        NoiseSettings settings) {
+                        NoiseSettings settings, int topY) {
         var generatorSettings = generator.generatorSettings().value();
         width = settings.getCellWidth();
         cellHeight = settings.getCellHeight();
@@ -58,13 +64,26 @@ public final class TerrainCell implements AutoCloseable {
         defaultBlock = generatorSettings.defaultBlock();
         noise = new NoiseChunk(1,state,originX,originZ,
                 settings,ZERO,generatorSettings,((NoiseGeneratorAccess)generator).auram$fluidPicker().get(),Blender.empty());
-        noise.initializeForFirstCellX();
-        noise.advanceCellX(0);
+        int upperY = Math.min(maxY - 1, Math.max(minY, topY));
+        int rows = Math.floorDiv(upperY - minY, cellHeight) + 2;
+        if (rows < settings.height() / cellHeight + 1
+                && ((NoiseSliceRange) noise).auram$initializeSlicePrefix(state, rows)) {
+            preparedTopY = minY + (rows - 1) * cellHeight - 1;
+        } else {
+            preparedTopY = maxY - 1;
+            noise.initializeForFirstCellX();
+            noise.advanceCellX(0);
+        }
+    }
+
+    public boolean coversThrough(int y) {
+        return preparedTopY >= Math.min(y, maxY - 1);
     }
 
     public BlockState state(int x,int y,int z) {
         if (closed) throw new IllegalStateException("Terrain cell is closed");
         if (y < minY || y >= maxY) return Blocks.AIR.defaultBlockState();
+        if (y > preparedTopY) throw new IllegalArgumentException("Y outside prepared interpolation rows: " + y);
         int cellY = Math.floorDiv(y,cellHeight)-baseCellY;
         if (selectedY != cellY) {
             noise.selectCellYZ(cellY,0);

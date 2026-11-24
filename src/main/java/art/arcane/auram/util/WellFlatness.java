@@ -19,7 +19,9 @@ public final class WellFlatness {
                     context.heightAccessor(),context.randomState(),false)) {
                 return scan(radius,(dx,dz)->{
                     int x=center.getX()+dx,z=center.getZ()+dz;
-                    return batch.state(x,center.getY(),z).isAir() && !batch.state(x,center.getY()+1,z).isAir();
+                    int floorY = center.getY() + 1;
+                    return batch.state(x, center.getY(), z, floorY).isAir()
+                            && !batch.state(x, floorY, z, floorY).isAir();
                 });
             }
         }

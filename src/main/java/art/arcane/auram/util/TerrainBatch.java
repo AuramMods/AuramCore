@@ -59,15 +59,22 @@ public final class TerrainBatch implements AutoCloseable {
     }
 
     private Cell cell(int x,int z) {
+        return cell(x, z, Integer.MAX_VALUE);
+    }
+
+    private Cell cell(int x, int z, int topY) {
         if(closed) throw new IllegalStateException("Terrain batch is closed");
         if(height.getMinBuildHeight()!=minBuildHeight || height.getHeight()!=buildHeight) return null;
         long key=ChunkPos.asLong(Math.floorDiv(x,width),Math.floorDiv(z,width));
         if(cells==null) cells=new Long2ObjectLinkedOpenHashMap<>();
         Cell cached=cells.getAndMoveToLast(key);
-        if(cached!=null) return cached;
-        if(cells.size()==LIMIT) cells.removeFirst().terrain.close();
-        TerrainCell terrain=TerrainCell.open(generator,x,z,height,state);
-        if(terrain==null) return null;
+        if (cached != null && cached.terrain.coversThrough(topY)) return cached;
+        // A later wider query replaces the bounded sampler with a full one.
+        TerrainCell terrain = TerrainCell.open(generator, x, z, height, state,
+                cached == null ? topY : Integer.MAX_VALUE);
+        if (terrain == null) return null;
+        if (cached != null) cached.terrain.close();
+        else if (cells.size() == LIMIT) cells.removeFirst().terrain.close();
         Cell created=new Cell(terrain);
         cells.putAndMoveToLast(key,created);
         return created;
@@ -91,12 +98,20 @@ public final class TerrainBatch implements AutoCloseable {
 
     /** The batch owns this cell. Use it immediately without closing it. */
     public TerrainCell borrowCell(int x, int z) {
-        Cell cell = cell(x, z);
+        return borrowCell(x, z, Integer.MAX_VALUE);
+    }
+
+    public TerrainCell borrowCell(int x, int z, int topY) {
+        Cell cell = cell(x, z, topY);
         return cell == null ? null : cell.terrain;
     }
 
     public BlockState state(int x,int y,int z) {
-        Cell cell=cell(x,z);
+        return state(x, y, z, Integer.MAX_VALUE);
+    }
+
+    public BlockState state(int x, int y, int z, int topY) {
+        Cell cell = cell(x, z, topY);
         return cell==null ? generator.getBaseColumn(x,z,height,state).getBlock(y) : cell.terrain.state(x,y,z);
     }
 

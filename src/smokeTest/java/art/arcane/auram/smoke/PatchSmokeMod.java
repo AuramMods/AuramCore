@@ -158,6 +158,11 @@ public final class PatchSmokeMod {
                 Files.writeString(Path.of("auram-bettercaves-lookup-pass.txt"), "PASS cache-hit identity and seeded tables\n");
                 return;
             }
+            if (smokeMode.equals("boundedslice")) {
+                BoundedSliceSmoke.run(event.getServer().overworld());
+                Files.writeString(Path.of("auram-boundedslice-pass.txt"), "PASS bounded slice parity and paired timing\n");
+                return;
+            }
             if (System.getProperty("auram.smoke", "").equals("terrainbatch")) {
                 TerrainBatchSmoke.run(event.getServer());
                 HeightCacheSmoke.run(event.getServer());

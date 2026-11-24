@@ -1,6 +1,6 @@
 package art.arcane.auram.mixin.minecraft;
 
-import art.arcane.auram.util.ClimateMappingAccess;
+import art.arcane.auram.util.NoiseRouterCapabilities;
 import art.arcane.auram.util.PreliminaryDensity;
 import art.arcane.auram.util.PreliminarySurfaceCache;
 import art.arcane.auram.util.PreliminarySurfaceCacheAccess;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.Unique;
 import java.lang.invoke.MethodHandles;
 
 @Mixin(RandomState.class)
-public abstract class RandomStateSurfaceCacheMixin implements PreliminarySurfaceCacheAccess, ClimateMappingAccess {
+public abstract class RandomStateSurfaceCacheMixin implements PreliminarySurfaceCacheAccess, NoiseRouterCapabilities {
     @Unique private volatile Boolean auram$climateMappingReusable;
 
     @Override
@@ -23,6 +23,18 @@ public abstract class RandomStateSurfaceCacheMixin implements PreliminarySurface
             auram$climateMappingReusable = reusable;
         }
         return reusable;
+    }
+
+    @Unique private volatile Boolean auram$slicesCanBeLimited;
+
+    @Override
+    public boolean auram$canLimitSliceRows(MethodHandles.Lookup lookup) {
+        Boolean supported = auram$slicesCanBeLimited;
+        if (supported == null) {
+            supported = PreliminaryDensity.canLimitSliceRows(((RandomState) (Object) this).router(), lookup);
+            auram$slicesCanBeLimited = supported;
+        }
+        return supported;
     }
 
     @Unique private volatile boolean auram$surfaceCacheInitialized;

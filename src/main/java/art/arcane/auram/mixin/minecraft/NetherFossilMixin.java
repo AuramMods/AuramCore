@@ -41,9 +41,9 @@ public abstract class NetherFossilMixin {
         if(context.chunkGenerator().getClass()!=NoiseBasedChunkGenerator.class) return;
         var generator = (NoiseBasedChunkGenerator) context.chunkGenerator();
         TerrainBatch batch = TerrainBatch.current(generator, context.heightAccessor(), context.randomState());
-        TerrainCell shared = batch == null ? null : batch.borrowCell(x, z);
+        TerrainCell shared = batch == null ? null : batch.borrowCell(x, z, sampledHeight);
         try (TerrainCell owned = batch == null
-                ? TerrainCell.open(generator, x, z, context.heightAccessor(), context.randomState()) : null) {
+                ? TerrainCell.open(generator, x, z, context.heightAccessor(), context.randomState(), sampledHeight) : null) {
             TerrainCell cell = shared == null ? owned : shared;
             if(cell==null) return;
             // All states above maxY are air in the original NoiseColumn.

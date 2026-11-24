@@ -19,10 +19,19 @@ public final class PreliminaryDensity {
     private enum Axes { HORIZONTAL, VERTICAL, UNSUPPORTED }
 
     private final MethodHandles.Lookup lookup;
+    private enum SliceMode { NONE, ARRAY, FLAT_INPUT }
+
+    private final SliceMode sliceMode;
+    private PreliminaryDensity flatInputs;
     private final IdentityHashMap<DensityFunction, Axes> known = new IdentityHashMap<>();
 
     private PreliminaryDensity(MethodHandles.Lookup lookup) {
+        this(lookup, SliceMode.NONE);
+    }
+
+    private PreliminaryDensity(MethodHandles.Lookup lookup, SliceMode sliceMode) {
         this.lookup = lookup;
+        this.sliceMode = sliceMode;
     }
 
     public static boolean canShare(DensityFunction function, MethodHandles.Lookup lookup) {
@@ -47,6 +56,25 @@ public final class PreliminaryDensity {
         }
     }
 
+    public static boolean canLimitSliceRows(NoiseRouter router, MethodHandles.Lookup lookup) {
+        try {
+            var graph = new PreliminaryDensity(lookup, SliceMode.ARRAY);
+            // NoiseChunk maps the entire router, including functions used later
+            // by biome, aquifer, and material rules. Any interpolation marker
+            // it installs must respect the length of the supplied array.
+            for (DensityFunction function : new DensityFunction[]{
+                    router.barrierNoise(), router.fluidLevelFloodednessNoise(), router.fluidLevelSpreadNoise(),
+                    router.lavaNoise(), router.temperature(), router.vegetation(), router.continents(),
+                    router.erosion(), router.depth(), router.ridges(), router.initialDensityWithoutJaggedness(),
+                    router.finalDensity(), router.veinToggle(), router.veinRidged(), router.veinGap()}) {
+                if (graph.axes(function) == Axes.UNSUPPORTED) return false;
+            }
+            return true;
+        } catch (ReflectiveOperationException | LinkageError | SecurityException exception) {
+            return false;
+        }
+    }
+
     private Axes axes(DensityFunction function) throws ReflectiveOperationException {
         if (function == null) return Axes.UNSUPPORTED;
         Axes cached = known.get(function);
@@ -59,14 +87,31 @@ public final class PreliminaryDensity {
 
     private Axes classify(DensityFunction function) throws ReflectiveOperationException {
         if (function.getClass() == BlendedNoise.class) return Axes.VERTICAL;
-        if (!VanillaDensity.isBuiltin(function)) return Axes.UNSUPPORTED;
+        if (!VanillaDensity.isBuiltin(function)) {
+            if (sliceMode != SliceMode.NONE && function.getClass().getName().equals("dev.worldgen.tectonic.worldgen.densityfunction.Invert")) {
+                // Tectonic's unary transform fills its child array, then
+                // transforms precisely those rows. Its child still needs checking.
+                return axes((DensityFunction) function.getClass().getMethod("input").invoke(function));
+            }
+            return Axes.UNSUPPORTED;
+        }
         if (function instanceof DensityFunctions.HolderHolder holder) return axes(holder.function().value());
         if (function instanceof DensityFunctions.Spline spline) return splineAxes(spline.spline());
         if (function instanceof DensityFunctions.MarkerOrMarked marker) {
-            Axes child = axes(marker.wrapped());
             String type = ((Enum<?>) marker.type()).name();
+            if (sliceMode == SliceMode.ARRAY && type.equals("FlatCache")) {
+                // A one-cell TerrainCell's four corners use the eager Y=0
+                // values. Check those inputs separately so vertical children
+                // may qualify without allowing unknown or deferred fillers.
+                if (flatInputs == null) flatInputs = new PreliminaryDensity(lookup, SliceMode.FLAT_INPUT);
+                return flatInputs.axes(marker.wrapped()) == Axes.UNSUPPORTED ? Axes.UNSUPPORTED : Axes.HORIZONTAL;
+            }
+            if (sliceMode == SliceMode.FLAT_INPUT &&
+                    (type.equals("Interpolated") || type.equals("CacheAllInCell"))) return Axes.UNSUPPORTED;
+            Axes child = axes(marker.wrapped());
             return switch (type) {
-                case "Cache2D", "FlatCache" -> child == Axes.HORIZONTAL ? child : Axes.UNSUPPORTED;
+                case "Cache2D", "FlatCache" ->
+                        sliceMode == SliceMode.FLAT_INPUT || child == Axes.HORIZONTAL ? child : Axes.UNSUPPORTED;
                 case "Interpolated", "CacheOnce", "CacheAllInCell" -> child;
                 default -> Axes.UNSUPPORTED;
             };

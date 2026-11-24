@@ -48,6 +48,7 @@ public final class SurfaceMapBenchSmoke {
     private static long tickStart;
     private static long start;
     private static long levelStarted;
+    private static long coldStartMillis;
     private static long levelToSpawn;
     private static long spawnStarted;
     private static long spawnElapsed;
@@ -77,6 +78,7 @@ public final class SurfaceMapBenchSmoke {
                 if (start == 0) {
                     start = tickStart;
                     if (WORLDGEN) {
+                        coldStartMillis = System.currentTimeMillis();
                         AquiferReuseProbe.beginColdRun();
                         WorldgenTargets.beginCold();
                     }
@@ -148,6 +150,8 @@ public final class SurfaceMapBenchSmoke {
 
     private static void finish(MinecraftServer server) throws IOException {
         if (WORLDGEN) {
+            Files.writeString(Path.of("worldgen-cold-window.csv"), "start_epoch_ms,end_epoch_ms\n"
+                    + coldStartMillis + "," + System.currentTimeMillis() + "\n");
             completedRequests.add(0, "chunk_x,chunk_z,ready_ns");
             Files.write(Path.of("worldgen-chunks.csv"), completedRequests);
             AquiferReuseProbe.write(Path.of("worldgen-stage-cpu.csv"));
