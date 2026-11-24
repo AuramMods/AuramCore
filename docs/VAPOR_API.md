@@ -30,14 +30,17 @@ and transfer rates as air.
 | Exposed lava | 0.10 per sampled puff in the air above it |
 | Regular or soul torch, including wall torches | 0.03 per sampled puff |
 | TNT or large ghast fireball explosion | 1.0 at the center, with a 7-block falloff |
-| Entity arrival or departure | 0.25 per puff |
+| Living entity death | One 1.0 pulse at the entity's final block |
 | Burning entity | 0.15 per tick |
+| Tinkers' seared heater | 0.12 per tick from its front while burning fuel |
+| Tinkers' smeltery or foundry | 0.12 per tick per open interior floor cell while the tank holds fluid |
+| Tinkers' drain faucet | 0.08 per tick while it transfers fluid |
+| Tinkers' casting table, basin, or channel | 0.08 per tick while casting fills or cools, or while the channel holds fluid |
+| Tinkers' melter or alloyer | 0.08 per tick above it while fueled or holding hot fluid |
 
 The client tries 32 random block positions per tick within eight blocks
 horizontally and four blocks vertically of the camera. It also samples nearby
-burning entities from their synced fire state. The server sends the arrival and
-departure puffs for spawns, removals, and teleports. Chunk streaming does not
-count as a spawn or departure.
+burning entities from their synced fire state.
 
 ## Typed API
 

@@ -12,6 +12,7 @@ abstract class IrisVaporDefinesMixin {
     @ModifyReturnValue(method = "createStandardEnvironmentDefines", at = @At("RETURN"))
     private static ImmutableList<StringPair> auram$vaporDefine(ImmutableList<StringPair> defines) {
         return ImmutableList.<StringPair>builder().addAll(defines)
-                .add(new StringPair("AURAM_VAPOR_BACKEND", "")).build();
+                .add(new StringPair("AURAM_VAPOR_BACKEND", ""))
+                .add(new StringPair("AURAM_RF_BACKEND", "")).build();
     }
 }

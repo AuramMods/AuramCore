@@ -4,7 +4,6 @@ import art.arcane.auram.Auram;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.projectile.LargeFireball;
@@ -13,13 +12,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.EntityTeleportEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -30,8 +24,6 @@ public final class VaporDemonstrators {
     private static final float FURNACE_RATE = 0.14f;
     private static final float FIRE_RATE = 0.32f;
     private static final float CAMPFIRE_RATE = 0.65f;
-    // Give the client's login or dimension-change packet time to install the new level.
-    private static final int PLAYER_ARRIVAL_DELAY = 2;
 
     private VaporDemonstrators() {
     }
@@ -51,7 +43,7 @@ public final class VaporDemonstrators {
         }
     }
 
-    private static boolean open(ServerLevel level, BlockPos pos) {
+    static boolean open(ServerLevel level, BlockPos pos) {
         if (!level.hasChunkAt(pos)) return false;
         BlockState block = level.getBlockState(pos);
         return block.getFluidState().isEmpty() && !block.isCollisionShapeFullBlock(level, pos);
@@ -68,7 +60,7 @@ public final class VaporDemonstrators {
     }
 
     private static float fireRate(BlockState state) {
-        if (state.is(Blocks.FIRE)) return FIRE_RATE;
+        if (state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE)) return FIRE_RATE;
         return state.getBlock() instanceof CampfireBlock && state.getValue(CampfireBlock.LIT) ? CAMPFIRE_RATE : 0.0f;
     }
 
@@ -117,57 +109,5 @@ public final class VaporDemonstrators {
         if (!(source instanceof PrimedTnt) && !(source instanceof LargeFireball)) return;
         // Delivery is deferred to the level tick end, after the explosion updates the terrain.
         Vapor.pulse(level, BlockPos.containing(event.getExplosion().getPosition()), 1.0f, 7);
-    }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void entityJoined(EntityJoinLevelEvent event) {
-        if (event.getLevel() instanceof ServerLevel level && !event.loadedFromDisk()
-                && !(event.getEntity() instanceof ServerPlayer)) {
-            VaporSources.entityPuff(level, event.getEntity().blockPosition(), 0);
-        }
-    }
-
-    @SubscribeEvent
-    public static void entityLeft(EntityLeaveLevelEvent event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) return;
-        Entity entity = event.getEntity();
-        Entity.RemovalReason reason = entity.getRemovalReason();
-        if (reason != null && (reason.shouldDestroy() || reason == Entity.RemovalReason.CHANGED_DIMENSION)) {
-            VaporSources.entityPuff(level, entity.blockPosition(), 0);
-        }
-    }
-
-    @SubscribeEvent
-    public static void playerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        playerArrived(event);
-    }
-
-    @SubscribeEvent
-    public static void playerRespawned(PlayerEvent.PlayerRespawnEvent event) {
-        playerArrived(event);
-    }
-
-    @SubscribeEvent
-    public static void playerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        playerArrived(event);
-    }
-
-    private static void playerArrived(PlayerEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            VaporSources.entityPuff(player.serverLevel(), player.blockPosition(), PLAYER_ARRIVAL_DELAY);
-        }
-    }
-
-    @SubscribeEvent
-    public static void playerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) {
-            VaporSources.entityPuff(player.serverLevel(), player.blockPosition(), 0);
-        }
-    }
-
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void entityTeleporting(EntityTeleportEvent event) {
-        Entity entity = event.getEntity();
-        if (entity.level() instanceof ServerLevel level) VaporSources.trackTeleport(level, entity);
     }
 }

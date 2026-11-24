@@ -1,5 +1,6 @@
 package art.arcane.auram.mixin.vapor;
 
+import art.arcane.auram.rf.client.RfFieldTexture;
 import art.arcane.auram.vapor.client.VaporTexture;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import net.irisshaders.iris.gl.sampler.SamplerHolder;
@@ -16,6 +17,9 @@ abstract class IrisVaporBindingsMixin {
     @Inject(method = "addCustomTextures", at = @At("HEAD"))
     private static void auram$bindVapor(SamplerHolder samplers, Object2ObjectMap<String, TextureAccess> textures,
                                       CallbackInfo callback) {
+        if (samplers.hasSampler(RfFieldTexture.SAMPLER)) {
+            samplers.addDynamicSampler(TextureType.TEXTURE_3D, RfFieldTexture::texture, null, RfFieldTexture.SAMPLER);
+        }
         if (samplers.hasSampler(VaporTexture.SAMPLER)) {
             samplers.addDynamicSampler(TextureType.TEXTURE_3D, VaporTexture::texture, null, VaporTexture.SAMPLER);
         }

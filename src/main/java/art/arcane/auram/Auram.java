@@ -9,6 +9,7 @@ import art.arcane.auram.tweak.LogRetention;
 import art.arcane.auram.util.RecipeCache;
 import art.arcane.auram.vapor.VaporNetwork;
 import art.arcane.auram.wind.WindNetwork;
+import art.arcane.auram.rf.RfNetwork;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.registries.Registries;
@@ -98,6 +99,7 @@ public class Auram {
         SurfaceMapNetwork.register();
         VaporNetwork.register();
         WindNetwork.register();
+        RfNetwork.register();
         MinecraftForge.EVENT_BUS.register(new AuramCommands());
     } 
 

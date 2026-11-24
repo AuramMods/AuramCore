@@ -2,6 +2,7 @@ package art.arcane.auram.vapor.client;
 
 import art.arcane.auram.field.FieldFrames;
 import art.arcane.auram.field.FieldTicker;
+import art.arcane.auram.field.client.VoxelTextureUpload;
 import art.arcane.auram.field.VoxelGrid.Bounds;
 import art.arcane.auram.field.VoxelGrid.Position;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -16,9 +17,6 @@ import java.nio.ByteBuffer;
 import static net.irisshaders.iris.gl.uniform.UniformUpdateFrequency.PER_FRAME;
 import static org.lwjgl.opengl.GL11C.*;
 import static org.lwjgl.opengl.GL12C.*;
-import static org.lwjgl.opengl.GL15C.glBindBuffer;
-import static org.lwjgl.opengl.GL21C.GL_PIXEL_UNPACK_BUFFER;
-import static org.lwjgl.opengl.GL21C.GL_PIXEL_UNPACK_BUFFER_BINDING;
 
 /** Render-thread upload and bindings for the Vapor field. */
 public final class VaporTexture {
@@ -51,7 +49,7 @@ public final class VaporTexture {
         if (texture == 0) {
             texture = glGenTextures();
             staging = BufferUtils.createByteBuffer(VaporVolume.CELLS * 4);
-            withUnpackState(() -> {
+            VoxelTextureUpload.withUnpackState(texture, () -> {
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -152,29 +150,8 @@ public final class VaporTexture {
             }
         }
         staging.flip();
-        withUnpackState(() -> glTexSubImage3D(GL_TEXTURE_3D, 0, region.minX(), region.minY(), region.minZ(),
+        VoxelTextureUpload.withUnpackState(texture, () -> glTexSubImage3D(GL_TEXTURE_3D, 0, region.minX(), region.minY(), region.minZ(),
                 region.maxX() - region.minX(), region.maxY() - region.minY(), region.maxZ() - region.minZ(),
                 GL_RGBA, GL_UNSIGNED_BYTE, staging));
-    }
-
-    private static void withUnpackState(Runnable upload) {
-        int bound = glGetInteger(GL_TEXTURE_BINDING_3D);
-        int buffer = glGetInteger(GL_PIXEL_UNPACK_BUFFER_BINDING);
-        int[] parameters = {GL_UNPACK_ALIGNMENT, GL_UNPACK_ROW_LENGTH, GL_UNPACK_IMAGE_HEIGHT,
-                GL_UNPACK_SKIP_PIXELS, GL_UNPACK_SKIP_ROWS, GL_UNPACK_SKIP_IMAGES};
-        int[] previous = new int[parameters.length];
-        try {
-            glBindTexture(GL_TEXTURE_3D, texture);
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-            for (int i = 0; i < parameters.length; i++) {
-                previous[i] = glGetInteger(parameters[i]);
-                glPixelStorei(parameters[i], i == 0 ? 4 : 0);
-            }
-            upload.run();
-        } finally {
-            for (int i = 0; i < parameters.length; i++) glPixelStorei(parameters[i], previous[i]);
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer);
-            glBindTexture(GL_TEXTURE_3D, bound);
-        }
     }
 }

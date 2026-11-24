@@ -19,7 +19,8 @@ final class VaporAmbient {
     private static final int HORIZONTAL_RANGE = 8;
     private static final int VERTICAL_RANGE = 4;
     private static final int MAX_BURNING_ENTITIES = 32;
-    private static final float LAVA_PUFF = 0.1f;
+    private static final float LAVA_PUFF = 0.50f;
+    private static final float MAGMA_PUFF = LAVA_PUFF * 0.5f;
     private static final float TORCH_PUFF = 0.03f;
     private static final float BURNING_ENTITY_RATE = 0.15f;
     private static final RandomSource RANDOM = RandomSource.create();
@@ -44,11 +45,12 @@ final class VaporAmbient {
                     camera.getZ() + offset(HORIZONTAL_RANGE));
             if (level.isOutsideBuildHeight(pos) || !level.hasChunkAt(pos)) continue;
             var state = level.getBlockState(pos);
-            if (state.getFluidState().is(FluidTags.LAVA)) {
-                // Fluid fills its own cell. A surface puff starts in the cell immediately above.
+            boolean lava = state.getFluidState().is(FluidTags.LAVA);
+            if (lava || state.is(Blocks.MAGMA_BLOCK)) {
+                // Surface puffs start above the fluid or solid block.
                 BlockPos vent = pos.above();
                 if (!level.isOutsideBuildHeight(vent) && level.getFluidState(vent).isEmpty()) {
-                    puffs.add(new VaporVolume.Source(VaporClient.position(vent), LAVA_PUFF, 0));
+                    puffs.add(new VaporVolume.Source(VaporClient.position(vent), lava ? LAVA_PUFF : MAGMA_PUFF, 0));
                 }
             } else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)
                     || state.is(Blocks.SOUL_TORCH) || state.is(Blocks.SOUL_WALL_TORCH)) {

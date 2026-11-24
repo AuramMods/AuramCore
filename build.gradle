@@ -107,6 +107,9 @@ dependencies {
         jarJar.ranged(it, '[0.5.0,)')
     }
     implementation fg.deobf("curse.maven:projecte-226410:4901949")
+    // Optional Tinkers' Construct Vapor hooks, built against the pack versions.
+    compileOnly fg.deobf('curse.maven:tinkers-construct-74072:7449219')
+    compileOnly fg.deobf('curse.maven:mantle-74924:7414488')
     // Lucent stays optional at runtime. These mixins only use its own Java types.
     compileOnly "curse.maven:lucent-493280:4951434"
     // Oculus exposes the Iris shader-pack state through a mapping-independent API.
