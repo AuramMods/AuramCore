@@ -8,6 +8,7 @@ import art.arcane.auram.field.VoxelOccupancy;
 import art.arcane.auram.field.VoxelOccupancy.SectionOccupancy;
 import art.arcane.auram.field.WindField;
 import art.arcane.auram.vapor.VaporNetwork;
+import art.arcane.auram.vapor.VaporObstacles;
 import art.arcane.auram.wind.WindNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -16,7 +17,6 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -338,7 +338,7 @@ public final class VaporClient {
                         var state = blocks.getBlockState(x, y, z);
                         if (state.isAir()) continue;
                         pos.set(section.x() * SECTION + x, section.y() * SECTION + y, section.z() * SECTION + z);
-                        if (blocksVapor(state, pos)) {
+                        if (VaporObstacles.blocksVapor(level, pos, state)) {
                             occupied.set(SECTIONS.index(x, y, z));
                         }
                     }
@@ -363,18 +363,13 @@ public final class VaporClient {
             SectionOccupancy previous = sections.get(section);
             if (previous == null) return;
             var state = level.getBlockState(pos);
-            boolean blocked = blocksVapor(state, pos);
+            boolean blocked = VaporObstacles.blocksVapor(level, pos, state);
             var updated = previous.with(pos.getX() & (SECTION - 1), pos.getY() & (SECTION - 1),
                     pos.getZ() & (SECTION - 1), blocked);
             if (previous != updated) {
                 sections.put(section, updated);
                 changed = true;
             }
-        }
-
-        private boolean blocksVapor(BlockState state, BlockPos pos) {
-            // Partial shapes leave the entire cell available for transport.
-            return !state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos);
         }
 
         private boolean pulseReady(VaporVolume.Source pulse) {

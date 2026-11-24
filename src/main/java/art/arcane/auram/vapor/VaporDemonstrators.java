@@ -45,8 +45,7 @@ public final class VaporDemonstrators {
 
     static boolean open(ServerLevel level, BlockPos pos) {
         if (!level.hasChunkAt(pos)) return false;
-        BlockState block = level.getBlockState(pos);
-        return block.getFluidState().isEmpty() && !block.isCollisionShapeFullBlock(level, pos);
+        return !VaporObstacles.blocksVapor(level, pos, level.getBlockState(pos));
     }
 
     public static void blockChanged(ServerLevel level, BlockPos pos, BlockState before, BlockState after) {
