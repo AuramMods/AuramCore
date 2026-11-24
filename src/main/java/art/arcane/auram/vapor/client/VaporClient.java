@@ -7,6 +7,7 @@ import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.VoxelOccupancy;
 import art.arcane.auram.field.VoxelOccupancy.SectionOccupancy;
 import art.arcane.auram.field.WindField;
+import art.arcane.auram.light.LightClient;
 import art.arcane.auram.vapor.VaporNetwork;
 import art.arcane.auram.vapor.VaporObstacles;
 import art.arcane.auram.wind.WindNetwork;
@@ -70,6 +71,7 @@ public final class VaporClient {
     private static void receive(VaporNetwork.Frame frame) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().location().equals(frame.dimension())) return;
+        LightClient.setAlembicLights(level, frame.emitters());
         submitEmitters(level, frame.emitters().stream()
                 .map(emitter -> new VaporVolume.Source(position(emitter.position()), emitter.rate(), 0)).toList());
         for (var pulse : frame.pulses()) {

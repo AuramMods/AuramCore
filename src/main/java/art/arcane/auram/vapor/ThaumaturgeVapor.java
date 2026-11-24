@@ -7,7 +7,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import java.util.List;
+
 public final class ThaumaturgeVapor {
+    public static final ResourceLocation ALEMBIC = source("alembic");
     private static final ResourceLocation CRUCIBLE = source("crucible");
     private static final ResourceLocation INFUSION = source("infusion");
     private static final ResourceLocation MACHINE = source("machine");
@@ -33,6 +36,17 @@ public final class ThaumaturgeVapor {
         // The matrix's own unrest uses negative stability and reaches its maximum at -100.
         float unrest = Mth.clamp(stability / INFUSION_STABILITY_FLOOR, 0.0f, 1.0f);
         refresh(matrix, INFUSION, Mth.lerp(unrest, INFUSION_BASE, 1.0f), 1);
+    }
+
+    public static void alembics(ServerLevel level, List<BlockPos> columns) {
+        // The original 0.10 was a single smelter source. Share half that output across its exits.
+        float rate = MACHINE_RATE * 0.5f / columns.size();
+        for (BlockPos top : columns) {
+            BlockPos above = top.above();
+            BlockPos vent = !level.isOutsideBuildHeight(above) && VaporDemonstrators.open(level, above)
+                    ? above : top;
+            VaporSources.refresh(level, top, new VaporNetwork.Emitter(ALEMBIC, vent, rate));
+        }
     }
 
     public static void machine(BlockEntity machine, boolean active) {

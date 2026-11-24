@@ -2,6 +2,8 @@ package art.arcane.auram.light;
 
 import art.arcane.auram.Auram;
 import art.arcane.auram.field.VoxelGrid.Position;
+import art.arcane.auram.vapor.ThaumaturgeVapor;
+import art.arcane.auram.vapor.VaporNetwork;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -18,6 +20,10 @@ import static art.arcane.auram.field.VoxelGrid.BLOCKS;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
 public final class LightClient {
+    private static final int ALEMBIC_COLOR = 0xE5D5FF;
+    private static final float ALEMBIC_STRENGTH = 3f / 15f;
+    private static ClientLevel alembicLevel;
+    private static List<LightSample> alembics = List.of();
     private static ClientLevel remoteLevel;
     private static List<LightSample> remote = List.of();
 
@@ -39,8 +45,24 @@ public final class LightClient {
         remote = frame.sources();
     }
 
+    public static void setAlembicLights(ClientLevel level, List<VaporNetwork.Emitter> emitters) {
+        // The server's short-lived Vapor sources already carry the active vents and their lifetime.
+        alembicLevel = level;
+        alembics = alembicSamples(emitters);
+    }
+
+    static List<LightSample> alembicSamples(List<VaporNetwork.Emitter> emitters) {
+        return emitters.stream().filter(emitter -> emitter.id().equals(ThaumaturgeVapor.ALEMBIC))
+                .map(emitter -> new LightSample(emitter.position(), ALEMBIC_COLOR, ALEMBIC_STRENGTH, 0, 0))
+                .toList();
+    }
+
     @SubscribeEvent
     public static void unload(LevelEvent.Unload event) {
+        if (event.getLevel() == alembicLevel) {
+            alembicLevel = null;
+            alembics = List.of();
+        }
         if (event.getLevel() == remoteLevel) {
             remoteLevel = null;
             remote = List.of();
@@ -54,7 +76,8 @@ public final class LightClient {
     }
 
     public static boolean hasSources(ClientLevel level) {
-        return (level == remoteLevel && !remote.isEmpty()) || !LightSources.local(level).isEmpty();
+        return (level == remoteLevel && !remote.isEmpty()) || (level == alembicLevel && !alembics.isEmpty())
+                || !LightSources.local(level).isEmpty();
     }
 
     public static void collect(ClientLevel level, Position origin, Int2IntOpenHashMap colors) {
@@ -62,6 +85,9 @@ public final class LightClient {
         float partial = Minecraft.getInstance().getFrameTime();
         if (level == remoteLevel) {
             for (LightSample light : remote) add(level, origin, colors, light, tick, partial);
+        }
+        if (level == alembicLevel) {
+            for (LightSample light : alembics) add(level, origin, colors, light, tick, partial);
         }
         for (LightSample light : LightSources.local(level)) add(level, origin, colors, light, tick, partial);
     }

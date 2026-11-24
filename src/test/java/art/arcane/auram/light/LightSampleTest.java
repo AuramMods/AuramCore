@@ -1,7 +1,12 @@
 package art.arcane.auram.light;
 
+import art.arcane.auram.vapor.ThaumaturgeVapor;
+import art.arcane.auram.vapor.VaporNetwork;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -17,6 +22,19 @@ public class LightSampleTest {
         assertFalse(light.expired(119));
         assertTrue(light.expired(120));
         assertEquals(0, light.packedColor(120, 0f));
+    }
+
+    @Test
+    public void onlyAlembicVaporCreatesLevelThreeLavenderLight() {
+        BlockPos outlet = new BlockPos(7, 64, 11);
+        var machine = new VaporNetwork.Emitter(ResourceLocation.fromNamespaceAndPath("auram", "machine"),
+                BlockPos.ZERO, 0.10f);
+        var alembic = new VaporNetwork.Emitter(ThaumaturgeVapor.ALEMBIC, outlet, 0.05f);
+        var samples = LightClient.alembicSamples(List.of(machine, alembic));
+        assertEquals(1, samples.size());
+        assertEquals(outlet, samples.get(0).position());
+        assertEquals(0x33E5D5FF, samples.get(0).packedColor(200, 0.5f));
+        assertTrue(LightClient.alembicSamples(List.of()).isEmpty());
     }
 
     @Test

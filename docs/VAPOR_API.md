@@ -45,7 +45,8 @@ and transfer rates as air.
 | Thaumaturge Nitor, any color | 0.05 per tick |
 | Thaumaturge boiling crucible | 0.05 per tick plus a puff of 0.03 per essentia unit in each accepted item, capped at 1.0 per puff |
 | Thaumaturge active infusion matrix | 0.05 per tick at stability 0 or higher, rising linearly to 1.0 at −100 stability |
-| Thaumaturge lit essentia smelters and advanced alchemical furnace, operating infernal furnace, thaumatorium, essentia crystalizer, centrifuge, focal manipulator, golem press, arcane bore, flux scrubber, flux condenser, and void siphon | 0.10 per operating tick |
+| Thaumaturge alembic outlets | 0.05 per smelting tick per smelter, shared across its connected columns |
+| Thaumaturge lit essentia smelters without alembics and advanced alchemical furnace, operating infernal furnace, thaumatorium, essentia crystalizer, centrifuge, focal manipulator, golem press, arcane bore, flux scrubber, flux condenser, and void siphon | 0.10 per operating tick |
 | Ender IO SAG Mill, Alloy Smelter, Slice'N'Splice, Painting Machine, Soul Engine, Farming Station, Vat, Fluid Drain, Vacuum Chest, and XP Vacuum | 0.08 per operating tick |
 | Ender IO Crafter, Impulse Hopper, and Niard | One 0.08 puff per successful operation |
 
