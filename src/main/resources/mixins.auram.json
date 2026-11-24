@@ -130,6 +130,8 @@
     "ftbessentials.RtpCommandMixin",
     "ftbessentials.RtpTeleporterMixin",
     "ftbessentials.RtpBiomeWaitMixin",
+    "botania.ManaPoolVaporMixin",
+    "botania.EndoflameEffectsMixin",
     "mekanism.WorldUtilsMixin",
     "mekanism.RfNetworkAccess",
     "mekanism.RfEnergyNetworkMixin",

@@ -5,6 +5,7 @@ import art.arcane.auram.field.VoxelGrid.Bounds;
 import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.client.VoxelTextureUpload;
 import art.arcane.auram.light.LightClient;
+import art.arcane.auram.vapor.client.BotaniaEffects;
 import art.arcane.auram.vapor.client.VanillaEntityEffects;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.irisshaders.iris.Iris;
@@ -99,6 +100,7 @@ public final class TinkersFluidLightTexture {
             ambientLights.clear();
             if (ModList.get().isLoaded("tconstruct")) TinkersFluidLights.collect(current, base, ambientLights);
             VanillaEntityEffects.collectLights(current, base, ambientLights);
+            if (ModList.get().isLoaded("botania")) BotaniaEffects.collectLights(current, base, ambientLights);
         }
 
         boolean apiLights = LightClient.hasSources(current);

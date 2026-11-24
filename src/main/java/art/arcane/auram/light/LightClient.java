@@ -7,6 +7,7 @@ import art.arcane.auram.vapor.VaporNetwork;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
@@ -95,9 +96,13 @@ public final class LightClient {
     private static void add(ClientLevel level, Position origin, Int2IntOpenHashMap colors, LightSample light,
                             long tick, float partial) {
         var pos = light.position();
+        if (level.hasChunkAt(pos)) putSource(origin, pos, light.packedColor(tick, partial), colors);
+    }
+
+    public static void putSource(Position origin, BlockPos pos, int packed,
+                                 Int2IntOpenHashMap colors) {
         int x = pos.getX() - origin.x(), y = pos.getY() - origin.y(), z = pos.getZ() - origin.z();
-        if (!BLOCKS.contains(x, y, z) || !level.hasChunkAt(pos)) return;
-        int packed = light.packedColor(tick, partial);
+        if (!BLOCKS.contains(x, y, z)) return;
         int cell = BLOCKS.index(x, y, z);
         if ((packed >>> 24) > (colors.get(cell) >>> 24)) colors.put(cell, packed);
     }

@@ -11,6 +11,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.phys.AABB;
+import net.minecraftforge.fml.ModList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +69,7 @@ final class VaporAmbient {
             burning.add(new VaporVolume.Source(VaporClient.position(entity.blockPosition()), BURNING_ENTITY_RATE, 0));
         }
         VanillaEntityEffects.addVapor(level, window, puffs, burning);
+        if (ModList.get().isLoaded("botania")) BotaniaEffects.addVapor(level, window, burning);
         return puffs.isEmpty() && burning.isEmpty() ? Sources.EMPTY : new Sources(puffs, burning);
     }
 

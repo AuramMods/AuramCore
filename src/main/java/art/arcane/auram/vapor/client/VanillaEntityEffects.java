@@ -1,6 +1,7 @@
 package art.arcane.auram.vapor.client;
 
 import art.arcane.auram.field.VoxelGrid.Position;
+import art.arcane.auram.light.LightClient;
 import art.arcane.auram.vapor.VaporObstacles;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -99,17 +100,17 @@ public final class VanillaEntityEffects {
         });
         for (Entity entity : entities) {
             if (entity instanceof AreaEffectCloud breath) {
-                addLight(origin, breath.blockPosition(), DRAGON_BREATH_LIGHT, colors);
+                LightClient.putSource(origin, breath.blockPosition(), DRAGON_BREATH_LIGHT, colors);
                 float offset = breath.getRadius() * 0.65f;
                 if (offset < 1f) continue;
                 for (int angle = 0; angle < 4; angle++) {
                     float radians = angle * Mth.HALF_PI + Mth.PI / 4;
                     var pos = BlockPos.containing(breath.getX() + offset * Mth.cos(radians), breath.getY(),
                             breath.getZ() + offset * Mth.sin(radians));
-                    addLight(origin, pos, DRAGON_BREATH_LIGHT, colors);
+                    LightClient.putSource(origin, pos, DRAGON_BREATH_LIGHT, colors);
                 }
             } else {
-                addLight(origin, body(entity), PASSIVE.get(entity.getType()).light(), colors);
+                LightClient.putSource(origin, body(entity), PASSIVE.get(entity.getType()).light(), colors);
             }
         }
     }
@@ -127,13 +128,6 @@ public final class VanillaEntityEffects {
 
     private static BlockPos body(Entity entity) {
         return BlockPos.containing(entity.getX(), entity.getY(0.5), entity.getZ());
-    }
-
-    private static void addLight(Position origin, BlockPos pos, int color, Int2IntOpenHashMap colors) {
-        int x = pos.getX() - origin.x(), y = pos.getY() - origin.y(), z = pos.getZ() - origin.z();
-        if (!BLOCKS.contains(x, y, z)) return;
-        int index = BLOCKS.index(x, y, z);
-        if ((color >>> 24) > (colors.get(index) >>> 24)) colors.put(index, color);
     }
 
     private static int light(int rgb, int level) {

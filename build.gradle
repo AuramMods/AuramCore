@@ -125,6 +125,7 @@ dependencies {
     compileOnly fg.deobf('curse.maven:mantle-74924:7414488')
     compileOnly fg.deobf('auram.releases:thaumaturge:1.1.6')
     compileOnly fg.deobf('maven.modrinth:mekanism:uxe1WQp4')
+    compileOnly fg.deobf('curse.maven:botania-225643:6870713')
     // Lucent stays optional at runtime. These mixins only use its own Java types.
     compileOnly "curse.maven:lucent-493280:4951434"
     // Oculus exposes the Iris shader-pack state through a mapping-independent API.
