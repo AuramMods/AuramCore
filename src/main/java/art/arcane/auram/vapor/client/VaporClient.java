@@ -1,6 +1,11 @@
 package art.arcane.auram.vapor.client;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.FieldFrames;
+import art.arcane.auram.field.VoxelGrid;
+import art.arcane.auram.field.VoxelGrid.Position;
+import art.arcane.auram.field.VoxelOccupancy;
+import art.arcane.auram.field.VoxelOccupancy.SectionOccupancy;
 import art.arcane.auram.vapor.VaporNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -28,7 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static art.arcane.auram.vapor.client.VaporVolume.SECTION;
+import static art.arcane.auram.field.VoxelGrid.SECTION;
+import static art.arcane.auram.field.VoxelGrid.SECTIONS;
 import static art.arcane.auram.vapor.client.VaporVolume.SIDE;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
@@ -37,7 +43,7 @@ public final class VaporClient {
     private static final int SECTION_READS_PER_TICK = 4;
     private static final int MAX_WAITING_PULSES = 32;
     private static final int PULSE_WAIT_TICKS = 40;
-    private static final VaporVolume.SectionOccupancy EMPTY_SECTION = new VaporVolume.SectionOccupancy(new BitSet());
+    private static final SectionOccupancy EMPTY_SECTION = new SectionOccupancy(new BitSet());
 
     private static Session session;
 
@@ -66,8 +72,8 @@ public final class VaporClient {
         }
     }
 
-    static VaporVolume.Position position(BlockPos pos) {
-        return new VaporVolume.Position(pos.getX(), pos.getY(), pos.getZ());
+    static Position position(BlockPos pos) {
+        return new Position(pos.getX(), pos.getY(), pos.getZ());
     }
 
     // Called only on the client game thread, including after packet scheduling.
@@ -80,10 +86,10 @@ public final class VaporClient {
         sessionFor(level).emitters = List.copyOf(emitters);
     }
 
-    static VaporWorker.Frames frames() {
+    static FieldFrames<VaporVolume.Snapshot> frames() {
         Session current = session;
         return current == null || current.level != Minecraft.getInstance().level
-                ? VaporWorker.Frames.EMPTY : current.worker.frames();
+                ? FieldFrames.empty() : current.worker.frames();
     }
 
     private static Session sessionFor(ClientLevel level) {
@@ -149,13 +155,13 @@ public final class VaporClient {
         private final ClientLevel level;
         private final String dimension;
         private final VaporWorker worker = new VaporWorker();
-        private final Map<VaporVolume.Position, VaporVolume.SectionOccupancy> sections = new HashMap<>();
-        private final Map<VaporVolume.Position, LevelChunk> knownChunks = new LinkedHashMap<>();
-        private final List<VaporVolume.Position> window = new ArrayList<>();
+        private final Map<Position, SectionOccupancy> sections = new HashMap<>();
+        private final Map<Position, LevelChunk> knownChunks = new LinkedHashMap<>();
+        private final List<Position> window = new ArrayList<>();
         private final ArrayDeque<WaitingPulse> pulses = new ArrayDeque<>();
         private List<VaporVolume.Source> emitters = List.of();
-        private VaporVolume.Position origin;
-        private VaporVolume.Occupancy input;
+        private Position origin;
+        private VoxelOccupancy input;
         private VaporVolume.Erosion erosion = VaporVolume.Erosion.CLEAR;
         private VaporAtmosphere atmosphere;
         private VaporAtmosphere.Sample weather;
@@ -178,11 +184,11 @@ public final class VaporClient {
                 return;
             }
             ticks++;
-            VaporVolume.Position next = VaporVolume.Position.originAround(camera.getX(), camera.getY(), camera.getZ());
+            Position next = VoxelGrid.originAround(camera.getX(), camera.getY(), camera.getZ());
             if (!next.equals(origin)) moveWindow(next, camera);
             readSections();
             if (changed) {
-                input = new VaporVolume.Occupancy(origin, sections);
+                input = new VoxelOccupancy(origin, sections);
                 changed = false;
             }
             for (var pulse : local.puffs()) queuePulse(pulse);
@@ -190,7 +196,7 @@ public final class VaporClient {
             var pending = pulses.iterator();
             while (pending.hasNext()) {
                 WaitingPulse pulse = pending.next();
-                if (ticks - pulse.expiresAt >= 0 || !inWindow(sectionAt(pulse.source.position()))) {
+                if (ticks - pulse.expiresAt >= 0 || !inWindow(pulse.source.position().section())) {
                     pending.remove();
                 } else if (pulseReady(pulse.source)) {
                     ready.add(pulse.source);
@@ -222,7 +228,7 @@ public final class VaporClient {
                     int worldY = origin.y() + y;
                     int worldZ = origin.z() + z;
                     boolean precipitation = false;
-                    if (local.rain() > 0.0f && sections.containsKey(sectionAt(new VaporVolume.Position(worldX, worldY, worldZ)))) {
+                    if (local.rain() > 0.0f && sections.containsKey(new Position(worldX, worldY, worldZ).section())) {
                         // Weather outside applies beneath roofs and underground as well.
                         int surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, worldX, worldZ);
                         sample.set(worldX, Math.max(worldY, surface), worldZ);
@@ -236,7 +242,7 @@ public final class VaporClient {
             refreshWeather = false;
         }
 
-        private void moveWindow(VaporVolume.Position next, BlockPos camera) {
+        private void moveWindow(Position next, BlockPos camera) {
             origin = next;
             refreshWeather = true;
             int x0 = next.x() / SECTION;
@@ -246,11 +252,11 @@ public final class VaporClient {
             for (int x = x0; x < x0 + SECTIONS_PER_SIDE; x++) {
                 for (int y = y0; y < y0 + SECTIONS_PER_SIDE; y++) {
                     for (int z = z0; z < z0 + SECTIONS_PER_SIDE; z++) {
-                        window.add(new VaporVolume.Position(x, y, z));
+                        window.add(new Position(x, y, z));
                     }
                 }
             }
-            VaporVolume.Position center = sectionAt(position(camera));
+            Position center = position(camera).section();
             window.sort(Comparator.comparingInt(pos -> distance(pos, center)));
             sections.keySet().retainAll(window);
             knownChunks.keySet().retainAll(window);
@@ -259,7 +265,7 @@ public final class VaporClient {
 
         private void readSections() {
             int reads = 0;
-            for (VaporVolume.Position section : window) {
+            for (Position section : window) {
                 if (sections.containsKey(section)) continue;
                 int index = level.getSectionIndexFromSectionY(section.y());
                 if (index < 0 || index >= level.getSectionsCount()) continue;
@@ -274,7 +280,7 @@ public final class VaporClient {
             }
         }
 
-        private VaporVolume.SectionOccupancy readSection(VaporVolume.Position section, LevelChunkSection blocks) {
+        private SectionOccupancy readSection(Position section, LevelChunkSection blocks) {
             BitSet occupied = new BitSet(SECTION * SECTION * SECTION);
             BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
             for (int z = 0; z < SECTION; z++) {
@@ -284,17 +290,17 @@ public final class VaporClient {
                         if (state.isAir()) continue;
                         pos.set(section.x() * SECTION + x, section.y() * SECTION + y, section.z() * SECTION + z);
                         if (blocksVapor(state, pos)) {
-                            occupied.set(VaporVolume.sectionIndex(x, y, z));
+                            occupied.set(SECTIONS.index(x, y, z));
                         }
                     }
                 }
             }
-            return new VaporVolume.SectionOccupancy(occupied);
+            return new SectionOccupancy(occupied);
         }
 
         private void invalidateColumn(LevelChunk chunk, boolean unloading) {
             var pos = chunk.getPos();
-            for (VaporVolume.Position section : window) {
+            for (Position section : window) {
                 if (section.x() != pos.x || section.z() != pos.z || (unloading && knownChunks.get(section) != chunk)) continue;
                 sections.remove(section);
                 knownChunks.remove(section);
@@ -304,8 +310,8 @@ public final class VaporClient {
         }
 
         private void blockChanged(BlockPos pos) {
-            VaporVolume.Position section = sectionAt(position(pos));
-            VaporVolume.SectionOccupancy previous = sections.get(section);
+            Position section = position(pos).section();
+            SectionOccupancy previous = sections.get(section);
             if (previous == null) return;
             var state = level.getBlockState(pos);
             boolean blocked = blocksVapor(state, pos);
@@ -325,8 +331,8 @@ public final class VaporClient {
         private boolean pulseReady(VaporVolume.Source pulse) {
             var pos = pulse.position();
             int radius = pulse.radius();
-            var low = sectionAt(new VaporVolume.Position(pos.x() - radius, pos.y() - radius, pos.z() - radius));
-            var high = sectionAt(new VaporVolume.Position(pos.x() + radius, pos.y() + radius, pos.z() + radius));
+            var low = new Position(pos.x() - radius, pos.y() - radius, pos.z() - radius).section();
+            var high = new Position(pos.x() + radius, pos.y() + radius, pos.z() + radius).section();
             for (var section : window) {
                 if (section.x() >= low.x() && section.x() <= high.x()
                         && section.y() >= low.y() && section.y() <= high.y()
@@ -336,20 +342,15 @@ public final class VaporClient {
                         && level.getSectionIndexFromSectionY(section.y()) >= 0
                         && level.getSectionIndexFromSectionY(section.y()) < level.getSectionsCount()) return false;
             }
-            return sections.containsKey(sectionAt(pos));
+            return sections.containsKey(pos.section());
         }
 
-        private boolean inWindow(VaporVolume.Position section) {
+        private boolean inWindow(Position section) {
             return window.contains(section);
         }
     }
 
-    private static VaporVolume.Position sectionAt(VaporVolume.Position pos) {
-        return new VaporVolume.Position(Math.floorDiv(pos.x(), SECTION), Math.floorDiv(pos.y(), SECTION),
-                Math.floorDiv(pos.z(), SECTION));
-    }
-
-    private static int distance(VaporVolume.Position a, VaporVolume.Position b) {
+    private static int distance(Position a, Position b) {
         return Math.abs(a.x() - b.x()) + Math.abs(a.y() - b.y()) + Math.abs(a.z() - b.z());
     }
 }

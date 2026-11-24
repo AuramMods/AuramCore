@@ -1,5 +1,8 @@
 package art.arcane.auram.vapor.client;
 
+import art.arcane.auram.field.FieldFrames;
+import art.arcane.auram.field.FieldTicker;
+import art.arcane.auram.field.VoxelGrid.Bounds;
 import net.irisshaders.iris.gl.uniform.UniformHolder;
 import net.irisshaders.iris.uniforms.CameraUniforms;
 import org.joml.Vector3f;
@@ -18,11 +21,11 @@ import static org.lwjgl.opengl.GL21C.GL_PIXEL_UNPACK_BUFFER_BINDING;
 public final class VaporTexture {
     public static final String SAMPLER = "auramVaporVolume";
     private static final int SIDE = VaporVolume.SIDE;
-    private static final double TICK_NANOS = VaporWorker.TICK_NANOS;
+    private static final double TICK_NANOS = FieldTicker.TICK_NANOS;
     private static int texture;
     private static ByteBuffer staging;
-    private static VaporWorker.Frames uploaded = VaporWorker.Frames.EMPTY;
-    private static VaporVolume.Bounds bounds = VaporVolume.Bounds.EMPTY;
+    private static FieldFrames<VaporVolume.Snapshot> uploaded = FieldFrames.empty();
+    private static Bounds bounds = Bounds.EMPTY;
     private static final Vector3f origin = new Vector3f();
     private static final Vector3f minimum = new Vector3f();
     private static final Vector3f maximum = new Vector3f();
@@ -57,7 +60,7 @@ public final class VaporTexture {
     }
 
     public static void prepareFrame() {
-        VaporWorker.Frames frames = VaporClient.frames();
+        FieldFrames<VaporVolume.Snapshot> frames = VaporClient.frames();
         var current = frames.current();
         var previous = frames.previous();
         active = texture != 0 && (current != null || previous != null);
@@ -79,7 +82,7 @@ public final class VaporTexture {
         blend = Math.max(0.0, Math.min(1.0, (System.nanoTime() - frames.publishedAt()) / TICK_NANOS));
     }
 
-    private static void upload(VaporVolume.Bounds region, VaporVolume.Snapshot previous,
+    private static void upload(Bounds region, VaporVolume.Snapshot previous,
                                VaporVolume.Snapshot current, VaporVolume.Snapshot occupancy) {
         staging.clear();
         for (int z = region.minZ(); z < region.maxZ(); z++) {

@@ -1,59 +1,22 @@
 package art.arcane.auram.vapor.client;
 
+import art.arcane.auram.field.VoxelOccupancy;
+import art.arcane.auram.field.VoxelGrid.Bounds;
+import art.arcane.auram.field.VoxelGrid.Position;
+
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.List;
-import java.util.Map;
+
+import static art.arcane.auram.field.VoxelGrid.BLOCKS;
 
 /** The worker-owned density field. Positions and bounds are in world blocks. */
 final class VaporVolume {
-    static final int SIDE = 64;
-    static final int SECTION = 16;
-    static final int CELLS = SIDE * SIDE * SIDE;
+    static final int SIDE = BLOCKS.side();
+    static final int CELLS = BLOCKS.cells();
     private static final float MAX_DENSITY = 1.0f;
     private static final float RETENTION = 0.975f;
     private static final float MIN_DENSITY = 0.001f;
     private static final int PLANE = SIDE * SIDE;
-
-    record Position(int x, int y, int z) {
-        static Position originAround(int x, int y, int z) {
-            return originFor(Math.floorDiv(x, SECTION), Math.floorDiv(y, SECTION), Math.floorDiv(z, SECTION));
-        }
-
-        private static Position originFor(int x, int y, int z) {
-            return new Position(x * SECTION - SIDE / 2, y * SECTION - SIDE / 2, z * SECTION - SIDE / 2);
-        }
-    }
-
-    // A missing section has unknown occupancy and is treated as sealed.
-    record SectionOccupancy(BitSet occupied) {
-        SectionOccupancy {
-            occupied = (BitSet) occupied.clone();
-        }
-
-        boolean blocked(int x, int y, int z) {
-            return occupied.get(sectionIndex(x, y, z));
-        }
-
-        SectionOccupancy with(int x, int y, int z, boolean blocked) {
-            int index = sectionIndex(x, y, z);
-            if (occupied.get(index) == blocked) return this;
-            BitSet updated = (BitSet) occupied.clone();
-            updated.set(index, blocked);
-            return new SectionOccupancy(updated);
-        }
-
-        @Override
-        public BitSet occupied() {
-            return (BitSet) occupied.clone();
-        }
-    }
-
-    record Occupancy(Position origin, Map<Position, SectionOccupancy> sections) {
-        Occupancy {
-            sections = Map.copyOf(sections);
-        }
-    }
 
     static final class Erosion {
         private static final int SHIFT = 3;
@@ -107,33 +70,6 @@ final class VaporVolume {
         }
     }
 
-    record Bounds(int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
-        static final Bounds EMPTY = new Bounds(0, 0, 0, 0, 0, 0);
-
-        boolean empty() {
-            return minX == maxX;
-        }
-
-        Bounds include(int x, int y, int z) {
-            if (empty()) return new Bounds(x, y, z, x + 1, y + 1, z + 1);
-            if (x >= minX && x < maxX && y >= minY && y < maxY && z >= minZ && z < maxZ) return this;
-            return new Bounds(Math.min(minX, x), Math.min(minY, y), Math.min(minZ, z),
-                    Math.max(maxX, x + 1), Math.max(maxY, y + 1), Math.max(maxZ, z + 1));
-        }
-
-        Bounds union(Bounds other) {
-            if (empty()) return other;
-            if (other.empty()) return this;
-            return new Bounds(Math.min(minX, other.minX), Math.min(minY, other.minY), Math.min(minZ, other.minZ),
-                    Math.max(maxX, other.maxX), Math.max(maxY, other.maxY), Math.max(maxZ, other.maxZ));
-        }
-
-        Bounds expand() {
-            return new Bounds(Math.max(0, minX - 1), Math.max(0, minY - 1), Math.max(0, minZ - 1),
-                    Math.min(SIDE, maxX + 1), Math.min(SIDE, maxY + 1), Math.min(SIDE, maxZ + 1));
-        }
-    }
-
     // Published arrays are private and never reused or mutated by the worker.
     static final class Snapshot {
         final Position origin;
@@ -160,14 +96,14 @@ final class VaporVolume {
     private final int[] pulseQueue = new int[CELLS];
     private final int[] pulseVisits = new int[CELLS];
     private int pulseId;
-    private Occupancy occupancy;
+    private VoxelOccupancy occupancy;
     private boolean[] open = new boolean[CELLS];
     private float[] density = new float[CELLS];
     private float[] display = new float[CELLS];
     private float[] next = new float[CELLS];
     private Bounds active = Bounds.EMPTY;
 
-    Snapshot step(Occupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters) {
+    Snapshot step(VoxelOccupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters) {
         if (updated != occupancy) replaceOccupancy(updated);
         if (!active.empty()) spread(erosion);
         for (Source pulse : pulses) inject(pulse);
@@ -180,9 +116,9 @@ final class VaporVolume {
         Arrays.fill(next, 0.0f);
         Bounds area = active;
         // Reserve space for the density that already occupies each cell after erosion.
-        for (int z = area.minZ; z < area.maxZ; z++) {
-            for (int y = area.minY; y < area.maxY; y++) {
-                for (int x = area.minX; x < area.maxX; x++) {
+        for (int z = area.minZ(); z < area.maxZ(); z++) {
+            for (int y = area.minY(); y < area.maxY(); y++) {
+                for (int x = area.minX(); x < area.maxX(); x++) {
                     int index = index(x, y, z);
                     float amount = density[index] * erosion.at(x, y, z);
                     density[index] = next[index] = amount >= MIN_DENSITY ? amount : 0.0f;
@@ -190,9 +126,9 @@ final class VaporVolume {
             }
         }
         // Upper cells can free space before lower cells try to rise into it.
-        for (int y = area.maxY - 1; y >= area.minY; y--) {
-            for (int z = area.minZ; z < area.maxZ; z++) {
-                for (int x = area.minX; x < area.maxX; x++) {
+        for (int y = area.maxY() - 1; y >= area.minY(); y--) {
+            for (int z = area.minZ(); z < area.maxZ(); z++) {
+                for (int x = area.minX(); x < area.maxX(); x++) {
                     int index = index(x, y, z);
                     float amount = density[index];
                     if (amount == 0.0f) continue;
@@ -208,7 +144,7 @@ final class VaporVolume {
         float[] old = density;
         density = next;
         next = old;
-        active = area.expand();
+        active = area.expand(SIDE);
     }
 
     private void transfer(int from, int to, float offered) {
@@ -224,10 +160,10 @@ final class VaporVolume {
     }
 
     private void inject(Source source) {
-        Position origin = occupancy.origin;
-        int x = source.position.x - origin.x;
-        int y = source.position.y - origin.y;
-        int z = source.position.z - origin.z;
+        Position origin = occupancy.origin();
+        int x = source.position.x() - origin.x();
+        int y = source.position.y() - origin.y();
+        int z = source.position.z() - origin.z();
         if (source.density == 0.0f || !inside(x, y, z) || !open[index(x, y, z)]) return;
         if (source.radius == 0) {
             add(x, y, z, source.density);
@@ -277,9 +213,9 @@ final class VaporVolume {
         byte[] pixels = null;
         Bounds live = Bounds.EMPTY;
         Bounds visible = Bounds.EMPTY;
-        for (int z = active.minZ; z < active.maxZ; z++) {
-            for (int y = active.minY; y < active.maxY; y++) {
-                for (int x = active.minX; x < active.maxX; x++) {
+        for (int z = active.minZ(); z < active.maxZ(); z++) {
+            for (int y = active.minY(); y < active.maxY(); y++) {
+                for (int x = active.minX(); x < active.maxX(); x++) {
                     int index = index(x, y, z);
                     float target = density[index];
                     float previous = display[index];
@@ -297,39 +233,24 @@ final class VaporVolume {
             }
         }
         active = live;
-        return pixels == null ? null : new Snapshot(occupancy.origin, visible.expand(), pixels, open);
+        return pixels == null ? null : new Snapshot(occupancy.origin(), visible.expand(SIDE), pixels, open);
     }
 
-    private void replaceOccupancy(Occupancy updated) {
-        boolean[] newOpen = new boolean[CELLS];
-        Position origin = updated.origin;
-        for (var entry : updated.sections.entrySet()) {
-            Position section = entry.getKey();
-            int x0 = section.x * SECTION - origin.x;
-            int y0 = section.y * SECTION - origin.y;
-            int z0 = section.z * SECTION - origin.z;
-            if (!inside(x0, y0, z0)) continue;
-            for (int z = 0; z < SECTION; z++) {
-                for (int y = 0; y < SECTION; y++) {
-                    for (int x = 0; x < SECTION; x++) {
-                        newOpen[index(x0 + x, y0 + y, z0 + z)] = !entry.getValue().blocked(x, y, z);
-                    }
-                }
-            }
-        }
-
+    private void replaceOccupancy(VoxelOccupancy updated) {
+        boolean[] newOpen = updated.openBlocks();
+        Position origin = updated.origin();
         if (occupancy != null && !active.empty()) {
-            Position previous = occupancy.origin;
-            int moveX = previous.x - origin.x;
-            int moveY = previous.y - origin.y;
-            int moveZ = previous.z - origin.z;
+            Position previous = occupancy.origin();
+            int moveX = previous.x() - origin.x();
+            int moveY = previous.y() - origin.y();
+            int moveZ = previous.z() - origin.z();
             boolean moved = !previous.equals(origin);
             float[] newDensity = moved ? new float[CELLS] : density;
             float[] newDisplay = moved ? new float[CELLS] : display;
             Bounds retained = Bounds.EMPTY;
-            for (int z = active.minZ; z < active.maxZ; z++) {
-                for (int y = active.minY; y < active.maxY; y++) {
-                    for (int x = active.minX; x < active.maxX; x++) {
+            for (int z = active.minZ(); z < active.maxZ(); z++) {
+                for (int y = active.minY(); y < active.maxY(); y++) {
+                    for (int x = active.minX(); x < active.maxX(); x++) {
                         int px = x + moveX, py = y + moveY, pz = z + moveZ;
                         if (!inside(px, py, pz)) continue;
                         int oldIndex = index(x, y, z);
@@ -355,14 +276,10 @@ final class VaporVolume {
     }
 
     static int index(int x, int y, int z) {
-        return x + SIDE * (y + SIDE * z);
-    }
-
-    static int sectionIndex(int x, int y, int z) {
-        return x + SECTION * (y + SECTION * z);
+        return BLOCKS.index(x, y, z);
     }
 
     private static boolean inside(int x, int y, int z) {
-        return x >= 0 && x < SIDE && y >= 0 && y < SIDE && z >= 0 && z < SIDE;
+        return BLOCKS.contains(x, y, z);
     }
 }

@@ -1,5 +1,6 @@
 package art.arcane.auram.vapor.client;
 
+import art.arcane.auram.field.VoxelGrid;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
@@ -55,7 +56,7 @@ final class VaporAmbient {
             }
         }
 
-        var origin = VaporVolume.Position.originAround(camera.getX(), camera.getY(), camera.getZ());
+        var origin = VoxelGrid.originAround(camera.getX(), camera.getY(), camera.getZ());
         int side = VaporVolume.SIDE;
         AABB window = new AABB(origin.x(), origin.y(), origin.z(), origin.x() + side, origin.y() + side, origin.z() + side);
         List<Entity> entities = new ArrayList<>();
