@@ -45,7 +45,7 @@ public final class VaporNetwork {
         }
     }
 
-    private static Consumer<Frame> receiver = frame -> {};
+    private static volatile Consumer<Frame> receiver = frame -> {};
     private VaporNetwork() {
     }
 
@@ -99,10 +99,17 @@ public final class VaporNetwork {
     }
 
     static boolean available(ServerPlayer player) {
-        return CHANNEL.isRemotePresent(player.connection.connection);
+        var connection = player.connection.connection;
+        return connection.isMemoryConnection() || CHANNEL.isRemotePresent(connection);
     }
 
     static void send(ServerPlayer player, Frame frame) {
-        CHANNEL.sendTo(frame, player.connection.connection, NetworkDirection.PLAY_TO_CLIENT);
+        var connection = player.connection.connection;
+        if (connection.isMemoryConnection()) {
+            // The integrated server shares the client JVM, even without a negotiated channel.
+            receiver.accept(frame);
+        } else {
+            CHANNEL.sendTo(frame, connection, NetworkDirection.PLAY_TO_CLIENT);
+        }
     }
 }

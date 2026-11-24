@@ -45,8 +45,12 @@ public final class VaporClient {
     public static final class Setup {
         @SubscribeEvent
         public static void clientSetup(FMLClientSetupEvent event) {
-            event.enqueueWork(() -> VaporNetwork.setReceiver(VaporClient::receive));
+            event.enqueueWork(() -> VaporNetwork.setReceiver(VaporClient::scheduleFrame));
         }
+    }
+
+    private static void scheduleFrame(VaporNetwork.Frame frame) {
+        Minecraft.getInstance().execute(() -> receive(frame));
     }
 
     private static void receive(VaporNetwork.Frame frame) {
