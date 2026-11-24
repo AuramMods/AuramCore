@@ -80,7 +80,7 @@ final class VaporWorker implements AutoCloseable {
                 wind.step(wind.topology(), windEmitters, gusts);
             }
         }
-        VaporVolume.Snapshot snapshot = volume.step(occupancy, atmosphere, pending, continuous);
+        VaporVolume.Snapshot snapshot = volume.step(occupancy, atmosphere, pending, continuous, wind, null);
         synchronized (this) {
             if (!closed) {
                 VaporVolume.Snapshot current = frames.current();

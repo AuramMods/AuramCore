@@ -1,6 +1,7 @@
 package art.arcane.auram.vapor.client;
 
 import art.arcane.auram.field.VoxelOccupancy;
+import art.arcane.auram.field.WindField;
 import art.arcane.auram.field.VoxelGrid.Bounds;
 import art.arcane.auram.field.VoxelGrid.Position;
 
@@ -16,6 +17,10 @@ final class VaporVolume {
     private static final float MAX_DENSITY = 1.0f;
     private static final float RETENTION = 0.975f;
     private static final float MIN_DENSITY = 0.001f;
+    private static final float UP = 0.36f;
+    private static final float DOWN = 0.025f;
+    private static final float SIDEWAYS = 0.09f;
+    private static final float TRANSPORT_RATE = UP + DOWN + 4 * SIDEWAYS;
     private static final int PLANE = SIDE * SIDE;
 
     static final class Erosion {
@@ -93,6 +98,12 @@ final class VaporVolume {
         }
     }
 
+    @FunctionalInterface
+    interface FlowMeter {
+        void accept(int from, int to, float amount);
+    }
+
+    private final float[] windVector = new float[3];
     private final int[] pulseQueue = new int[CELLS];
     private final int[] pulseVisits = new int[CELLS];
     private int pulseId;
@@ -104,15 +115,20 @@ final class VaporVolume {
     private Bounds active = Bounds.EMPTY;
 
     Snapshot step(VoxelOccupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters) {
+        return step(updated, erosion, pulses, emitters, null, null);
+    }
+
+    Snapshot step(VoxelOccupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters,
+                  WindField wind, FlowMeter meter) {
         updateOccupancy(updated);
-        if (!active.empty()) spread(erosion);
+        if (!active.empty()) spread(erosion, wind != null && wind.active() ? wind : null, meter);
         for (Source pulse : pulses) inject(pulse);
         for (Source emitter : emitters) inject(emitter);
         if (active.empty()) return null;
         return capture();
     }
 
-    private void spread(Erosion erosion) {
+    private void spread(Erosion erosion, WindField wind, FlowMeter meter) {
         Arrays.fill(next, 0.0f);
         Bounds area = active;
         // Reserve space for the density that already occupies each cell after erosion.
@@ -132,12 +148,9 @@ final class VaporVolume {
                     int index = index(x, y, z);
                     float amount = density[index];
                     if (amount == 0.0f) continue;
-                    if (y + 1 < SIDE) transfer(index, index + SIDE, amount * 0.36f);
-                    if (y > 0) transfer(index, index - SIDE, amount * 0.025f);
-                    if (x + 1 < SIDE) transfer(index, index + 1, amount * 0.09f);
-                    if (x > 0) transfer(index, index - 1, amount * 0.09f);
-                    if (z + 1 < SIDE) transfer(index, index + PLANE, amount * 0.09f);
-                    if (z > 0) transfer(index, index - PLANE, amount * 0.09f);
+                    if (wind == null || !offerWind(index, x, y, z, amount, wind, meter)) {
+                        offer(index, x, y, z, amount, 0, 0, 0, meter);
+                    }
                 }
             }
         }
@@ -147,12 +160,35 @@ final class VaporVolume {
         active = area.expand(SIDE);
     }
 
-    private void transfer(int from, int to, float offered) {
+    private boolean offerWind(int from, int x, int y, int z, float amount, WindField wind, FlowMeter meter) {
+        wind.sample(x, y, z, windVector);
+        float wx = windVector[0], wy = windVector[1], wz = windVector[2];
+        float lengthSquared = wx * wx + wy * wy + wz * wz;
+        if (lengthSquared < WindField.MIN_WIND * WindField.MIN_WIND) return false;
+
+        float bias = Math.min(0.98f, 5.0f * (float) Math.sqrt(lengthSquared));
+        float directed = amount * bias * (TRANSPORT_RATE + 0.24f * bias)
+                / (Math.abs(wx) + Math.abs(wy) + Math.abs(wz));
+        offer(from, x, y, z, amount * (1 - bias), wx * directed, wy * directed, wz * directed, meter);
+        return true;
+    }
+
+    private void offer(int from, int x, int y, int z, float amount, float east, float up, float south, FlowMeter meter) {
+        if (y + 1 < SIDE) transfer(from, from + SIDE, amount * UP + Math.max(0, up), meter);
+        if (y > 0) transfer(from, from - SIDE, amount * DOWN + Math.max(0, -up), meter);
+        if (x + 1 < SIDE) transfer(from, from + 1, amount * SIDEWAYS + Math.max(0, east), meter);
+        if (x > 0) transfer(from, from - 1, amount * SIDEWAYS + Math.max(0, -east), meter);
+        if (z + 1 < SIDE) transfer(from, from + PLANE, amount * SIDEWAYS + Math.max(0, south), meter);
+        if (z > 0) transfer(from, from - PLANE, amount * SIDEWAYS + Math.max(0, -south), meter);
+    }
+
+    private void transfer(int from, int to, float offered, FlowMeter meter) {
         if (!open[to]) return;
         float accepted = acceptedTransfer(offered, next[to]);
         if (accepted == 0.0f) return;
         next[to] += accepted;
         next[from] -= accepted;
+        if (meter != null) meter.accept(from, to, accepted);
     }
 
     static float acceptedTransfer(float offered, float destination) {

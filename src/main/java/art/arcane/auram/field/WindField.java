@@ -31,6 +31,25 @@ public final class WindField {
         return node < 0 ? 0 : current[node * 4 + axis];
     }
 
+    /** Samples the coarse field at a fine-cell center without interpolating through solid faces. */
+    public void sample(int x, int y, int z, float[] result) {
+        int center = topology.node(x, y, z);
+        if (center < 0) {
+            Arrays.fill(result, 0);
+            return;
+        }
+        int adjacentX = topology.node(x + ((x & 1) == 0 ? -1 : 1), y, z);
+        int adjacentY = topology.node(x, y + ((y & 1) == 0 ? -1 : 1), z);
+        int adjacentZ = topology.node(x, y, z + ((z & 1) == 0 ? -1 : 1));
+        for (int axis = 0; axis < 3; axis++) {
+            float base = component(center, axis);
+            float dx = adjacentX < 0 ? 0 : component(adjacentX, axis) - base;
+            float dy = adjacentY < 0 ? 0 : component(adjacentY, axis) - base;
+            float dz = adjacentZ < 0 ? 0 : component(adjacentZ, axis) - base;
+            result[axis] = base + 0.25f * (dx + dy + dz);
+        }
+    }
+
     public void step(WindTopology updated, List<Source> continuous, List<Source> gusts) {
         if (updated != topology) move(updated);
         for (Source gust : gusts) addGust(gust);
