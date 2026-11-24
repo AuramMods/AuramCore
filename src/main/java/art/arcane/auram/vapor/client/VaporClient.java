@@ -9,6 +9,7 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
@@ -269,7 +270,7 @@ public final class VaporClient {
                         var state = blocks.getBlockState(x, y, z);
                         if (state.isAir()) continue;
                         pos.set(section.x() * SECTION + x, section.y() * SECTION + y, section.z() * SECTION + z);
-                        if (!state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos)) {
+                        if (blocksVapor(state, pos)) {
                             occupied.set(VaporVolume.sectionIndex(x, y, z));
                         }
                     }
@@ -294,13 +295,18 @@ public final class VaporClient {
             VaporVolume.SectionOccupancy previous = sections.get(section);
             if (previous == null) return;
             var state = level.getBlockState(pos);
-            boolean blocked = !state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos);
+            boolean blocked = blocksVapor(state, pos);
             var updated = previous.with(pos.getX() & (SECTION - 1), pos.getY() & (SECTION - 1),
                     pos.getZ() & (SECTION - 1), blocked);
             if (previous != updated) {
                 sections.put(section, updated);
                 changed = true;
             }
+        }
+
+        private boolean blocksVapor(BlockState state, BlockPos pos) {
+            // Partial shapes leave the entire cell available for transport.
+            return !state.getFluidState().isEmpty() || state.isCollisionShapeFullBlock(level, pos);
         }
 
         private boolean pulseReady(VaporVolume.Source pulse) {

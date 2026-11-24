@@ -10,6 +10,7 @@ final class VaporVolume {
     static final int SIDE = 64;
     static final int SECTION = 16;
     static final int CELLS = SIDE * SIDE * SIDE;
+    private static final float MAX_DENSITY = 1.0f;
     private static final float RETENTION = 0.975f;
     private static final float MIN_DENSITY = 0.001f;
     private static final int PLANE = SIDE * SIDE;
@@ -178,21 +179,29 @@ final class VaporVolume {
     private void spread(Erosion erosion) {
         Arrays.fill(next, 0.0f);
         Bounds area = active;
+        // Reserve space for the density that already occupies each cell after erosion.
         for (int z = area.minZ; z < area.maxZ; z++) {
             for (int y = area.minY; y < area.maxY; y++) {
                 for (int x = area.minX; x < area.maxX; x++) {
                     int index = index(x, y, z);
                     float amount = density[index] * erosion.at(x, y, z);
-                    if (amount < MIN_DENSITY) continue;
-                    float outgoing = 0.0f;
-                    if (y + 1 < SIDE) outgoing += transfer(index + SIDE, amount * 0.36f);
-                    if (y > 0) outgoing += transfer(index - SIDE, amount * 0.025f);
-                    if (x + 1 < SIDE) outgoing += transfer(index + 1, amount * 0.09f);
-                    if (x > 0) outgoing += transfer(index - 1, amount * 0.09f);
-                    if (z + 1 < SIDE) outgoing += transfer(index + PLANE, amount * 0.09f);
-                    if (z > 0) outgoing += transfer(index - PLANE, amount * 0.09f);
-                    // Shares aimed at blocked cells remain here and can spread sideways on later steps.
-                    next[index] += amount - outgoing;
+                    density[index] = next[index] = amount >= MIN_DENSITY ? amount : 0.0f;
+                }
+            }
+        }
+        // Upper cells can free space before lower cells try to rise into it.
+        for (int y = area.maxY - 1; y >= area.minY; y--) {
+            for (int z = area.minZ; z < area.maxZ; z++) {
+                for (int x = area.minX; x < area.maxX; x++) {
+                    int index = index(x, y, z);
+                    float amount = density[index];
+                    if (amount == 0.0f) continue;
+                    if (y + 1 < SIDE) transfer(index, index + SIDE, amount * 0.36f);
+                    if (y > 0) transfer(index, index - SIDE, amount * 0.025f);
+                    if (x + 1 < SIDE) transfer(index, index + 1, amount * 0.09f);
+                    if (x > 0) transfer(index, index - 1, amount * 0.09f);
+                    if (z + 1 < SIDE) transfer(index, index + PLANE, amount * 0.09f);
+                    if (z > 0) transfer(index, index - PLANE, amount * 0.09f);
                 }
             }
         }
@@ -202,10 +211,16 @@ final class VaporVolume {
         active = area.expand();
     }
 
-    private float transfer(int offset, float amount) {
-        if (!open[offset]) return 0.0f;
-        next[offset] += amount;
-        return amount;
+    private void transfer(int from, int to, float offered) {
+        if (!open[to]) return;
+        float accepted = acceptedTransfer(offered, next[to]);
+        if (accepted == 0.0f) return;
+        next[to] += accepted;
+        next[from] -= accepted;
+    }
+
+    static float acceptedTransfer(float offered, float destination) {
+        return Math.min(offered, Math.max(0.0f, MAX_DENSITY - destination));
     }
 
     private void inject(Source source) {
@@ -254,7 +269,7 @@ final class VaporVolume {
 
     private void add(int x, int y, int z, float amount) {
         int index = index(x, y, z);
-        density[index] = Math.min(1.0f, density[index] + amount);
+        density[index] = Math.min(MAX_DENSITY, density[index] + amount);
         active = active.include(x, y, z);
     }
 
@@ -266,7 +281,7 @@ final class VaporVolume {
             for (int y = active.minY; y < active.maxY; y++) {
                 for (int x = active.minX; x < active.maxX; x++) {
                     int index = index(x, y, z);
-                    float target = Math.min(1.0f, density[index]);
+                    float target = density[index];
                     float previous = display[index];
                     // About 94% of a held increase becomes visible in one second at 20 Hz.
                     float value = previous + (target - previous) * (target > previous ? 0.13f : 0.25f);
