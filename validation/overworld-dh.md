@@ -18,7 +18,15 @@ The selector trace counted 219 global world queries in one invocation of `ggunz:
 
 ## Rejected density mapping experiments
 
-Memoizing all binary operands doubled the median time for a warmed 16-column Overworld batch in the initial replay. Reusing the full final-density branch still gave slower column medians in the two follow-up pairs. In the 48-chunk negative-coordinate replay, full branch reuse gave 7.13 fresh chunks/s against 10.19/s in the control. The saved terrain, biomes, structures and fluid ticks matched. The remaining climate sampler candidate is measured separately from those changes.
+Memoizing all binary operands doubled the median time for a warmed 16-column Overworld batch in the initial replay. Reusing the full final-density branch still gave slower column medians in the two follow-up pairs. In the 48-chunk negative-coordinate replay, full branch reuse gave 7.13 fresh chunks/s against 10.19/s in the control. The saved terrain, biomes, structures and fluid ticks matched.
+
+## Verified sampler reuse
+
+The climate change reuses the six mapped climate functions from the same noise chunk for eligible unblended routers. Two Overworld control runs used 2.12 and 1.98 seconds of aggregate biome-stage CPU. Two candidate runs used 1.25 and 1.21 seconds, roughly 40% lower on average. All four runs produced the same fingerprint across 73,728 biome samples.
+
+A separate 48-chunk cold replay from chunk (-92, -90) completed at 10.00 fresh FULL chunks/s on the control and 11.70/s on the candidate. Biome-stage CPU was 1.25 versus 0.67 seconds. Tick p95 was 19.10 versus 14.72 ms, and p99 and maximum were 50.27 versus 47.61 ms. All 4,718,592 pre-decoration block states, biome palettes, structure starts and saved fluid ticks matched. These rates come from a four-worker headless fixture with Tectonic, Lithostitched, ModernFix, Ksyxis and Better Caves.
+
+The Nyctophobia predicate matched its original height test in all 144 cases, including four occupied-height-64 boundary cases. When a matching terrain cell was already in scope, those checks created zero additional samplers.
 
 ## Integrated Distant Horizons
 

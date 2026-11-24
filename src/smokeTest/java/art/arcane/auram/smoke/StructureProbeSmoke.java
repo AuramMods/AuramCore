@@ -1,5 +1,6 @@
 package art.arcane.auram.smoke;
 
+import art.arcane.auram.util.TerrainBatch;
 import art.arcane.auram.util.TerrainCell;
 import com.google.gson.GsonBuilder;
 import net.minecraft.core.registries.Registries;
@@ -100,9 +101,34 @@ public final class StructureProbeSmoke {
             if(batch>=0) {oldTimes[batch]=oldTime;newTimes[batch]=newTime;}
         }
         double[] a=oldTimes.clone(),b=newTimes.clone();Arrays.sort(a);Arrays.sort(b);
-        Map<String,Object> result=Map.of("cases_per_batch",contexts.size(),"measured_batches",25,
+        Map<String,Object> result=new LinkedHashMap<>(Map.of("cases_per_batch",contexts.size(),"measured_batches",25,
                 "occupied_height_64_cases",boundaryCases,"original_median_batch_ms",a[12],"patched_median_batch_ms",b[12],
-                "original_batch_ms",oldTimes,"patched_batch_ms",newTimes);
+                "original_batch_ms",oldTimes,"patched_batch_ms",newTimes));
+        if (Boolean.getBoolean("auram.smoke.mushroomSharedCell")) {
+            long setups = 0;
+            for (var context : contexts) {
+                boolean expected = originalMushroomCheck(context);
+                setups += TerrainBatch.scoped(generator, level, context.randomState(), false, () -> {
+                    int x = context.chunkPos().getMinBlockX();
+                    int z = context.chunkPos().getMinBlockZ();
+                    var batch = TerrainBatch.current(generator, level, context.randomState());
+                    check(batch != null && batch.borrowCell(x, z) != null, "fixture creates an existing terrain cell");
+                    TerrainQueryProbe.Trace trace;
+                    TerrainQueryProbe.start();
+                    try {
+                        check((boolean) installed.invoke(null, context) == expected, "scoped Nyctophobia predicate");
+                    } catch (ReflectiveOperationException failure) {
+                        throw new IllegalStateException(failure);
+                    } finally {
+                        trace = TerrainQueryProbe.stop();
+                    }
+                    return trace.noiseChunks;
+                });
+            }
+            check(setups == 0, "mushroom checks reuse the existing sampler");
+            result.put("shared_cell_cases", contexts.size());
+            result.put("shared_cell_new_samplers", setups);
+        }
         Files.writeString(Path.of("mushroom-benchmark.json"),new GsonBuilder().setPrettyPrinting().create().toJson(result)+"\n");
         return result;
     }
