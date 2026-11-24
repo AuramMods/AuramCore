@@ -1,6 +1,7 @@
 package art.arcane.auram.mixin.vapor;
 
 import art.arcane.auram.rf.client.RfFieldTexture;
+import art.arcane.auram.tconstruct.client.TinkersFluidLightTexture;
 import art.arcane.auram.vapor.client.VaporTexture;
 import net.irisshaders.iris.gl.uniform.UniformHolder;
 import net.irisshaders.iris.shaderpack.properties.PackDirectives;
@@ -18,5 +19,6 @@ abstract class IrisVaporUniformsMixin {
                                             PackDirectives directives, CallbackInfo callback) {
         VaporTexture.uniforms(uniforms);
         RfFieldTexture.uniforms(uniforms);
+        TinkersFluidLightTexture.uniforms(uniforms);
     }
 }

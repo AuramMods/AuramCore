@@ -187,6 +187,7 @@
     "fastanim.WitherEntityModelMixin",
     "fastanim.WolfEntityModelMixin",
     "minecraft.VaporBlockUpdateMixin",
+    "tconstruct.BlissFluidShaderMixin",
     "vapor.IrisVaporBindingsMixin",
     "vapor.IrisVaporUniformsMixin",
     "vapor.IrisVaporDefinesMixin",

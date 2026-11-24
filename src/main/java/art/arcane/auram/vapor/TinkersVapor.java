@@ -16,7 +16,8 @@ public final class TinkersVapor {
     private static final ResourceLocation CASTING = source("casting");
     private static final ResourceLocation CHANNEL = source("channel");
     private static final float HEAT_RATE = 0.12f;
-    private static final float CASTING_RATE = 0.08f;
+    private static final float CONTROLLER_RATE = 0.08f;
+    private static final float CASTING_RATE = 0.02f;
     private static final int BOILING_WATER_KELVIN = 373;
 
     private TinkersVapor() {}
@@ -31,7 +32,7 @@ public final class TinkersVapor {
         }
         if (burning || (!contents.isEmpty()
                 && contents.getFluid().getFluidType().getTemperature(contents) >= BOILING_WATER_KELVIN)) {
-            emit(level, CONTROLLER, pos, pos.above(), CASTING_RATE);
+            emit(level, CONTROLLER, pos, pos.above(), CONTROLLER_RATE);
         }
     }
 

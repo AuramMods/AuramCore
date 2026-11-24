@@ -36,8 +36,8 @@ and transfer rates as air.
 | Burning entity | 0.15 per tick |
 | Tinkers' seared heater | 0.12 per tick from its front while burning fuel |
 | Tinkers' smeltery or foundry | 0.12 per tick per open interior floor cell while the tank holds fluid |
-| Tinkers' drain faucet | 0.08 per tick while it transfers fluid |
-| Tinkers' casting table, basin, or channel | 0.08 per tick while casting fills or cools, or while the channel holds fluid |
+| Tinkers' drain faucet | 0.02 per tick while it transfers fluid |
+| Tinkers' casting table, basin, or channel | 0.02 per tick while casting fills or cools, or while the channel holds fluid |
 | Tinkers' melter or alloyer | 0.08 per tick above it while fueled or holding hot fluid |
 | Ender IO SAG Mill, Alloy Smelter, Slice'N'Splice, Painting Machine, Soul Engine, Farming Station, Vat, Fluid Drain, Vacuum Chest, and XP Vacuum | 0.08 per operating tick |
 | Ender IO Crafter, Impulse Hopper, and Niard | One 0.08 puff per successful operation |
