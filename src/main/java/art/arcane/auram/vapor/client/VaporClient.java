@@ -1,5 +1,7 @@
 package art.arcane.auram.vapor.client;
 
+import art.arcane.auram.Auram;
+import art.arcane.auram.vapor.VaporNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -11,6 +13,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -24,7 +27,7 @@ import java.util.Map;
 import static art.arcane.auram.vapor.client.VaporVolume.SECTION;
 import static art.arcane.auram.vapor.client.VaporVolume.SIDE;
 
-@Mod.EventBusSubscriber(modid = "auram", value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
 public final class VaporClient {
     private static final int SECTIONS_PER_SIDE = SIDE / SECTION;
     private static final int SECTION_READS_PER_TICK = 4;
@@ -35,6 +38,28 @@ public final class VaporClient {
     private static Session session;
 
     private VaporClient() {
+    }
+
+    @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+    public static final class Setup {
+        @SubscribeEvent
+        public static void clientSetup(FMLClientSetupEvent event) {
+            event.enqueueWork(() -> VaporNetwork.setReceiver(VaporClient::receive));
+        }
+    }
+
+    private static void receive(VaporNetwork.Frame frame) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || !level.dimension().location().equals(frame.dimension())) return;
+        submitEmitters(level, frame.emitters().stream()
+                .map(emitter -> new VaporVolume.Source(position(emitter.position()), emitter.rate(), 0)).toList());
+        for (var pulse : frame.pulses()) {
+            submitPulse(level, new VaporVolume.Source(position(pulse.position()), pulse.density(), pulse.radius()));
+        }
+    }
+
+    private static VaporVolume.Position position(BlockPos pos) {
+        return new VaporVolume.Position(pos.getX(), pos.getY(), pos.getZ());
     }
 
     // Called only on the client game thread, including after packet scheduling.
@@ -158,7 +183,7 @@ public final class VaporClient {
                     }
                 }
             }
-            VaporVolume.Position center = sectionAt(new VaporVolume.Position(camera.getX(), camera.getY(), camera.getZ()));
+            VaporVolume.Position center = sectionAt(position(camera));
             window.sort(Comparator.comparingInt(pos -> distance(pos, center)));
             sections.keySet().retainAll(window);
             knownChunks.keySet().retainAll(window);
@@ -210,7 +235,7 @@ public final class VaporClient {
         }
 
         private void blockChanged(BlockPos pos) {
-            VaporVolume.Position section = sectionAt(new VaporVolume.Position(pos.getX(), pos.getY(), pos.getZ()));
+            VaporVolume.Position section = sectionAt(position(pos));
             VaporVolume.SectionOccupancy previous = sections.get(section);
             if (previous == null) return;
             var state = level.getBlockState(pos);

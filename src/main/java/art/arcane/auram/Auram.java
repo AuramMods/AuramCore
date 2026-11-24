@@ -7,6 +7,7 @@ import art.arcane.auram.loot.RockLootModifier;
 import art.arcane.auram.map.SurfaceMapNetwork;
 import art.arcane.auram.tweak.LogRetention;
 import art.arcane.auram.util.RecipeCache;
+import art.arcane.auram.vapor.VaporNetwork;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.registries.Registries;
@@ -94,6 +95,7 @@ public class Auram {
         context.registerConfig(ModConfig.Type.COMMON, AuramConfig.COMMON_SPEC);
         context.registerConfig(ModConfig.Type.SERVER, AuramConfig.SERVER_SPEC);
         SurfaceMapNetwork.register();
+        VaporNetwork.register();
         MinecraftForge.EVENT_BUS.register(new AuramCommands());
     } 
 
