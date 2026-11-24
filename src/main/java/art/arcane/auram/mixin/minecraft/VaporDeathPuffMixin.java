@@ -1,6 +1,6 @@
 package art.arcane.auram.mixin.minecraft;
 
-import art.arcane.auram.vapor.Vapor;
+import art.arcane.auram.vapor.DeathVaporSpread;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.server.level.ServerLevel;
@@ -15,8 +15,8 @@ abstract class VaporDeathPuffMixin {
     @WrapOperation(method = "tickDeath", at = @At(value = "INVOKE", target =
             "Lnet/minecraft/world/level/Level;broadcastEntityEvent(Lnet/minecraft/world/entity/Entity;B)V"))
     private void auram$replaceDeathPoof(Level level, Entity entity, byte event, Operation<Void> original) {
-        if (level instanceof ServerLevel serverLevel && event == 60) {
-            Vapor.pulse(serverLevel, entity.blockPosition(), 1.0f);
+        if (level instanceof ServerLevel serverLevel && event == 60 && entity instanceof LivingEntity living) {
+            DeathVaporSpread.emit(serverLevel, living.blockPosition(), living.getMaxHealth());
         } else {
             original.call(level, entity, event);
         }

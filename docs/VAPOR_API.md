@@ -30,13 +30,15 @@ and transfer rates as air.
 | Exposed lava | 0.10 per sampled puff in the air above it |
 | Regular or soul torch, including wall torches | 0.03 per sampled puff |
 | TNT or large ghast fireball explosion | 1.0 at the center, with a 7-block falloff |
-| Living entity death | One 1.0 pulse at the entity's final block |
+| Living entity death | 1.0 per open floor cell, with 2, 8, or up to 16 attempts at 5, 20, or 100 maximum HP |
 | Burning entity | 0.15 per tick |
 | Tinkers' seared heater | 0.12 per tick from its front while burning fuel |
 | Tinkers' smeltery or foundry | 0.12 per tick per open interior floor cell while the tank holds fluid |
 | Tinkers' drain faucet | 0.08 per tick while it transfers fluid |
 | Tinkers' casting table, basin, or channel | 0.08 per tick while casting fills or cools, or while the channel holds fluid |
 | Tinkers' melter or alloyer | 0.08 per tick above it while fueled or holding hot fluid |
+| Ender IO SAG Mill, Alloy Smelters, Slice'N'Splice, Painting Machine, Stirling Generator, Soul Engine, Farming Station, Vat, Fluid Drain, Vacuum Chest, and XP Vacuum | 0.08 per operating tick |
+| Ender IO Crafter, Impulse Hopper, and Niard | One 0.08 puff per successful operation |
 
 The client tries 32 random block positions per tick within eight blocks
 horizontally and four blocks vertically of the camera. It also samples nearby
