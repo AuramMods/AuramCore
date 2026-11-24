@@ -47,6 +47,8 @@
     "terramity.FlintlockReloadMixin",
     "minecraft.NetherFossilMixin",
     "minecraft.NoiseChunkMappingMixin",
+    "minecraft.NoiseSplineContextMixin",
+    "minecraft.SplinePointMixin",
     "minecraft.NoiseChunkSliceRangeMixin",
     "minecraft.NoiseInterpolatorSliceAccess",
     "minecraft.RandomStateSurfaceCacheMixin",

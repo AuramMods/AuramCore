@@ -20,3 +20,18 @@ The cold chunk fixture used the same mod set, 32 vanilla tickets at chunk origin
 Both comparisons matched 8,912,896 saved blocks, biome palettes, complete structure starts and fluid ticks across all 32 targets. Time in the unchanged NOISE stage also varied, so the whole-fixture throughput figures describe the individual runs. The paired probe CPU figures isolate the change.
 
 The initial conservative classifier declined Tectonic's vertical functions even inside already-populated flat caches. The test failed because the new path was never exercised. The final classifier checks eager inputs separately and declines unknown functions and deferred interpolation or cell fillers there.
+
+## Spline sampling allocations
+
+The full-pack JFR had sampled allocations of `DensityFunctions.Spline.Point` in the NOISE stage. The wrapper contains the function context, and ordinary NoiseChunk sampling already updates and reuses that context. The change creates the wrapper once per NoiseChunk and preserves the normal wrapper construction for other contexts.
+
+The isolated comparison used the four-CPU cold fixture above in both run orders. Every arm completed 96 noise fills and 736 structure-start tasks. Both 32-chunk pairs matched all 8,912,896 blocks, biome palettes, starts and fluid ticks. JFR results were filtered to each run's timed phase and to stacks in the noise stage.
+
+| Arm | Weighted spline wrapper allocation samples | All weighted allocation samples in NOISE | NOISE CPU |
+| --- | ---: | ---: | ---: |
+| A1 released jar | 506.24 MB | 2,427.81 MB | 10.33 s |
+| B1 reused wrapper | 0 sampled | 1,909.75 MB | 10.98 s |
+| B2 reused wrapper | 2.10 MB | 1,919.70 MB | 10.28 s |
+| A2 released jar | 582.83 MB | 2,363.07 MB | 10.20 s |
+
+The allocation figures are estimates from weighted samples. Throughput varied with run order. The repeatable improvement is the removal of nearly all sampled allocations at that site during noise fill.
