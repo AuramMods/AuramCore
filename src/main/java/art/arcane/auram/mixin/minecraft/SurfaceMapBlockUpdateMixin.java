@@ -1,6 +1,7 @@
 package art.arcane.auram.mixin.minecraft;
 
 import art.arcane.auram.map.SurfaceMaps;
+import art.arcane.auram.vapor.VaporDemonstrators;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,7 +15,9 @@ abstract class SurfaceMapBlockUpdateMixin {
     @Inject(method = "sendBlockUpdated", at = @At("TAIL"))
     private void auram$recordSurfaceChange(BlockPos pos, BlockState before, BlockState after, int flags, CallbackInfo ci) {
         if (before != after) {
-            SurfaceMaps.blockChanged((ServerLevel) (Object) this, pos);
+            ServerLevel level = (ServerLevel) (Object) this;
+            SurfaceMaps.blockChanged(level, pos);
+            VaporDemonstrators.blockChanged(level, pos, before, after);
         }
     }
 }

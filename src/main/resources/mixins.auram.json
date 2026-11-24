@@ -28,6 +28,7 @@
     "minecraft.SuperflatWorldDimensionsMixin",
     "minecraft.SurfaceMapGenerationMixin",
     "minecraft.SurfaceMapBlockUpdateMixin",
+    "minecraft.VaporFurnaceMixin",
     "minecraft.PlayerMovementReadinessMixin",
     "minecraft.ChunkWaitTraceMixin",
     "customnetherportals.EntityPortalSearchMixin",

@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -44,9 +45,13 @@ public final class VaporSources {
     }
 
     static boolean set(ServerLevel level, VaporNetwork.Emitter emitter) {
+        return set(level, emitter.position(), emitter);
+    }
+
+    static boolean set(ServerLevel level, BlockPos anchor, VaporNetwork.Emitter emitter) {
         if (level.isOutsideBuildHeight(emitter.position())) return false;
         LevelSources sources = LEVELS.computeIfAbsent(level, unused -> new LevelSources());
-        Key key = new Key(emitter.id(), emitter.position());
+        Key key = new Key(emitter.id(), anchor);
         if (sources.emitters.size() == WORLD_EMITTER_LIMIT && !sources.emitters.containsKey(key)) return false;
         sources.emitters.put(key, emitter);
         return true;
@@ -55,6 +60,12 @@ public final class VaporSources {
     static boolean stop(ServerLevel level, ResourceLocation id, BlockPos position) {
         LevelSources sources = LEVELS.get(level);
         return sources != null && sources.emitters.remove(new Key(id, position)) != null;
+    }
+
+    static void stopInChunk(ServerLevel level, ResourceLocation id, ChunkPos chunk) {
+        var sources = LEVELS.get(level);
+        if (sources != null) sources.emitters.keySet().removeIf(key -> key.id.equals(id)
+                && (key.pos.getX() >> 4) == chunk.x && (key.pos.getZ() >> 4) == chunk.z);
     }
 
     @SubscribeEvent
