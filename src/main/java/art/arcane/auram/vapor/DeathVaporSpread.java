@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class DeathVaporSpread {
-    private static final int MAX_ATTEMPTS = 16;
+    private static final int MAX_ATTEMPTS = 4;
     private static final float HEALTH_AT_LIMIT = 100.0f;
     private static final double MAX_EXPONENTIAL = 1.0 - Math.pow(0.5, HEALTH_AT_LIMIT / 20.0);
 
@@ -26,7 +26,7 @@ public final class DeathVaporSpread {
     static int attempts(float maxHealth) {
         if (maxHealth >= HEALTH_AT_LIMIT) return MAX_ATTEMPTS;
         double scaled = MAX_ATTEMPTS * (1.0 - Math.pow(0.5, maxHealth / 20.0)) / MAX_EXPONENTIAL;
-        return Math.max(2, (int) scaled);
+        return Math.max(1, (int) scaled);
     }
 
     static void spread(BlockPos origin, int budget, Predicate<BlockPos> isAir, Consumer<BlockPos> emit) {

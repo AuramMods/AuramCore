@@ -3,7 +3,6 @@ package art.arcane.auram.vapor.client;
 import art.arcane.auram.field.VoxelGrid;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Blocks;
@@ -19,8 +18,7 @@ final class VaporAmbient {
     private static final int HORIZONTAL_RANGE = 8;
     private static final int VERTICAL_RANGE = 4;
     private static final int MAX_BURNING_ENTITIES = 32;
-    private static final float LAVA_PUFF = 0.50f;
-    private static final float MAGMA_PUFF = LAVA_PUFF * 0.5f;
+    private static final float MAGMA_PUFF = 0.25f;
     private static final float TORCH_PUFF = 0.03f;
     private static final float BURNING_ENTITY_RATE = 0.15f;
     private static final RandomSource RANDOM = RandomSource.create();
@@ -45,12 +43,10 @@ final class VaporAmbient {
                     camera.getZ() + offset(HORIZONTAL_RANGE));
             if (level.isOutsideBuildHeight(pos) || !level.hasChunkAt(pos)) continue;
             var state = level.getBlockState(pos);
-            boolean lava = state.getFluidState().is(FluidTags.LAVA);
-            if (lava || state.is(Blocks.MAGMA_BLOCK)) {
-                // Surface puffs start above the fluid or solid block.
+            if (state.is(Blocks.MAGMA_BLOCK)) {
                 BlockPos vent = pos.above();
                 if (!level.isOutsideBuildHeight(vent) && level.getFluidState(vent).isEmpty()) {
-                    puffs.add(new VaporVolume.Source(VaporClient.position(vent), lava ? LAVA_PUFF : MAGMA_PUFF, 0));
+                    puffs.add(new VaporVolume.Source(VaporClient.position(vent), MAGMA_PUFF, 0));
                 }
             } else if (state.is(Blocks.TORCH) || state.is(Blocks.WALL_TORCH)
                     || state.is(Blocks.SOUL_TORCH) || state.is(Blocks.SOUL_WALL_TORCH)) {

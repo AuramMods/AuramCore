@@ -27,10 +27,10 @@ and transfer rates as air.
 | Furnace, blast furnace, or smoker while cooking | 0.14 per tick |
 | Fire | 0.32 per tick |
 | Lit campfire or soul campfire | 0.65 per tick |
-| Exposed lava | 0.10 per sampled puff in the air above it |
+| Exposed magma block | 0.25 per sampled puff in the air above it |
 | Regular or soul torch, including wall torches | 0.03 per sampled puff |
 | TNT or large ghast fireball explosion | 1.0 at the center, with a 7-block falloff |
-| Living entity death | 1.0 per open floor cell, with 2, 8, or up to 16 attempts at 5, 20, or 100 maximum HP |
+| Living entity death | 1.0 per open floor cell, with 1–4 attempts based on maximum HP. For example, 5, 20, 40, and 100 HP get 1, 2, 3, and 4 attempts respectively. |
 | Burning entity | 0.15 per tick |
 | Tinkers' seared heater | 0.12 per tick from its front while burning fuel |
 | Tinkers' smeltery or foundry | 0.12 per tick per open interior floor cell while the tank holds fluid |
