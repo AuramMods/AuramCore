@@ -77,8 +77,8 @@ final class VaporWorker implements AutoCloseable {
         VaporVolume.Snapshot snapshot = volume.step(occupancy, pending, continuous);
         synchronized (this) {
             if (!closed) {
-                VaporVolume.Snapshot previous = frames.current != null
-                        && frames.current.origin.equals(occupancy.origin()) ? frames.current : null;
+                VaporVolume.Snapshot previous = frames.current;
+                if (previous != null && !previous.origin.equals(occupancy.origin())) previous = snapshot;
                 frames = previous == null && snapshot == null ? Frames.EMPTY : new Frames(previous, snapshot, System.nanoTime());
             }
         }

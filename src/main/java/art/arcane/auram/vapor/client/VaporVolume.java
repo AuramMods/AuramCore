@@ -76,6 +76,13 @@ final class VaporVolume {
                     Math.max(maxX, x + 1), Math.max(maxY, y + 1), Math.max(maxZ, z + 1));
         }
 
+        Bounds union(Bounds other) {
+            if (empty()) return other;
+            if (other.empty()) return this;
+            return new Bounds(Math.min(minX, other.minX), Math.min(minY, other.minY), Math.min(minZ, other.minZ),
+                    Math.max(maxX, other.maxX), Math.max(maxY, other.maxY), Math.max(maxZ, other.maxZ));
+        }
+
         Bounds expand() {
             return new Bounds(Math.max(0, minX - 1), Math.max(0, minY - 1), Math.max(0, minZ - 1),
                     Math.min(SIDE, maxX + 1), Math.min(SIDE, maxY + 1), Math.min(SIDE, maxZ + 1));

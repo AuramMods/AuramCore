@@ -29,6 +29,9 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
     }
 
     private static String optionalTarget(String mixinClassName) {
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.vapor.")) {
+            return "net.irisshaders.iris.api.v0.IrisApi";
+        }
         if (mixinClassName.startsWith("art.arcane.auram.mixin.journeymap.")) {
             return "journeymap.client.JourneymapClient";
         }
