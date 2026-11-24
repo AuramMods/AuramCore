@@ -20,6 +20,25 @@ Full collision cubes and fluid-filled cells block transport. Partial collision
 shapes, including doors, trapdoors, levers, and ladders, have the same capacity
 and transfer rates as air.
 
+## Built-in emitters
+
+| Source | Density |
+| --- | --- |
+| Furnace, blast furnace, or smoker while cooking | 0.14 per tick |
+| Fire | 0.32 per tick |
+| Lit campfire or soul campfire | 0.65 per tick |
+| Exposed lava | 0.10 per sampled puff in the air above it |
+| Regular or soul torch, including wall torches | 0.03 per sampled puff |
+| TNT or large ghast fireball explosion | 1.0 at the center, with a 7-block falloff |
+| Entity arrival or departure | 0.25 per puff |
+| Burning entity | 0.15 per tick |
+
+The client tries 32 random block positions per tick within eight blocks
+horizontally and four blocks vertically of the camera. It also samples nearby
+burning entities from their synced fire state. The server sends the arrival and
+departure puffs for spawns, removals, and teleports. Chunk streaming does not
+count as a spawn or departure.
+
 ## Typed API
 
 Call on the logical server thread. Density is normalized from 0 to 1. Zero is
