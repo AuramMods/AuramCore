@@ -260,7 +260,7 @@ def lifecycle(server, server_log, clients):
     replaced_at = log.stat().st_size
     send(server, f"kick {PLAYER_NEAR} Reconnect audit")
     wait_for(server_log, server, f"{PLAYER_NEAR} joined the game", timeout=60, offset=joined_at)
-    wait_for(log, child, "Renderer setup complete", offset=replaced_at)
+    wait_for(log, child, "Started DHLevel", offset=replaced_at)
     send(server, f"tp {PLAYER_NEAR} 36.5 153 31.5 0 27")
     toggle(server, True)
     time.sleep(3)
