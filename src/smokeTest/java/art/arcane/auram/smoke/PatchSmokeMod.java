@@ -49,6 +49,7 @@ public final class PatchSmokeMod {
     @SubscribeEvent
     public static void onStarted(ServerStartedEvent event) {
         String smokeMode = System.getProperty("auram.smoke", "");
+        if (FieldNetworkSmoke.ENABLED) return;
         if ((smokeMode.equals("surfacemap-server") || smokeMode.equals("surfacemap-bench") || SurfaceMapBenchSmoke.WORLDGEN) || smokeMode.equals("book") || smokeMode.equals("ftbrtp") || smokeMode.equals("movementpacketreplay") || smokeMode.startsWith("memory-") || smokeMode.equals("tomehud")
                 || smokeMode.equals("world-startup") || smokeMode.startsWith("forge-remote")
                 || DistantHorizonsSmoke.SERVER) return;

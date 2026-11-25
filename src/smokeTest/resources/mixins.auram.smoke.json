@@ -38,6 +38,8 @@
     "SelectorProbeMixin",
     "GlobalSelectorProbeMixin",
     "PlayerListAccess",
+    "FieldPayloadAccess",
+    "FieldPacketProbeMixin",
     "TerminalPacketProbeMixin",
     "TerminalWriteProbeMixin",
     "DhQueueProbeMixin",
