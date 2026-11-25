@@ -1,6 +1,8 @@
 package art.arcane.auram.light;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.FieldNetwork;
+import art.arcane.auram.field.client.FieldInterestClient;
 import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.vapor.ThaumaturgeVapor;
 import art.arcane.auram.vapor.VaporNetwork;
@@ -41,7 +43,8 @@ public final class LightClient {
 
     private static void receive(LightNetwork.Frame frame) {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null || !level.dimension().location().equals(frame.dimension())) return;
+        if (level == null || !FieldInterestClient.enabled(FieldNetwork.LIGHT)
+                || !level.dimension().location().equals(frame.dimension())) return;
         remoteLevel = level;
         remote = frame.sources();
     }
@@ -64,10 +67,12 @@ public final class LightClient {
             alembicLevel = null;
             alembics = List.of();
         }
-        if (event.getLevel() == remoteLevel) {
-            remoteLevel = null;
-            remote = List.of();
-        }
+        if (event.getLevel() == remoteLevel) clearRemote();
+    }
+
+    public static void clearRemote() {
+        remoteLevel = null;
+        remote = List.of();
     }
 
     @SubscribeEvent

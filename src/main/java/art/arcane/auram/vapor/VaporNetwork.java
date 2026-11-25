@@ -98,7 +98,7 @@ public final class VaporNetwork {
         return result;
     }
 
-    static boolean available(ServerPlayer player) {
+    public static boolean available(ServerPlayer player) {
         var connection = player.connection.connection;
         return connection.isMemoryConnection() || CHANNEL.isRemotePresent(connection);
     }

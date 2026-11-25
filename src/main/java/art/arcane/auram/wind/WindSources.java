@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import static art.arcane.auram.wind.WindNetwork.*;
 
@@ -32,7 +31,7 @@ public final class WindSources {
     private static final Map<ServerLevel, LevelSources> LEVELS = new HashMap<>();
 
     private record Key(ResourceLocation id, BlockPos position) {}
-    private record Sent(List<Emitter> emitters, long refreshAt) {}
+    private record Sent(List<Emitter> emitters, long refreshAt, int revision) {}
 
     private WindSources() {}
 
@@ -90,17 +89,16 @@ public final class WindSources {
     private static final class LevelSources {
         private final Map<Key, Emitter> emitters = new HashMap<>();
         private final List<Flow> gusts = new ArrayList<>();
-        private final Map<UUID, Sent> sent = new HashMap<>();
+        private final Map<ServerPlayer, Sent> sent = new HashMap<>();
         private boolean dirty;
 
         private void dispatch(ServerLevel level) {
             long ticks = level.getGameTime();
             if (!dirty && gusts.isEmpty() && (ticks & 3) != 0) return;
-            Set<UUID> present = new HashSet<>();
+            Set<ServerPlayer> present = new HashSet<>();
             for (ServerPlayer player : level.players()) {
-                if (!available(player)) continue;
-                UUID playerId = player.getUUID();
-                present.add(playerId);
+                if (!available(player) || !FieldNetwork.interested(player, FieldNetwork.VAPOR)) continue;
+                present.add(player);
                 BlockPos origin = player.blockPosition();
                 boolean ownsVisuals = FieldNetwork.supportsLocalSources(player);
                 List<Emitter> selected = emitters.values().stream()
@@ -111,12 +109,14 @@ public final class WindSources {
                                 emitter.flow().position().distToCenterSqr(player.position())).thenComparing(ORDER))
                         .limit(MAX_EMITTERS_PER_CLIENT).sorted(ORDER).toList();
                 List<Flow> nearbyGusts = gusts.stream().filter(gust -> nearby(gust.position(), origin)).toList();
-                Sent previous = sent.get(playerId);
-                boolean changed = previous == null ? !selected.isEmpty() : !selected.equals(previous.emitters);
+                Sent previous = sent.get(player);
+                int revision = FieldNetwork.revision(player, FieldNetwork.VAPOR);
+                boolean changed = previous == null ? !selected.isEmpty()
+                        : !selected.equals(previous.emitters) || previous.revision != revision;
                 if (changed || !nearbyGusts.isEmpty() || (previous != null && ticks >= previous.refreshAt)) {
                     send(player, new Frame(level.dimension().location(), selected, nearbyGusts));
-                    if (selected.isEmpty()) sent.remove(playerId);
-                    else sent.put(playerId, new Sent(selected, ticks + REFRESH_TICKS));
+                    if (selected.isEmpty()) sent.remove(player);
+                    else sent.put(player, new Sent(selected, ticks + REFRESH_TICKS, revision));
                 }
             }
             sent.keySet().retainAll(present);

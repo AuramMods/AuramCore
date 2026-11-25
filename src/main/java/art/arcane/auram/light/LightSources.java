@@ -1,6 +1,7 @@
 package art.arcane.auram.light;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.FieldNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -20,7 +21,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID)
 public final class LightSources {
@@ -117,19 +117,18 @@ public final class LightSources {
                 && Math.abs(position.getZ() - viewer.getZ()) <= RANGE;
     }
 
-    private record Sent(List<LightSample> lights, long refreshAt) {}
+    private record Sent(List<LightSample> lights, long refreshAt, int revision) {}
 
     private static final class Tracked {
         private final Map<Key, LightSample> sources = new HashMap<>();
-        private final Map<UUID, Sent> sent = new HashMap<>();
+        private final Map<ServerPlayer, Sent> sent = new HashMap<>();
         private boolean dirty;
 
         private void dispatch(ServerLevel level, long now) {
-            var present = new HashSet<UUID>();
+            var present = new HashSet<ServerPlayer>();
             for (ServerPlayer player : level.players()) {
-                if (!LightNetwork.available(player)) continue;
-                UUID viewer = player.getUUID();
-                present.add(viewer);
+                if (!LightNetwork.available(player) || !FieldNetwork.interested(player, FieldNetwork.LIGHT)) continue;
+                present.add(player);
                 BlockPos origin = player.blockPosition();
                 List<LightSample> selected = sources.entrySet().stream()
                         .filter(entry -> nearby(entry.getKey().position, origin))
@@ -139,12 +138,13 @@ public final class LightSources {
                                 .thenComparing(entry -> entry.getKey().position))
                         .limit(LightNetwork.MAX_PER_CLIENT)
                         .map(Map.Entry::getValue).toList();
-                Sent previous = sent.get(viewer);
+                Sent previous = sent.get(player);
+                int revision = FieldNetwork.revision(player, FieldNetwork.LIGHT);
                 if (previous == null ? selected.isEmpty()
-                        : selected.equals(previous.lights()) && now < previous.refreshAt()) continue;
+                        : selected.equals(previous.lights()) && now < previous.refreshAt() && previous.revision == revision) continue;
                 LightNetwork.send(player, new LightNetwork.Frame(level.dimension().location(), selected));
-                if (selected.isEmpty()) sent.remove(viewer);
-                else sent.put(viewer, new Sent(selected, now + REFRESH_TICKS));
+                if (selected.isEmpty()) sent.remove(player);
+                else sent.put(player, new Sent(selected, now + REFRESH_TICKS, revision));
             }
             sent.keySet().retainAll(present);
             dirty = false;

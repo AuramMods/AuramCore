@@ -10,6 +10,7 @@ import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.VoxelOccupancy;
 import art.arcane.auram.field.VoxelOccupancy.SectionOccupancy;
 import art.arcane.auram.field.WindField;
+import art.arcane.auram.field.client.FieldInterestClient;
 import art.arcane.auram.light.LightClient;
 import art.arcane.auram.vapor.VaporNetwork;
 import art.arcane.auram.vapor.VaporObstacles;
@@ -77,7 +78,8 @@ public final class VaporClient {
 
     private static void receive(VaporNetwork.Frame frame) {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null || !level.dimension().location().equals(frame.dimension())) return;
+        if (level == null || !FieldInterestClient.enabled(FieldNetwork.VAPOR)
+                || !level.dimension().location().equals(frame.dimension())) return;
         LightClient.setAlembicLights(level, frame.emitters());
         if (frame.emitters().isEmpty() && frame.pulses().isEmpty() && (session == null || session.level != level)) return;
         Session current = sessionFor(level);
@@ -90,11 +92,13 @@ public final class VaporClient {
 
     private static void receiveState(VaporState state) {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null || !level.dimension().location().equals(state.dimension())) return;
+        if (level == null || !FieldInterestClient.enabled(FieldNetwork.VAPOR)
+                || !level.dimension().location().equals(state.dimension())) return;
         Session current = sessionFor(level);
+        if (state.initial()) current.remoteVapor.clear();
         for (var key : state.removed()) current.remoteVapor.remove(key);
         for (var source : state.changed()) current.remoteVapor.put(source.key(), source.emitter());
-        if (!state.changed().isEmpty() || !state.removed().isEmpty()) {
+        if (state.initial() || !state.changed().isEmpty() || !state.removed().isEmpty()) {
             current.sourcesChanged = true;
             LightClient.setAlembicLights(level, List.copyOf(current.remoteVapor.values()));
         }
@@ -103,7 +107,8 @@ public final class VaporClient {
 
     private static void receiveWind(WindNetwork.Frame frame) {
         ClientLevel level = Minecraft.getInstance().level;
-        if (level == null || !level.dimension().location().equals(frame.dimension())) return;
+        if (level == null || !FieldInterestClient.enabled(FieldNetwork.VAPOR)
+                || !level.dimension().location().equals(frame.dimension())) return;
         if (frame.emitters().isEmpty() && frame.gusts().isEmpty() && (session == null || session.level != level)) return;
         Session current = sessionFor(level);
         if (!current.windEmitters.equals(frame.emitters())) {
@@ -132,13 +137,15 @@ public final class VaporClient {
     }
 
     public static boolean localPulse(Level level, VaporNetwork.Pulse pulse) {
-        if (!(level instanceof ClientLevel client) || Minecraft.getInstance().level != level
+        if (!(level instanceof ClientLevel client) || !FieldInterestClient.enabled(FieldNetwork.VAPOR)
+                || Minecraft.getInstance().level != level
                 || level.isOutsideBuildHeight(pulse.position()) || !level.hasChunkAt(pulse.position())) return false;
         return sessionFor(client).queuePulse(vaporSource(pulse));
     }
 
     public static boolean localGust(Level level, WindNetwork.Flow gust) {
-        if (!(level instanceof ClientLevel client) || Minecraft.getInstance().level != level
+        if (!(level instanceof ClientLevel client) || !FieldInterestClient.enabled(FieldNetwork.VAPOR)
+                || Minecraft.getInstance().level != level
                 || level.isOutsideBuildHeight(gust.position()) || !level.hasChunkAt(gust.position())) return false;
         return sessionFor(client).queueGust(windSource(gust));
     }
@@ -162,7 +169,7 @@ public final class VaporClient {
         return session;
     }
 
-    private static void reset() {
+    public static void reset() {
         if (session != null) {
             session.worker.close();
             session = null;
@@ -177,7 +184,7 @@ public final class VaporClient {
         ClientLevel level = client.level;
         if (session != null && level != session.level) reset();
         var camera = client.getCameraEntity();
-        if (level == null || camera == null) return;
+        if (level == null || camera == null || !FieldInterestClient.enabled(FieldNetwork.VAPOR)) return;
 
         boolean paused = client.isPaused();
         BlockPos center = camera.blockPosition();

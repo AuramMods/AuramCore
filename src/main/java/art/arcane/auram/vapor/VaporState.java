@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 
 /** Sparse updates to continuous sources whose activity is known only on the server. */
-public record VaporState(ResourceLocation dimension, List<Source> changed, List<Key> removed,
+public record VaporState(ResourceLocation dimension, boolean initial, List<Source> changed, List<Key> removed,
                          List<VaporNetwork.Pulse> pulses) {
     public VaporState {
         changed = List.copyOf(changed);
@@ -21,6 +21,7 @@ public record VaporState(ResourceLocation dimension, List<Source> changed, List<
 
     public static void encode(VaporState state, FriendlyByteBuf out) {
         out.writeResourceLocation(state.dimension);
+        out.writeBoolean(state.initial);
         out.writeVarInt(state.changed.size());
         for (Source source : state.changed) {
             writeKey(out, source.key);
@@ -41,6 +42,7 @@ public record VaporState(ResourceLocation dimension, List<Source> changed, List<
 
     public static VaporState decode(FriendlyByteBuf in) {
         var dimension = in.readResourceLocation();
+        boolean initial = in.readBoolean();
         var changes = read(in, VaporNetwork.MAX_EMITTERS_PER_CLIENT, buffer -> {
             var key = readKey(buffer);
             var vent = buffer.readBoolean() ? buffer.readBlockPos() : key.anchor();
@@ -49,7 +51,7 @@ public record VaporState(ResourceLocation dimension, List<Source> changed, List<
         var removals = read(in, VaporNetwork.MAX_EMITTERS_PER_CLIENT, VaporState::readKey);
         var pulses = read(in, VaporNetwork.MAX_PULSES_PER_TICK,
                 buffer -> new VaporNetwork.Pulse(buffer.readBlockPos(), buffer.readFloat(), buffer.readVarInt()));
-        return new VaporState(dimension, changes, removals, pulses);
+        return new VaporState(dimension, initial, changes, removals, pulses);
     }
 
     private static void writeKey(FriendlyByteBuf buffer, Key key) {

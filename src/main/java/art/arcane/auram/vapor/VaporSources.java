@@ -35,6 +35,7 @@ public final class VaporSources {
 
     private record ActiveEmitter(VaporNetwork.Emitter emitter, long expiresAt) {}
     private record Sent(List<VaporNetwork.Emitter> emitters, long nextRefresh) {}
+    private record ModernSent(Map<Key, VaporNetwork.Emitter> sources, int revision) {}
 
     private VaporSources() {
     }
@@ -103,13 +104,13 @@ public final class VaporSources {
         private final Map<Key, ActiveEmitter> emitters = new HashMap<>();
         private final List<VaporNetwork.Pulse> pulses = new ArrayList<>();
         private final Map<ServerPlayer, Sent> sent = new IdentityHashMap<>();
-        private final Map<ServerPlayer, Map<Key, VaporNetwork.Emitter>> modern = new IdentityHashMap<>();
+        private final Map<ServerPlayer, ModernSent> modern = new IdentityHashMap<>();
 
         private void dispatch(ServerLevel level) {
             if (pulses.isEmpty() && (level.getGameTime() & 3) != 0) return;
             Set<ServerPlayer> present = new HashSet<>();
             for (ServerPlayer player : level.players()) {
-                if (!VaporNetwork.available(player)) continue;
+                if (!VaporNetwork.available(player) || !FieldNetwork.interested(player, FieldNetwork.VAPOR)) continue;
                 present.add(player);
                 sendTo(level, player);
             }
@@ -145,16 +146,19 @@ public final class VaporSources {
 
         private void sendChanges(ServerLevel level, ServerPlayer player, Map<Key, VaporNetwork.Emitter> current,
                                  List<VaporNetwork.Pulse> pulses) {
-            var previous = modern.getOrDefault(player, Map.of());
+            var sent = modern.get(player);
+            int revision = FieldNetwork.revision(player, FieldNetwork.VAPOR);
+            boolean initial = sent == null || sent.revision != revision;
+            Map<Key, VaporNetwork.Emitter> previous = initial ? Map.of() : sent.sources;
             var removed = previous.keySet().stream().filter(key -> !current.containsKey(key)).toList();
             var changed = new ArrayList<VaporState.Source>();
             current.forEach((key, source) -> {
                 if (!source.equals(previous.get(key))) changed.add(new VaporState.Source(key, source));
             });
             if (removed.isEmpty() && changed.isEmpty() && pulses.isEmpty()) return;
-            FieldNetwork.sendVapor(player, new VaporState(level.dimension().location(), changed, removed, pulses));
+            FieldNetwork.sendVapor(player, new VaporState(level.dimension().location(), initial, changed, removed, pulses));
             if (current.isEmpty()) modern.remove(player);
-            else modern.put(player, current);
+            else modern.put(player, new ModernSent(current, revision));
         }
 
         private void sendLegacy(ServerLevel level, ServerPlayer player, List<VaporNetwork.Emitter> nearby,

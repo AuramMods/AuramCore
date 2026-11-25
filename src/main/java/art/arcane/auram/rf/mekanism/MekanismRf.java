@@ -72,6 +72,10 @@ public final class MekanismRf {
         if (amount.isZero() || !(network.getWorld() instanceof ServerLevel level)
                 || !level.getServer().isSameThread()) return;
         Flow flow = NETWORKS.get(network);
+        boolean route = output != null && RfFlow.needsRoutes(level);
+        if (output != null && !route) {
+            RfFlow.recordRoutedInput(level, output.machine.asLong(), EnergyUnit.FORGE_ENERGY.convertToAsLong(amount));
+        }
         FloatingLong unrouted = FloatingLong.ZERO;
         if (flow != null) {
             var entries = flow.inputs.entrySet().iterator();
@@ -84,13 +88,13 @@ public final class MekanismRf {
                 if (used.equals(stored)) entries.remove();
                 else entry.setValue(stored.subtract(used));
 
-                if (output == null) continue;
+                if (!route) continue;
                 Path path = path(level, network, flow, new Route(input, output));
                 if (path == null) unrouted = unrouted.add(used);
                 else path.observe.accept(EnergyUnit.FORGE_ENERGY.convertToAsLong(used));
             }
         }
-        if (output == null) return;
+        if (!route) return;
         long remainder = EnergyUnit.FORGE_ENERGY.convertToAsLong(unrouted.add(amount));
         if (remainder > 0) {
             // A persisted or merged buffer can deliver energy with no observable source.
