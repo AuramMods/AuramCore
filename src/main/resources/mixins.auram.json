@@ -140,6 +140,7 @@
     "mekanism.RfCablePullMixin",
     "mekanism.EvolvedQioDriveRegistrationMixin",
     "minecraft.SelectedItemSelectorMixin",
+    "minecraft.EntityLookupTypeMixin",
     "minecraft.DroppedItemTagSelectorMixin",
     "tomsstorage.TerminalIdMixin",
     "tomsstorage.StoredQuantityAccess",

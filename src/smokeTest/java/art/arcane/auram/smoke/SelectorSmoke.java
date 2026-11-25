@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder;
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.StringReader;
 import com.mojang.logging.LogUtils;
+import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.commands.CommandFunction;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.selector.EntitySelector;
@@ -21,10 +22,17 @@ import net.minecraft.server.ServerFunctionManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.Arrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.entity.EntityLookup;
+import net.minecraft.util.AbortableIterationConsumer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,7 +44,9 @@ public final class SelectorSmoke {
         ServerPlayer player = new ServerPlayer(server, server.overworld(),
                 new GameProfile(UUID.fromString("00000000-0000-0000-0000-000000000101"), "AuramSelectors"));
         List<String> actionBars = new ArrayList<>();
-        player.connection = new ServerGamePacketListenerImpl(server, new Connection(PacketFlow.SERVERBOUND), player) {
+        Connection connection = new Connection(PacketFlow.SERVERBOUND);
+        EmbeddedChannel channel = new EmbeddedChannel(connection);
+        player.connection = new ServerGamePacketListenerImpl(server, connection, player) {
             @Override public void send(Packet<?> packet) {
                 if (packet instanceof ClientboundSetActionBarTextPacket bar) actionBars.add(bar.getText().getString());
             }
@@ -97,6 +107,7 @@ public final class SelectorSmoke {
         }
         Map<String,Object> result=new LinkedHashMap<>();
         result.put("semantic_comparisons",comparisons);result.put("functions",functions);
+        result.put("exact_type_lookup", exactTypeLookup(player));
         result.put("scope","Installed datapacks, one live server player with tagged inventory and 32 armor stands; not a hosted-server speedup estimate.");
         if (droppedItems) {
             result.put("dropped_item_comparisons", dropComparisons);
@@ -106,7 +117,111 @@ public final class SelectorSmoke {
             result.put("guns_offhand", GunsOffhandSmoke.run(player, source, actionBars));
         }
         result.put("guns_arrow_selector", arrowSelector(player, source));
+        result.put("attachment_and_shield_checks", attachmentAndShieldChecks(player, source));
         Files.writeString(Path.of("selector-benchmark.json"),new GsonBuilder().setPrettyPrinting().create().toJson(result)+"\n");
+        channel.finishAndReleaseAll();
+    }
+
+    private static Map<String, Object> exactTypeLookup(ServerPlayer player) {
+        var lookup = new EntityLookup<Entity>();
+        var level = player.serverLevel();
+        var first = new ItemEntity(level, 0, 0, 0, new ItemStack(Items.STONE));
+        var second = new ItemEntity(level, 0, 0, 0, new ItemStack(Items.STONE));
+        lookup.add(first);
+        for (int index = 0; index < 512; index++) {
+            lookup.add(new ArmorStand(level, 0, 0, 0));
+        }
+        check(firstItem(lookup) == first, "exact lookup stops at the first item");
+        lookup.add(second);
+        check(firstItem(lookup) == first, "adding a later item preserves the first result");
+        lookup.remove(first);
+        check(firstItem(lookup) == second, "removal updates exact lookup");
+        var duplicate = new ItemEntity(level, 0, 0, 0, new ItemStack(Items.GOLD_INGOT));
+        duplicate.setUUID(second.getUUID());
+        lookup.add(duplicate);
+        check(firstItem(lookup) == second, "a rejected duplicate UUID is invisible");
+        var replacement = new ArmorStand(level, 0, 0, 0);
+        replacement.setId(second.getId());
+        lookup.add(replacement);
+        check(firstItem(lookup) == null, "replacing an entity ID invalidates its old type");
+        lookup.add(first);
+        check(firstItem(lookup) == first, "lookup recovers after replacement");
+        double[] times = new double[21];
+        for (int batch = -5; batch < times.length; batch++) {
+            long start = System.nanoTime();
+            for (int i = 0; i < 4000; i++) {
+                check(firstItem(lookup) == first, "exact lookup result");
+            }
+            if (batch >= 0) times[batch] = (System.nanoTime() - start) / 1e6;
+        }
+        Arrays.sort(times);
+        return Map.of("parity_checks", 6, "unrelated_entities", 513,
+                "median_4000_queries_ms", times[times.length / 2]);
+    }
+
+    private static ItemEntity firstItem(EntityLookup<Entity> lookup) {
+        ItemEntity[] result = new ItemEntity[1];
+        lookup.getEntities(EntityType.ITEM, item -> {
+            result[0] = item;
+            return AbortableIterationConsumer.Continuation.ABORT;
+        });
+        return result[0];
+    }
+
+    private static Map<String, Object> attachmentAndShieldChecks(ServerPlayer player, CommandSourceStack source) {
+        int cases = 0;
+        var scans = new TreeMap<String, Long>();
+        var level = player.serverLevel();
+        var functions = player.server.getFunctions();
+        var conversion = Map.of("suppress", 88921, "laserattach", 88948);
+        for (var entry : conversion.entrySet()) {
+            var gunStack = new ItemStack(Items.CROSSBOW);
+            gunStack.getOrCreateTagElement("gz_data").putInt("id", 11);
+            var attachmentStack = new ItemStack(Items.CLOCK);
+            attachmentStack.getOrCreateTag().putInt("CustomModelData", entry.getValue());
+            var gun = new ItemEntity(level, 5.5, -61, 5, gunStack);
+            var attachment = new ItemEntity(level, 5, -61, 5, attachmentStack);
+            var remote = new ItemEntity(level, 15, -61, 15, attachmentStack.copy());
+            level.addFreshEntity(gun);
+            level.addFreshEntity(attachment);
+            level.addFreshEntity(remote);
+            var function = functions.get(ResourceLocation.parse("ggunz:utilities/" + entry.getKey())).orElseThrow();
+            scans.put(entry.getKey(), countScans(functions, function, source));
+            check(gun.isRemoved() && attachment.isRemoved() && !remote.isRemoved(),
+                    "attachments use the first global match and consume only nearby items");
+            remote.discard();
+            cases++;
+        }
+        var clock = functions.get(ResourceLocation.parse("incendium:clocks/main")).orElseThrow();
+        var objective = level.getScoreboard().getObjective("in.cd_shield");
+        check(objective != null, "Incendium loaded its shield objective");
+        var shield = new ItemStack(Items.SHIELD);
+        shield.getOrCreateTagElement("incendium").putString("item", "radiation_shield");
+        player.setItemSlot(EquipmentSlot.OFFHAND, shield);
+        var score = level.getScoreboard().getOrCreatePlayerScore(player.getScoreboardName(), objective);
+        score.setScore(0);
+        player.addEffect(new MobEffectInstance(MobEffects.POISON, 500));
+        functions.execute(clock, source);
+        check(player.hasEffect(MobEffects.POISON), "Incendium leaves effects without an active shield score");
+        score.setScore(200);
+        scans.put("radiation_shield", countScans(functions, clock, source));
+        check(!player.hasEffect(MobEffects.POISON), "Incendium removes poison for an active radiation shield");
+        score.setScore(200);
+        shield.getOrCreateTagElement("incendium").putString("item", "necrotic_shield");
+        player.addEffect(new MobEffectInstance(MobEffects.WITHER, 500));
+        scans.put("necrotic_shield", countScans(functions, clock, source));
+        check(!player.hasEffect(MobEffects.WITHER), "Incendium removes wither for an active necrotic shield");
+        return Map.of("gameplay_cases", cases + 3, "global_scans", scans);
+    }
+
+    private static long countScans(ServerFunctionManager manager, CommandFunction function, CommandSourceStack source) {
+        SelectorProbe.start();
+        try {
+            manager.execute(function, source);
+            return SelectorProbe.globalScans();
+        } finally {
+            SelectorProbe.stop();
+        }
     }
 
     private static Map<String, Long> arrowSelector(ServerPlayer player, CommandSourceStack source) throws Exception {
