@@ -4,6 +4,7 @@ import art.arcane.auram.Auram;
 import art.arcane.auram.field.ClientFieldSources;
 import art.arcane.auram.field.ClientFieldSources.Key;
 import art.arcane.auram.field.FieldFrames;
+import art.arcane.auram.field.FieldNetwork;
 import art.arcane.auram.field.VoxelGrid;
 import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.VoxelOccupancy;
@@ -12,11 +13,13 @@ import art.arcane.auram.field.WindField;
 import art.arcane.auram.light.LightClient;
 import art.arcane.auram.vapor.VaporNetwork;
 import art.arcane.auram.vapor.VaporObstacles;
+import art.arcane.auram.vapor.VaporState;
 import art.arcane.auram.wind.WindNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -62,6 +65,7 @@ public final class VaporClient {
         public static void clientSetup(FMLClientSetupEvent event) {
             event.enqueueWork(() -> {
                 VaporNetwork.setReceiver(VaporClient::scheduleFrame);
+                FieldNetwork.setVaporReceiver(state -> Minecraft.getInstance().execute(() -> receiveState(state)));
                 WindNetwork.setReceiver(frame -> Minecraft.getInstance().execute(() -> receiveWind(frame)));
             });
         }
@@ -84,6 +88,19 @@ public final class VaporClient {
         for (var pulse : frame.pulses()) current.queuePulse(vaporSource(pulse));
     }
 
+    private static void receiveState(VaporState state) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null || !level.dimension().location().equals(state.dimension())) return;
+        Session current = sessionFor(level);
+        for (var key : state.removed()) current.remoteVapor.remove(key);
+        for (var source : state.changed()) current.remoteVapor.put(source.key(), source.emitter());
+        if (!state.changed().isEmpty() || !state.removed().isEmpty()) {
+            current.sourcesChanged = true;
+            LightClient.setAlembicLights(level, List.copyOf(current.remoteVapor.values()));
+        }
+        for (var pulse : state.pulses()) current.queuePulse(vaporSource(pulse));
+    }
+
     private static void receiveWind(WindNetwork.Frame frame) {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().location().equals(frame.dimension())) return;
@@ -96,6 +113,10 @@ public final class VaporClient {
         for (var gust : frame.gusts()) {
             if (!current.queueGust(windSource(gust))) break;
         }
+    }
+
+    private static VaporVolume.Source vaporSource(VaporNetwork.Emitter source) {
+        return new VaporVolume.Source(position(source.position()), source.rate(), 0);
     }
 
     private static VaporVolume.Source vaporSource(VaporNetwork.Pulse pulse) {
@@ -162,20 +183,27 @@ public final class VaporClient {
         BlockPos center = camera.blockPosition();
         VaporAmbient.Sources local = paused || VaporAtmosphere.current() == null
                 ? VaporAmbient.Sources.EMPTY : VaporAmbient.sample(level, center);
-        if (session != null || !local.empty() || ClientFieldSources.VAPOR.has(level) || ClientFieldSources.WIND.has(level)) {
-            sessionFor(level).tick(center, paused, local);
+        Map<Key, VaporNetwork.Emitter> machines = paused || VaporAtmosphere.current() == null ? Map.of()
+                : LocalMachineVapor.collect(level, VoxelGrid.originAround(center.getX(), center.getY(), center.getZ()));
+        if (session != null || !local.empty() || !machines.isEmpty()
+                || ClientFieldSources.VAPOR.has(level) || ClientFieldSources.WIND.has(level)) {
+            sessionFor(level).tick(center, paused, local, machines);
             VaporTexture.pumpCompute();
         }
     }
 
     @SubscribeEvent
     public static void levelUnloaded(LevelEvent.Unload event) {
+        if (event.getLevel() instanceof ClientLevel level) LocalMachineVapor.unload(level);
         Session current = session;
         if (current != null && event.getLevel() == current.level) reset();
     }
 
     @SubscribeEvent
     public static void chunkLoaded(ChunkEvent.Load event) {
+        if (event.getLevel() instanceof ClientLevel level && event.getChunk() instanceof LevelChunk chunk) {
+            for (var entity : chunk.getBlockEntities().values()) machineAdded(level, entity);
+        }
         if (session != null && event.getLevel() == session.level && event.getChunk() instanceof LevelChunk chunk) {
             session.invalidateColumn(chunk, false);
         }
@@ -183,9 +211,18 @@ public final class VaporClient {
 
     @SubscribeEvent
     public static void chunkUnloaded(ChunkEvent.Unload event) {
+        if (event.getLevel() instanceof ClientLevel level) LocalMachineVapor.unload(level, event.getChunk().getPos());
         if (session != null && event.getLevel() == session.level && event.getChunk() instanceof LevelChunk chunk) {
             session.invalidateColumn(chunk, true);
         }
+    }
+
+    public static void machineAdded(ClientLevel level, BlockEntity entity) {
+        if (!entity.isRemoved()) LocalMachineVapor.add(level, entity);
+    }
+
+    public static void machineRemoved(ClientLevel level, BlockPos pos) {
+        LocalMachineVapor.remove(level, pos);
     }
 
     public static void blockChanged(ClientLevel level, BlockPos pos) {
@@ -209,10 +246,12 @@ public final class VaporClient {
         private final ArrayDeque<WaitingGust> gusts = new ArrayDeque<>();
         private List<WindNetwork.Emitter> windEmitters = List.of();
         private List<VaporNetwork.Emitter> emitters = List.of();
+        private final Map<Key, VaporNetwork.Emitter> remoteVapor = new LinkedHashMap<>();
         private final List<WindNetwork.Emitter> ownedWind = new ArrayList<>();
         private final List<VaporNetwork.Emitter> ownedVapor = new ArrayList<>();
         private List<WindNetwork.Emitter> previousWind = List.of();
         private List<VaporNetwork.Emitter> previousVapor = List.of();
+        private Map<Key, VaporNetwork.Emitter> previousMachines = Map.of();
         private List<WindField.Source> wind = List.of();
         private List<VaporVolume.Source> vapor = List.of();
         private boolean sourcesChanged;
@@ -242,7 +281,8 @@ public final class VaporClient {
             return true;
         }
 
-        private void tick(BlockPos camera, boolean paused, VaporAmbient.Sources local) {
+        private void tick(BlockPos camera, boolean paused, VaporAmbient.Sources local,
+                          Map<Key, VaporNetwork.Emitter> machines) {
             if (paused) {
                 worker.submit(input, erosion, List.of(), true, List.of(), List.of(), List.of());
                 return;
@@ -267,7 +307,7 @@ public final class VaporClient {
                     pending.remove();
                 }
             }
-            mergeSources();
+            mergeSources(machines);
             List<VaporVolume.Source> continuous = vapor;
             if (!local.burning().isEmpty()) {
                 continuous = new ArrayList<>(continuous);
@@ -292,16 +332,25 @@ public final class VaporClient {
             worker.submit(input, erosion, continuous, false, ready, wind, readyGusts);
         }
 
-        private void mergeSources() {
+        private void mergeSources(Map<Key, VaporNetwork.Emitter> machines) {
             ownedVapor.clear();
             ownedWind.clear();
             ClientFieldSources.VAPOR.collect(level, origin, ownedVapor);
             ClientFieldSources.WIND.collect(level, origin, ownedWind);
-            if (sourcesChanged || !previousVapor.equals(ownedVapor)) {
-                vapor = ClientFieldSources.mergeLegacy(emitters, ownedVapor,
-                        source -> new Key(source.id(), source.position()),
-                        source -> new VaporVolume.Source(position(source.position()), source.rate(), 0));
+            ownedVapor.addAll(machines.values());
+            if (sourcesChanged || !previousVapor.equals(ownedVapor) || !previousMachines.equals(machines)) {
+                if (remoteVapor.isEmpty()) {
+                    vapor = ClientFieldSources.mergeLegacy(emitters, ownedVapor,
+                            source -> new Key(source.id(), source.position()), VaporClient::vaporSource);
+                } else {
+                    vapor = new ArrayList<>(ownedVapor.size() + remoteVapor.size());
+                    for (var source : ownedVapor) vapor.add(vaporSource(source));
+                    remoteVapor.forEach((key, source) -> {
+                        if (!ClientFieldSources.VAPOR.contains(level, key) && !machines.containsKey(key)) vapor.add(vaporSource(source));
+                    });
+                }
                 previousVapor = List.copyOf(ownedVapor);
+                previousMachines = machines;
             }
             if (sourcesChanged || !previousWind.equals(ownedWind)) {
                 wind = ClientFieldSources.mergeLegacy(windEmitters, ownedWind,

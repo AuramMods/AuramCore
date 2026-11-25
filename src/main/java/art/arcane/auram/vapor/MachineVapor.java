@@ -6,6 +6,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -39,7 +40,7 @@ public final class MachineVapor {
         if (machine.getBlockState().is(FURNACE_FUEL_GENERATORS)) burning(machine);
     }
 
-    static BlockPos outlet(ServerLevel level, BlockEntity machine) {
+    static BlockPos outlet(Level level, BlockEntity machine) {
         BlockPos pos = machine.getBlockPos();
         BlockPos above = pos.above();
         if (VaporDemonstrators.open(level, above)) return above;

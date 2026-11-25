@@ -1,6 +1,7 @@
 package art.arcane.auram.vapor;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.ClientFieldSources.Key;
 import art.arcane.auram.field.FieldNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -18,10 +19,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID)
 public final class VaporSources {
@@ -32,7 +33,6 @@ public final class VaporSources {
     private static final Comparator<VaporNetwork.Emitter> EMITTER_ORDER = Comparator
             .comparing(VaporNetwork.Emitter::id).thenComparing(VaporNetwork.Emitter::position);
 
-    private record Key(ResourceLocation id, BlockPos pos) {}
     private record ActiveEmitter(VaporNetwork.Emitter emitter, long expiresAt) {}
     private record Sent(List<VaporNetwork.Emitter> emitters, long nextRefresh) {}
 
@@ -80,8 +80,8 @@ public final class VaporSources {
 
     static void stopInChunk(ServerLevel level, ResourceLocation id, ChunkPos chunk) {
         var sources = LEVELS.get(level);
-        if (sources != null) sources.emitters.keySet().removeIf(key -> key.id.equals(id)
-                && (key.pos.getX() >> 4) == chunk.x && (key.pos.getZ() >> 4) == chunk.z);
+        if (sources != null) sources.emitters.keySet().removeIf(key -> key.provider().equals(id)
+                && (key.anchor().getX() >> 4) == chunk.x && (key.anchor().getZ() >> 4) == chunk.z);
     }
 
     @SubscribeEvent
@@ -96,52 +96,82 @@ public final class VaporSources {
         if (sources == null) return;
         sources.emitters.values().removeIf(emitter -> emitter.expiresAt <= level.getGameTime());
         sources.dispatch(level);
-        if (sources.emitters.isEmpty() && sources.pulses.isEmpty() && sources.sent.isEmpty()) LEVELS.remove(level);
+        if (sources.emitters.isEmpty() && sources.pulses.isEmpty() && sources.sent.isEmpty() && sources.modern.isEmpty()) LEVELS.remove(level);
     }
 
     private static final class LevelSources {
         private final Map<Key, ActiveEmitter> emitters = new HashMap<>();
         private final List<VaporNetwork.Pulse> pulses = new ArrayList<>();
-        private final Map<UUID, Sent> sent = new HashMap<>();
+        private final Map<ServerPlayer, Sent> sent = new IdentityHashMap<>();
+        private final Map<ServerPlayer, Map<Key, VaporNetwork.Emitter>> modern = new IdentityHashMap<>();
 
         private void dispatch(ServerLevel level) {
             if (pulses.isEmpty() && (level.getGameTime() & 3) != 0) return;
-            Set<UUID> present = new HashSet<>();
+            Set<ServerPlayer> present = new HashSet<>();
             for (ServerPlayer player : level.players()) {
                 if (!VaporNetwork.available(player)) continue;
-                present.add(player.getUUID());
+                present.add(player);
                 sendTo(level, player);
             }
             sent.keySet().retainAll(present);
+            modern.keySet().retainAll(present);
             pulses.clear();
         }
 
         private void sendTo(ServerLevel level, ServerPlayer player) {
             boolean ownsVisuals = FieldNetwork.supportsLocalSources(player);
-            List<VaporNetwork.Emitter> nearby = emitters.values().stream()
-                    .map(ActiveEmitter::emitter)
-                    .filter(emitter -> !ownsVisuals || !VaporDemonstrators.clientOwned(emitter.id()))
-                    .filter(emitter -> emitter.position().distToCenterSqr(player.position()) <= RANGE * RANGE
-                            && level.hasChunkAt(emitter.position()))
-                    .sorted(Comparator.<VaporNetwork.Emitter>comparingDouble(emitter -> emitter.position()
-                            .distToCenterSqr(player.position())).thenComparing(EMITTER_ORDER))
+            var selected = emitters.entrySet().stream()
+                    .filter(entry -> !ownsVisuals || !VaporDemonstrators.clientOwned(level, entry.getKey()))
+                    .filter(entry -> visible(level, player, entry.getValue().emitter.position()))
+                    .sorted(Comparator.<Map.Entry<Key, ActiveEmitter>>comparingDouble(entry ->
+                                    entry.getValue().emitter.position().distToCenterSqr(player.position()))
+                            .thenComparing(entry -> entry.getValue().emitter, EMITTER_ORDER)
+                            .thenComparing(entry -> entry.getKey().anchor()))
                     .limit(VaporNetwork.MAX_EMITTERS_PER_CLIENT)
-                    .sorted(EMITTER_ORDER)
                     .toList();
             List<VaporNetwork.Pulse> nearbyPulses = pulses.stream()
                     .filter(pulse -> pulse.position().closerToCenterThan(player.position(), RANGE + pulse.radius()))
                     .limit(VaporNetwork.MAX_PULSES_PER_TICK)
                     .toList();
-            UUID id = player.getUUID();
-            Sent previous = sent.get(id);
+            if (ownsVisuals) {
+                var current = new LinkedHashMap<Key, VaporNetwork.Emitter>();
+                for (var entry : selected) current.put(entry.getKey(), entry.getValue().emitter);
+                sendChanges(level, player, current, nearbyPulses);
+            } else {
+                var nearby = selected.stream().map(entry -> entry.getValue().emitter).sorted(EMITTER_ORDER).toList();
+                sendLegacy(level, player, nearby, nearbyPulses);
+            }
+        }
+
+        private void sendChanges(ServerLevel level, ServerPlayer player, Map<Key, VaporNetwork.Emitter> current,
+                                 List<VaporNetwork.Pulse> pulses) {
+            var previous = modern.getOrDefault(player, Map.of());
+            var removed = previous.keySet().stream().filter(key -> !current.containsKey(key)).toList();
+            var changed = new ArrayList<VaporState.Source>();
+            current.forEach((key, source) -> {
+                if (!source.equals(previous.get(key))) changed.add(new VaporState.Source(key, source));
+            });
+            if (removed.isEmpty() && changed.isEmpty() && pulses.isEmpty()) return;
+            FieldNetwork.sendVapor(player, new VaporState(level.dimension().location(), changed, removed, pulses));
+            if (current.isEmpty()) modern.remove(player);
+            else modern.put(player, current);
+        }
+
+        private void sendLegacy(ServerLevel level, ServerPlayer player, List<VaporNetwork.Emitter> nearby,
+                                List<VaporNetwork.Pulse> pulses) {
+            Sent previous = sent.get(player);
             long now = level.getGameTime();
             boolean changed = previous == null ? !nearby.isEmpty() : !nearby.equals(previous.emitters);
             boolean refresh = previous != null && now >= previous.nextRefresh;
-            if (changed || refresh || !nearbyPulses.isEmpty()) {
-                VaporNetwork.send(player, new VaporNetwork.Frame(level.dimension().location(), nearby, nearbyPulses));
-                if (nearby.isEmpty()) sent.remove(id);
-                else sent.put(id, new Sent(nearby, now + REFRESH_TICKS));
+            if (changed || refresh || !pulses.isEmpty()) {
+                VaporNetwork.send(player, new VaporNetwork.Frame(level.dimension().location(), nearby, pulses));
+                if (nearby.isEmpty()) sent.remove(player);
+                else sent.put(player, new Sent(nearby, now + REFRESH_TICKS));
             }
+        }
+
+        private static boolean visible(ServerLevel level, ServerPlayer observer, BlockPos pos) {
+            return pos.distToCenterSqr(observer.position()) <= RANGE * RANGE && level.hasChunkAt(pos);
         }
     }
 }

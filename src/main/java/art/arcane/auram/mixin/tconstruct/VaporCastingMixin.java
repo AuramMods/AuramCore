@@ -1,6 +1,8 @@
 package art.arcane.auram.mixin.tconstruct;
 
 import art.arcane.auram.tconstruct.CastingCooling;
+import art.arcane.auram.tconstruct.CastingRecipeState;
+import art.arcane.auram.vapor.VaporDemonstrators;
 import art.arcane.auram.vapor.TinkersVapor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -14,13 +16,18 @@ import slimeknights.tconstruct.library.recipe.casting.ICastingRecipe;
 import slimeknights.tconstruct.smeltery.block.entity.CastingBlockEntity;
 
 @Mixin(value = CastingBlockEntity.class, remap = false)
-abstract class VaporCastingMixin {
+abstract class VaporCastingMixin implements CastingRecipeState {
     @Shadow(remap = false) private ICastingRecipe currentRecipe;
+
+    @Override
+    public boolean auram$hasVisibleRecipe() {
+        return currentRecipe != null;
+    }
 
     @Inject(method = "serverTick", at = @At("HEAD"))
     private void auram$vapor(Level world, BlockPos pos, CallbackInfo ci) {
         var casting = (CastingBlockEntity) (Object) this;
-        if (world instanceof ServerLevel level && currentRecipe != null && !casting.getTank().isEmpty()) {
+        if (world instanceof ServerLevel level && VaporDemonstrators.legacyViewers(level) && currentRecipe != null && !casting.getTank().isEmpty()) {
             TinkersVapor.casting(level, pos, CastingCooling.remainingHeat(casting));
         }
     }

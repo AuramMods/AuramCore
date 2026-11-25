@@ -209,6 +209,7 @@
     "fastanim.WitherEntityModelMixin",
     "fastanim.WolfEntityModelMixin",
     "minecraft.VaporBlockUpdateMixin",
+    "minecraft.ClientMachineIndexMixin",
     "openblocks.FanWindMixin",
     "tconstruct.BlissCastingPreviewMixin",
     "tconstruct.BlissFluidShaderMixin",

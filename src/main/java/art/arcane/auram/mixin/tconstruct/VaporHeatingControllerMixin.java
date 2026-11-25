@@ -18,8 +18,8 @@ import slimeknights.tconstruct.smeltery.block.entity.module.SolidFuelModule;
 
 @Mixin(value = {MelterBlockEntity.class, AlloyerBlockEntity.class}, remap = false)
 abstract class VaporHeatingControllerMixin {
-    @Shadow public abstract SolidFuelModule getFuelModule();
-    @Shadow public abstract FluidTankAnimated getTank();
+    @Shadow(remap = false) public abstract SolidFuelModule getFuelModule();
+    @Shadow(remap = false) public abstract FluidTankAnimated getTank();
 
     @Inject(method = "tick", at = @At("RETURN"))
     private void auram$vapor(Level world, BlockPos pos, BlockState state, CallbackInfo ci) {

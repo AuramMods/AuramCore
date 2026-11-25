@@ -1,6 +1,7 @@
 package art.arcane.auram.vapor;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.ClientFieldSources.Key;
 import art.arcane.auram.field.FieldNetwork;
 import art.arcane.auram.mixin.minecraft.ExplosionRadiusAccess;
 import net.minecraft.core.BlockPos;
@@ -75,9 +76,12 @@ public final class VaporDemonstrators {
         return false;
     }
 
-    static boolean clientOwned(ResourceLocation provider) {
+    static boolean clientOwned(ServerLevel level, Key key) {
+        ResourceLocation provider = key.provider();
         return provider.equals(FIRE) || provider.equals(LAVA_CAULDRON) || provider.equals(NITOR)
-                || provider.equals(BotaniaVapor.ENDOFLAME);
+                || provider.equals(BotaniaVapor.ENDOFLAME) || TinkersVapor.clientOwned(provider)
+                || provider.equals(EnderIoVapor.MACHINE) && level.hasChunkAt(key.anchor())
+                && EnderIoVapor.hasVisibleActivity(level.getBlockState(key.anchor()));
     }
 
     public static void blockChanged(Level level, BlockPos pos, BlockState before, BlockState after) {

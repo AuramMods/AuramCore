@@ -43,3 +43,25 @@ The baseline logged a pre-existing invalid `getFuelModule` shadow in the Tinkers
 heating-controller mixin. The harness still reached both rendering clients and all
 sampling phases. Treat heating-controller coverage separately from the other Tinkers
 fixture blocks until that mixin is corrected.
+
+## Machine state used by the client
+
+- Ender IO publishes its operating `powered` block state for the SAG Mill,
+  Alloy Smelter, Slice and Splice, Painting Machine, and Soul Engine. The client
+  uses loaded block entities and resolves the same top or front outlet against
+  its local world. Machines without a matching published state retain server
+  updates.
+- Tinkers synchronizes smeltery bounds and contents, casting recipes and
+  cooling timers, and channel fluid. These drive the local emitters. A faucet
+  can remain visually pouring while the output accepts zero fluid. Faucet smoke
+  therefore follows the server's accepted fill. The heater and heating
+  controllers also retain server state because their synced tags carry fluid and
+  inventory without the solid-fuel module's burn state.
+- Thermal's Stirling Dynamo hook observes energy actually generated on that
+  tick. Titanium detects the type of fuel consumed on the server. The Extra
+  Utilities generators hook actual output. Thaumaturge's alembic smoke and
+  infusion intensity depend on server processing and stability. Their updates
+  use the sparse emitter channel.
+- The vanilla furnace hook follows cooking progress and resolves covered
+  outlets on the server. Botania mana pool vapor follows actual transfer,
+  including acceptance through a Mana Void with a full pool.

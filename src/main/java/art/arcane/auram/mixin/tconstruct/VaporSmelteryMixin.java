@@ -1,6 +1,7 @@
 package art.arcane.auram.mixin.tconstruct;
 
 import art.arcane.auram.vapor.TinkersVapor;
+import art.arcane.auram.vapor.VaporDemonstrators;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -16,7 +17,7 @@ import slimeknights.tconstruct.smeltery.block.entity.controller.HeatingStructure
 abstract class VaporSmelteryMixin {
     @Inject(method = "serverTick", at = @At("RETURN"))
     private void auram$vapor(Level world, BlockPos pos, BlockState state, CallbackInfo ci) {
-        if (world instanceof ServerLevel level) {
+        if (world instanceof ServerLevel level && VaporDemonstrators.legacyViewers(level)) {
             var controller = (HeatingStructureBlockEntity) (Object) this;
             var structure = controller.getStructure();
             var current = controller.getBlockState();

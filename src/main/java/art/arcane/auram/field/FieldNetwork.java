@@ -1,10 +1,14 @@
 package art.arcane.auram.field;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.vapor.VaporState;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
+
+import java.util.function.Consumer;
 
 /** Optional field replication channel. The presence of this channel identifies local source support. */
 public final class FieldNetwork {
@@ -16,10 +20,26 @@ public final class FieldNetwork {
             .serverAcceptedVersions(FieldNetwork::accepts)
             .simpleChannel();
 
+    private static volatile Consumer<VaporState> vaporReceiver = state -> {};
+
     private FieldNetwork() {}
 
     public static void register() {
-        // Keep the optional channel in the login handshake even when its sources need no play messages.
+        CHANNEL.messageBuilder(VaporState.class, 0, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(VaporState::encode)
+                .decoder(VaporState::decode)
+                .consumerMainThread((state, context) -> vaporReceiver.accept(state))
+                .add();
+    }
+
+    public static void setVaporReceiver(Consumer<VaporState> receiver) {
+        vaporReceiver = receiver;
+    }
+
+    public static void sendVapor(ServerPlayer player, VaporState state) {
+        var connection = player.connection.connection;
+        if (connection.isMemoryConnection()) vaporReceiver.accept(state);
+        else CHANNEL.sendTo(state, connection, NetworkDirection.PLAY_TO_CLIENT);
     }
 
     public static boolean supportsLocalSources(ServerPlayer player) {

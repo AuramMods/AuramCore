@@ -110,6 +110,11 @@ public final class ClientFieldSources {
             return levels.containsKey(level);
         }
 
+        public boolean contains(Level level, Key key) {
+            var tracked = levels.get(level);
+            return tracked != null && tracked.sources.containsKey(key);
+        }
+
         /** Visits only emitters with vents in columns touching the voxel window. */
         public void collect(Level level, VoxelGrid.Position origin, List<T> into) {
             var tracked = levels.get(level);
