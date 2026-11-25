@@ -1,12 +1,16 @@
 package art.arcane.auram.vapor;
 
+import art.arcane.auram.field.ClientFieldSources;
+import art.arcane.auram.field.ClientFieldSources.Key;
+import art.arcane.auram.vapor.client.VaporClient;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 
 import java.util.Objects;
 
-/** World-space Vapor sources. Invoke on the logical server thread. */
+/** World-space Vapor sources. Invoke on the thread that owns the level. */
 public final class Vapor {
     public static final int MAX_RADIUS = 12;
 
@@ -44,6 +48,41 @@ public final class Vapor {
     public static boolean stopEmitter(ServerLevel level, ResourceLocation id, BlockPos position) {
         assertServerThread(level);
         return VaporSources.stop(level, Objects.requireNonNull(id, "id"), Objects.requireNonNull(position, "position"));
+    }
+
+    /** Uses this client's simulation. No message is sent to the server or other players. */
+    public static boolean pulse(Level level, BlockPos position, float density) {
+        return pulse(level, position, density, 0);
+    }
+
+    public static boolean pulse(Level level, BlockPos position, float density, int radius) {
+        if (level instanceof ServerLevel server) return pulse(server, position, density, radius);
+        ClientFieldSources.requireClientThread(level);
+        var pulse = new VaporNetwork.Pulse(position.immutable(), density, radius);
+        return density > 0 && VaporClient.localPulse(level, pulse);
+    }
+
+    /** Client-owned emitters are keyed by ID and block, and removed on chunk unload. */
+    public static boolean setEmitter(Level level, ResourceLocation id, BlockPos position, float densityPerTick) {
+        if (level instanceof ServerLevel server) return setEmitter(server, id, position, densityPerTick);
+        return setLocalEmitter(level, id, position, position, densityPerTick);
+    }
+
+    /** Sets a client-owned source at a vent adjacent to its owning block. */
+    public static boolean setLocalEmitter(Level level, ResourceLocation id, BlockPos anchor, BlockPos vent,
+                                          float densityPerTick) {
+        ClientFieldSources.requireClientThread(level);
+        validateDensity(densityPerTick);
+        var key = new Key(id, anchor);
+        if (densityPerTick == 0) return ClientFieldSources.VAPOR.stop(level, key);
+        if (anchor.distManhattan(vent) > 1) throw new IllegalArgumentException("Vapor vent must touch its anchor");
+        if (level.isOutsideBuildHeight(vent)) return false;
+        return ClientFieldSources.VAPOR.set(level, key, new VaporNetwork.Emitter(id, vent.immutable(), densityPerTick));
+    }
+
+    public static boolean stopEmitter(Level level, ResourceLocation id, BlockPos position) {
+        if (level instanceof ServerLevel server) return stopEmitter(server, id, position);
+        return ClientFieldSources.VAPOR.stop(level, new Key(id, position));
     }
 
     private static void assertServerThread(ServerLevel level) {

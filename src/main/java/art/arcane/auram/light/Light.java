@@ -1,5 +1,6 @@
 package art.arcane.auram.light;
 
+import art.arcane.auram.field.ClientFieldSources;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -11,7 +12,10 @@ import java.util.Objects;
 public final class Light {
     private Light() {}
 
-    /** Creates or updates a light at this ID and block position. A strength of zero removes it. */
+    /**
+     * Creates or updates a light at this ID and block position. A strength of zero removes it.
+     * With a client level, the source is local and belongs to the anchor chunk.
+     */
     public static boolean setEmitter(Level level, ResourceLocation id, BlockPos position, int rgb, float strength) {
         return set(level, id, position, rgb, strength, 0);
     }
@@ -48,8 +52,12 @@ public final class Light {
     }
 
     private static void requireLevelThread(Level level) {
-        if (Objects.requireNonNull(level, "level") instanceof ServerLevel server && !server.getServer().isSameThread()) {
-            throw new IllegalStateException("Light sources must be updated on the level thread");
+        if (Objects.requireNonNull(level, "level") instanceof ServerLevel server) {
+            if (!server.getServer().isSameThread()) {
+                throw new IllegalStateException("Light sources must be updated on the level thread");
+            }
+        } else {
+            ClientFieldSources.requireClientThread(level);
         }
     }
 }

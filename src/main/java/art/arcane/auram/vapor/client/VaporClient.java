@@ -1,6 +1,8 @@
 package art.arcane.auram.vapor.client;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.ClientFieldSources;
+import art.arcane.auram.field.ClientFieldSources.Key;
 import art.arcane.auram.field.FieldFrames;
 import art.arcane.auram.field.VoxelGrid;
 import art.arcane.auram.field.VoxelGrid.Position;
@@ -14,6 +16,7 @@ import art.arcane.auram.wind.WindNetwork;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -72,11 +75,13 @@ public final class VaporClient {
         ClientLevel level = Minecraft.getInstance().level;
         if (level == null || !level.dimension().location().equals(frame.dimension())) return;
         LightClient.setAlembicLights(level, frame.emitters());
-        submitEmitters(level, frame.emitters().stream()
-                .map(emitter -> new VaporVolume.Source(position(emitter.position()), emitter.rate(), 0)).toList());
-        for (var pulse : frame.pulses()) {
-            submitPulse(level, new VaporVolume.Source(position(pulse.position()), pulse.density(), pulse.radius()));
+        if (frame.emitters().isEmpty() && frame.pulses().isEmpty() && (session == null || session.level != level)) return;
+        Session current = sessionFor(level);
+        if (!current.emitters.equals(frame.emitters())) {
+            current.emitters = frame.emitters();
+            current.sourcesChanged = true;
         }
+        for (var pulse : frame.pulses()) current.queuePulse(vaporSource(pulse));
     }
 
     private static void receiveWind(WindNetwork.Frame frame) {
@@ -84,11 +89,17 @@ public final class VaporClient {
         if (level == null || !level.dimension().location().equals(frame.dimension())) return;
         if (frame.emitters().isEmpty() && frame.gusts().isEmpty() && (session == null || session.level != level)) return;
         Session current = sessionFor(level);
-        current.windEmitters = frame.emitters().stream().map(emitter -> windSource(emitter.flow())).toList();
-        for (var gust : frame.gusts()) {
-            if (current.gusts.size() == MAX_WAITING_PULSES) break;
-            current.gusts.addLast(new WaitingGust(windSource(gust), current.ticks + PULSE_WAIT_TICKS));
+        if (!current.windEmitters.equals(frame.emitters())) {
+            current.windEmitters = frame.emitters();
+            current.sourcesChanged = true;
         }
+        for (var gust : frame.gusts()) {
+            if (!current.queueGust(windSource(gust))) break;
+        }
+    }
+
+    private static VaporVolume.Source vaporSource(VaporNetwork.Pulse pulse) {
+        return new VaporVolume.Source(position(pulse.position()), pulse.density(), pulse.radius());
     }
 
     private static WindField.Source windSource(WindNetwork.Flow flow) {
@@ -99,14 +110,16 @@ public final class VaporClient {
         return new Position(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    // Called only on the client game thread, including after packet scheduling.
-    static void submitPulse(ClientLevel level, VaporVolume.Source pulse) {
-        sessionFor(level).queuePulse(pulse);
+    public static boolean localPulse(Level level, VaporNetwork.Pulse pulse) {
+        if (!(level instanceof ClientLevel client) || Minecraft.getInstance().level != level
+                || level.isOutsideBuildHeight(pulse.position()) || !level.hasChunkAt(pulse.position())) return false;
+        return sessionFor(client).queuePulse(vaporSource(pulse));
     }
 
-    static void submitEmitters(ClientLevel level, List<VaporVolume.Source> emitters) {
-        if (emitters.isEmpty() && (session == null || session.level != level)) return;
-        sessionFor(level).emitters = List.copyOf(emitters);
+    public static boolean localGust(Level level, WindNetwork.Flow gust) {
+        if (!(level instanceof ClientLevel client) || Minecraft.getInstance().level != level
+                || level.isOutsideBuildHeight(gust.position()) || !level.hasChunkAt(gust.position())) return false;
+        return sessionFor(client).queueGust(windSource(gust));
     }
 
     static VaporWorker worker() {
@@ -149,7 +162,7 @@ public final class VaporClient {
         BlockPos center = camera.blockPosition();
         VaporAmbient.Sources local = paused || VaporAtmosphere.current() == null
                 ? VaporAmbient.Sources.EMPTY : VaporAmbient.sample(level, center);
-        if (session != null || !local.empty()) {
+        if (session != null || !local.empty() || ClientFieldSources.VAPOR.has(level) || ClientFieldSources.WIND.has(level)) {
             sessionFor(level).tick(center, paused, local);
             VaporTexture.pumpCompute();
         }
@@ -194,8 +207,15 @@ public final class VaporClient {
         private final List<Position> window = new ArrayList<>();
         private final ArrayDeque<WaitingPulse> pulses = new ArrayDeque<>();
         private final ArrayDeque<WaitingGust> gusts = new ArrayDeque<>();
-        private List<WindField.Source> windEmitters = List.of();
-        private List<VaporVolume.Source> emitters = List.of();
+        private List<WindNetwork.Emitter> windEmitters = List.of();
+        private List<VaporNetwork.Emitter> emitters = List.of();
+        private final List<WindNetwork.Emitter> ownedWind = new ArrayList<>();
+        private final List<VaporNetwork.Emitter> ownedVapor = new ArrayList<>();
+        private List<WindNetwork.Emitter> previousWind = List.of();
+        private List<VaporNetwork.Emitter> previousVapor = List.of();
+        private List<WindField.Source> wind = List.of();
+        private List<VaporVolume.Source> vapor = List.of();
+        private boolean sourcesChanged;
         private Position origin;
         private VoxelOccupancy input;
         private VaporVolume.Erosion erosion = VaporVolume.Erosion.CLEAR;
@@ -210,13 +230,21 @@ public final class VaporClient {
             this.dimension = level.dimension().location().toString();
         }
 
-        private void queuePulse(VaporVolume.Source pulse) {
-            if (pulses.size() < MAX_WAITING_PULSES) pulses.addLast(new WaitingPulse(pulse, ticks + PULSE_WAIT_TICKS));
+        private boolean queuePulse(VaporVolume.Source pulse) {
+            if (pulses.size() == MAX_WAITING_PULSES) return false;
+            pulses.addLast(new WaitingPulse(pulse, ticks + PULSE_WAIT_TICKS));
+            return true;
+        }
+
+        private boolean queueGust(WindField.Source gust) {
+            if (gusts.size() == MAX_WAITING_PULSES) return false;
+            gusts.addLast(new WaitingGust(gust, ticks + PULSE_WAIT_TICKS));
+            return true;
         }
 
         private void tick(BlockPos camera, boolean paused, VaporAmbient.Sources local) {
             if (paused) {
-                worker.submit(input, erosion, emitters, true, List.of(), windEmitters, List.of());
+                worker.submit(input, erosion, List.of(), true, List.of(), List.of(), List.of());
                 return;
             }
             ticks++;
@@ -239,9 +267,10 @@ public final class VaporClient {
                     pending.remove();
                 }
             }
-            List<VaporVolume.Source> continuous = emitters;
+            mergeSources();
+            List<VaporVolume.Source> continuous = vapor;
             if (!local.burning().isEmpty()) {
-                continuous = new ArrayList<>(emitters);
+                continuous = new ArrayList<>(continuous);
                 continuous.addAll(local.burning());
             }
             if (!continuous.isEmpty() || !ready.isEmpty() || worker.frames().current() != null || VaporTexture.computeActive()) updateErosion();
@@ -260,7 +289,26 @@ public final class VaporClient {
                     }
                 }
             }
-            worker.submit(input, erosion, continuous, false, ready, windEmitters, readyGusts);
+            worker.submit(input, erosion, continuous, false, ready, wind, readyGusts);
+        }
+
+        private void mergeSources() {
+            ownedVapor.clear();
+            ownedWind.clear();
+            ClientFieldSources.VAPOR.collect(level, origin, ownedVapor);
+            ClientFieldSources.WIND.collect(level, origin, ownedWind);
+            if (sourcesChanged || !previousVapor.equals(ownedVapor)) {
+                vapor = ClientFieldSources.mergeLegacy(emitters, ownedVapor,
+                        source -> new Key(source.id(), source.position()),
+                        source -> new VaporVolume.Source(position(source.position()), source.rate(), 0));
+                previousVapor = List.copyOf(ownedVapor);
+            }
+            if (sourcesChanged || !previousWind.equals(ownedWind)) {
+                wind = ClientFieldSources.mergeLegacy(windEmitters, ownedWind,
+                        source -> new Key(source.id(), source.flow().position()), source -> windSource(source.flow()));
+                previousWind = List.copyOf(ownedWind);
+            }
+            sourcesChanged = false;
         }
 
         private void updateErosion() {
