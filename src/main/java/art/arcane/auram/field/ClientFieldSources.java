@@ -119,15 +119,18 @@ public final class ClientFieldSources {
         public void collect(Level level, VoxelGrid.Position origin, List<T> into) {
             var tracked = levels.get(level);
             if (tracked == null) return;
-            int firstX = origin.x() >> 4, firstZ = origin.z() >> 4;
-            for (int x = firstX; x < firstX + VoxelGrid.WINDOW_BLOCKS / 16; x++) {
-                for (int z = firstZ; z < firstZ + VoxelGrid.WINDOW_BLOCKS / 16; z++) {
+            var first = origin.section();
+            var last = VoxelGrid.VAPOR.lastSection(origin);
+            for (int x = first.x(); x <= last.x(); x++) {
+                for (int z = first.z(); z <= last.z(); z++) {
                     var entries = tracked.vents.get(ChunkPos.asLong(x, z));
                     if (entries == null) continue;
                     for (Key key : entries) {
                         T source = tracked.sources.get(key);
-                        int y = vent.apply(source).getY();
-                        if (y >= origin.y() && y < origin.y() + VoxelGrid.WINDOW_BLOCKS) into.add(source);
+                        BlockPos pos = vent.apply(source);
+                        if (VoxelGrid.VAPOR.contains(pos.getX() - origin.x(), pos.getY() - origin.y(), pos.getZ() - origin.z())) {
+                            into.add(source);
+                        }
                     }
                 }
             }

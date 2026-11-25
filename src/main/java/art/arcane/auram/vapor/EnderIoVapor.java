@@ -31,7 +31,7 @@ public final class EnderIoVapor {
     public static void collect(BlockEntity machine, VoxelGrid.Position origin, Map<Key, VaporNetwork.Emitter> result) {
         if (!machine.getBlockState().getValue(BlockStateProperties.POWERED)) return;
         var outlet = MachineVapor.outlet(machine.getLevel(), machine);
-        if (outlet == null || !VoxelGrid.BLOCKS.contains(outlet.getX() - origin.x(), outlet.getY() - origin.y(),
+        if (outlet == null || !VoxelGrid.VAPOR.contains(outlet.getX() - origin.x(), outlet.getY() - origin.y(),
                 outlet.getZ() - origin.z())) return;
         result.put(new Key(MACHINE, machine.getBlockPos()), new VaporNetwork.Emitter(MACHINE, outlet, RATE));
     }

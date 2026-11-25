@@ -3,21 +3,22 @@ package art.arcane.auram.field;
 import java.nio.IntBuffer;
 import java.util.Arrays;
 
-import static art.arcane.auram.field.VoxelGrid.BLOCKS;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 
 /** Connected air within each 2×2×2 cell and across its six faces. A cell has at most four components. */
 public final class WindTopology {
-    public static final VoxelGrid GRID = new VoxelGrid(32, 2);
+    public static final VoxelGrid GRID = new VoxelGrid(VAPOR.side() / 2, 2);
     public static final int COMPONENTS = 4;
     public static final int NODES = GRID.cells() * COMPONENTS;
     public static final int LINK_MASK = 0x00ff_ffff;
     static final int[] DX = {1, -1, 0, 0, 0, 0};
     static final int[] DY = {0, 0, 1, -1, 0, 0};
     static final int[] DZ = {0, 0, 0, 0, 1, -1};
-    private static final int[] NEIGHBOR = {1, -1, 32, -32, 1024, -1024};
+    private static final int SIDE = GRID.side();
+    private static final int[] NEIGHBOR = {1, -1, SIDE, -SIDE, SIDE * SIDE, -SIDE * SIDE};
 
     private final VoxelGrid.Position origin;
-    private final int[] labels = new int[BLOCKS.cells()];
+    private final int[] labels = new int[VAPOR.cells()];
     /** Lower 24 bits are the connected component slots on the six neighbor faces. Upper byte is this component's air mask. */
     private final int[] nodes = new int[NODES];
 
@@ -31,15 +32,15 @@ public final class WindTopology {
             }
         }
 
-        int full = BLOCKS.side();
+        int full = VAPOR.side();
         for (int z = 0; z < full; z++) {
             for (int y = 0; y < full; y++) {
                 for (int x = 0; x < full; x++) {
-                    int node = labels[BLOCKS.index(x, y, z)];
+                    int node = labels[VAPOR.index(x, y, z)];
                     if (node < 0) continue;
-                    if ((x & 1) != 0 && x + 1 < full) link(node, labels[BLOCKS.index(x + 1, y, z)], 0);
-                    if ((y & 1) != 0 && y + 1 < full) link(node, labels[BLOCKS.index(x, y + 1, z)], 2);
-                    if ((z & 1) != 0 && z + 1 < full) link(node, labels[BLOCKS.index(x, y, z + 1)], 4);
+                    if ((x & 1) != 0 && x + 1 < full) link(node, labels[VAPOR.index(x + 1, y, z)], 0);
+                    if ((y & 1) != 0 && y + 1 < full) link(node, labels[VAPOR.index(x, y + 1, z)], 2);
+                    if ((z & 1) != 0 && z + 1 < full) link(node, labels[VAPOR.index(x, y, z + 1)], 4);
                 }
             }
         }
@@ -81,7 +82,7 @@ public final class WindTopology {
     }
 
     public int node(int x, int y, int z) {
-        return BLOCKS.contains(x, y, z) ? labels[BLOCKS.index(x, y, z)] : -1;
+        return VAPOR.contains(x, y, z) ? labels[VAPOR.index(x, y, z)] : -1;
     }
 
     public int node(VoxelGrid.Position world) {
@@ -105,6 +106,6 @@ public final class WindTopology {
     }
 
     public static int blockIndex(int x, int y, int z, int corner) {
-        return BLOCKS.index(x * 2 + (corner & 1), y * 2 + ((corner >>> 1) & 1), z * 2 + (corner >>> 2));
+        return VAPOR.index(x * 2 + (corner & 1), y * 2 + ((corner >>> 1) & 1), z * 2 + (corner >>> 2));
     }
 }

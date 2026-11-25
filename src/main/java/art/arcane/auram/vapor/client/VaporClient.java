@@ -45,11 +45,10 @@ import java.util.Objects;
 
 import static art.arcane.auram.field.VoxelGrid.SECTION;
 import static art.arcane.auram.field.VoxelGrid.SECTIONS;
-import static art.arcane.auram.vapor.client.VaporVolume.SIDE;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
 public final class VaporClient {
-    private static final int SECTIONS_PER_SIDE = SIDE / SECTION;
     private static final int SECTION_READS_PER_TICK = 4;
     private static final int MAX_WAITING_PULSES = 32;
     private static final int PULSE_WAIT_TICKS = 40;
@@ -187,14 +186,15 @@ public final class VaporClient {
         if (level == null || camera == null || !FieldInterestClient.enabled(FieldNetwork.VAPOR)) return;
 
         boolean paused = client.isPaused();
-        BlockPos center = camera.blockPosition();
+        BlockPos center = BlockPos.containing(camera.getEyePosition());
+        var origin = VoxelGrid.vaporOriginAround(center.getX(), center.getY(), center.getZ());
         VaporAmbient.Sources local = paused || VaporAtmosphere.current() == null
-                ? VaporAmbient.Sources.EMPTY : VaporAmbient.sample(level, center);
+                ? VaporAmbient.Sources.EMPTY : VaporAmbient.sample(level, camera.blockPosition(), origin);
         Map<Key, VaporNetwork.Emitter> machines = paused || VaporAtmosphere.current() == null ? Map.of()
-                : LocalMachineVapor.collect(level, VoxelGrid.originAround(center.getX(), center.getY(), center.getZ()));
+                : LocalMachineVapor.collect(level, origin);
         if (session != null || !local.empty() || !machines.isEmpty()
                 || ClientFieldSources.VAPOR.has(level) || ClientFieldSources.WIND.has(level)) {
-            sessionFor(level).tick(center, paused, local, machines);
+            sessionFor(level).tick(origin, center, paused, local, machines);
             VaporTexture.pumpCompute();
         }
     }
@@ -263,6 +263,8 @@ public final class VaporClient {
         private List<VaporVolume.Source> vapor = List.of();
         private boolean sourcesChanged;
         private Position origin;
+        private Position firstSection;
+        private Position lastSection;
         private VoxelOccupancy input;
         private VaporVolume.Erosion erosion = VaporVolume.Erosion.CLEAR;
         private VaporAtmosphere atmosphere;
@@ -288,14 +290,13 @@ public final class VaporClient {
             return true;
         }
 
-        private void tick(BlockPos camera, boolean paused, VaporAmbient.Sources local,
+        private void tick(Position next, BlockPos camera, boolean paused, VaporAmbient.Sources local,
                           Map<Key, VaporNetwork.Emitter> machines) {
             if (paused) {
                 worker.submit(input, erosion, List.of(), true, List.of(), List.of(), List.of());
                 return;
             }
             ticks++;
-            Position next = VoxelGrid.originAround(camera.getX(), camera.getY(), camera.getZ());
             if (!next.equals(origin)) moveWindow(next, camera);
             readSections();
             if (changed) {
@@ -400,13 +401,16 @@ public final class VaporClient {
         private void moveWindow(Position next, BlockPos camera) {
             origin = next;
             refreshWeather = true;
-            int x0 = next.x() / SECTION;
-            int y0 = next.y() / SECTION;
-            int z0 = next.z() / SECTION;
+            changed = true;
+            var first = next.section();
+            var last = VAPOR.lastSection(next);
+            if (first.equals(firstSection) && last.equals(lastSection)) return;
+            firstSection = first;
+            lastSection = last;
             window.clear();
-            for (int x = x0; x < x0 + SECTIONS_PER_SIDE; x++) {
-                for (int y = y0; y < y0 + SECTIONS_PER_SIDE; y++) {
-                    for (int z = z0; z < z0 + SECTIONS_PER_SIDE; z++) {
+            for (int x = first.x(); x <= last.x(); x++) {
+                for (int y = first.y(); y <= last.y(); y++) {
+                    for (int z = first.z(); z <= last.z(); z++) {
                         window.add(new Position(x, y, z));
                     }
                 }
@@ -415,7 +419,6 @@ public final class VaporClient {
             window.sort(Comparator.comparingInt(pos -> distance(pos, center)));
             sections.keySet().retainAll(window);
             knownChunks.keySet().retainAll(window);
-            changed = true;
         }
 
         private void readSections() {

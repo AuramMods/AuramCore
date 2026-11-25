@@ -3,7 +3,7 @@ package art.arcane.auram.field;
 import java.util.Arrays;
 import java.util.List;
 
-import static art.arcane.auram.field.VoxelGrid.WINDOW_BLOCKS;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 
 /** Reference airflow solver. Its vectors and topology are shared with the compute implementation. */
 public final class WindField {
@@ -142,9 +142,9 @@ public final class WindField {
             var old = topology.origin();
             Arrays.fill(next, 0);
             byte[] count = new byte[WindTopology.NODES];
-            for (int z = 0; z < WINDOW_BLOCKS; z++) {
-                for (int y = 0; y < WINDOW_BLOCKS; y++) {
-                    for (int x = 0; x < WINDOW_BLOCKS; x++) {
+            for (int z = 0; z < VAPOR.side(); z++) {
+                for (int y = 0; y < VAPOR.side(); y++) {
+                    for (int x = 0; x < VAPOR.side(); x++) {
                         int to = updated.node(x, y, z);
                         if (to < 0) continue;
                         int from = topology.node(x + now.x() - old.x(), y + now.y() - old.y(), z + now.z() - old.z());

@@ -9,8 +9,7 @@ public record FieldFrames<T>(T previous, T current, long publishedAt) {
         return (FieldFrames<T>) EMPTY;
     }
 
-    public FieldFrames<T> advance(T next, boolean sameWindow) {
-        T prior = sameWindow ? current : next;
-        return prior == null && next == null ? empty() : new FieldFrames<>(prior, next, System.nanoTime());
+    public FieldFrames<T> advance(T next) {
+        return current == null && next == null ? empty() : new FieldFrames<>(current, next, System.nanoTime());
     }
 }

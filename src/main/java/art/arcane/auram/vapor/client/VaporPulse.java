@@ -4,7 +4,7 @@ import art.arcane.auram.field.VoxelGrid.Position;
 
 import java.util.Arrays;
 
-import static art.arcane.auram.field.VoxelGrid.BLOCKS;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 import static art.arcane.auram.vapor.client.VaporVolume.*;
 
 /** Rasterizes both backends' pulse inputs using the same fine-block paths. */
@@ -25,7 +25,7 @@ final class VaporPulse {
         int x = source.position().x() - origin.x();
         int y = source.position().y() - origin.y();
         int z = source.position().z() - origin.z();
-        if (source.density() == 0 || !BLOCKS.contains(x, y, z) || !open[index(x, y, z)]) return;
+        if (source.density() == 0 || !VAPOR.contains(x, y, z) || !open[index(x, y, z)]) return;
         if (source.radius() == 0) {
             consumer.accept(index(x, y, z), source.density());
             return;

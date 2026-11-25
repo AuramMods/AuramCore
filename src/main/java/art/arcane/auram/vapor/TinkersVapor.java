@@ -56,9 +56,9 @@ public final class TinkersVapor {
             var min = structure.getMinInside();
             var max = structure.getMaxInside();
             int y = min.getY();
-            if (y < origin.y() || y >= origin.y() + VoxelGrid.WINDOW_BLOCKS) return;
-            for (int x = Math.max(min.getX(), origin.x()); x <= Math.min(max.getX(), origin.x()+VoxelGrid.WINDOW_BLOCKS-1); x++) {
-                for (int z = Math.max(min.getZ(), origin.z()); z <= Math.min(max.getZ(), origin.z()+VoxelGrid.WINDOW_BLOCKS-1); z++) {
+            if (y < origin.y() || y >= origin.y() + VoxelGrid.VAPOR.side()) return;
+            for (int x = Math.max(min.getX(), origin.x()); x <= Math.min(max.getX(), origin.x()+VoxelGrid.VAPOR.side()-1); x++) {
+                for (int z = Math.max(min.getZ(), origin.z()); z <= Math.min(max.getZ(), origin.z()+VoxelGrid.VAPOR.side()-1); z++) {
                     var cell = new BlockPos(x, y, z);
                     if (level.hasChunkAt(cell) && level.isEmptyBlock(cell)) {
                         result.put(new Key(SMELTERY, cell), new VaporNetwork.Emitter(SMELTERY, cell, HEAT_RATE));
@@ -75,7 +75,7 @@ public final class TinkersVapor {
 
     private static void visibleVent(Level level, BlockPos pos, ResourceLocation id, float rate,
                                     VoxelGrid.Position origin, Map<Key, VaporNetwork.Emitter> result) {
-        if (rate <= 0f || !VoxelGrid.BLOCKS.contains(pos.getX()-origin.x(), pos.getY()-origin.y(), pos.getZ()-origin.z())
+        if (rate <= 0f || !VoxelGrid.VAPOR.contains(pos.getX()-origin.x(), pos.getY()-origin.y(), pos.getZ()-origin.z())
                 || !VaporDemonstrators.open(level, pos)) return;
         result.put(new Key(id, pos), new VaporNetwork.Emitter(id, pos, rate));
     }

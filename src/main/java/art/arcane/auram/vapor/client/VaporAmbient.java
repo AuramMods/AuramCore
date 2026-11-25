@@ -42,7 +42,7 @@ final class VaporAmbient {
     private VaporAmbient() {
     }
 
-    static Sources sample(ClientLevel level, BlockPos camera) {
+    static Sources sample(ClientLevel level, BlockPos camera, VoxelGrid.Position origin) {
         List<VaporVolume.Source> puffs = new ArrayList<>();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int i = 0; i < NEAR_SAMPLES_PER_TICK; i++) {
@@ -57,7 +57,6 @@ final class VaporAmbient {
             sampleBlock(level, pos.setWithOffset(camera, x, y, z), puffs, false);
         }
 
-        var origin = VoxelGrid.originAround(camera.getX(), camera.getY(), camera.getZ());
         int side = VaporVolume.SIDE;
         AABB window = new AABB(origin.x(), origin.y(), origin.z(), origin.x() + side, origin.y() + side, origin.z() + side);
         List<Entity> entities = new ArrayList<>();

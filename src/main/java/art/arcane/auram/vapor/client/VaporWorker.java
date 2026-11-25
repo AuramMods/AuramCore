@@ -124,8 +124,7 @@ final class VaporWorker implements AutoCloseable {
         if (probe != null && probe.measure(start)) probe.log(wind);
         synchronized (this) {
             if (!closed) {
-                VaporVolume.Snapshot current = frames.current();
-                frames = frames.advance(snapshot, current == null || current.origin.equals(occupancy.origin()));
+                frames = frames.advance(snapshot);
             }
         }
     }

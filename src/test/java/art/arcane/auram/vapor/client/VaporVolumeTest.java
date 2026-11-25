@@ -202,6 +202,33 @@ public class VaporVolumeTest {
         assertEquals(new Position(-48, -32, -32), originAround(-1, 0, 0));
     }
 
+    @Test
+    public void twoBlockRebasesKeepThePreviousDisplayAtTheSameWorldCell() {
+        Position section = new Position(1, 0, 0);
+        Position emitter = new Position(21, 5, 7);
+        var air = new SectionOccupancy(new BitSet());
+        var sections = Map.of(section, air);
+        var original = new VoxelOccupancy(ORIGIN, sections);
+        var shifted = new VoxelOccupancy(new Position(2, 2, -2), sections);
+        var control = new VaporVolume();
+        var moving = new VaporVolume();
+        var pulse = List.of(new Source(emitter, 1.0f, 0));
+        control.step(original, Erosion.CLEAR, pulse, List.of());
+        Snapshot before = moving.step(original, Erosion.CLEAR, pulse, List.of());
+        var frames = art.arcane.auram.field.FieldFrames.<Snapshot>empty().advance(before);
+        for (int i = 0; i < 8; i++) {
+            var input = i % 2 == 0 ? shifted : original;
+            Snapshot expected = control.step(original, Erosion.CLEAR, List.of(), List.of());
+            Snapshot after = moving.step(input, Erosion.CLEAR, List.of(), List.of());
+            var next = frames.advance(after);
+            assertSame(frames.current(), next.previous());
+            assertFalse(next.previous().boundsAt(after.origin).empty());
+            assertEquals(expected.density(21, 5, 7), after.density(emitter.x() - after.origin.x(),
+                    emitter.y() - after.origin.y(), emitter.z() - after.origin.z()));
+            frames = next;
+        }
+    }
+
     private static VoxelOccupancy occupancy(BitSet blocked) {
         return new VoxelOccupancy(ORIGIN, Map.of(ORIGIN, new SectionOccupancy(blocked)));
     }

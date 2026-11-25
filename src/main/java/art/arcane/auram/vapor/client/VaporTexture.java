@@ -9,6 +9,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.logging.LogUtils;
 import net.irisshaders.iris.gl.uniform.UniformHolder;
 import net.irisshaders.iris.uniforms.CameraUniforms;
+import net.minecraft.client.Minecraft;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 
@@ -28,6 +29,7 @@ public final class VaporTexture {
     private static FieldFrames<VaporVolume.Snapshot> uploaded = FieldFrames.empty();
     private static Bounds bounds = Bounds.EMPTY;
     private static final Vector3f origin = new Vector3f();
+    private static final Vector3f center = new Vector3f();
     private static final Vector3f minimum = new Vector3f();
     private static final Vector3f maximum = new Vector3f();
     private static double blend;
@@ -41,6 +43,7 @@ public final class VaporTexture {
         uniforms.uniform1b(PER_FRAME, "auramVaporActive", () -> active);
         uniforms.uniform1f(PER_FRAME, "auramVaporBlend", () -> blend);
         uniforms.uniform3f(PER_FRAME, "auramVaporOrigin", () -> origin);
+        uniforms.uniform3f(PER_FRAME, "auramVaporCenter", () -> center);
         uniforms.uniform3f(PER_FRAME, "auramVaporMinimum", () -> minimum);
         uniforms.uniform3f(PER_FRAME, "auramVaporMaximum", () -> maximum);
     }
@@ -117,7 +120,8 @@ public final class VaporTexture {
 
         var reference = current == null ? previous : current;
         if (uploaded != frames) {
-            var next = current == null ? previous.bounds : previous == null ? current.bounds : current.bounds.union(previous.bounds);
+            Bounds previousBounds = previous == null ? Bounds.EMPTY : previous.boundsAt(reference.origin);
+            var next = current == null ? previousBounds : current.bounds.union(previousBounds);
             var region = bounds.union(next);
             upload(region, previous, current, reference);
             uploaded = frames;
@@ -129,6 +133,13 @@ public final class VaporTexture {
 
     private static void updateUniforms(Position reference, Bounds region, long publishedAt) {
         var camera = CameraUniforms.getUnshiftedCameraPosition();
+        var client = Minecraft.getInstance();
+        var entity = client.getCameraEntity();
+        if (entity == null) center.zero();
+        else {
+            var eye = entity.getEyePosition(client.getFrameTime());
+            center.set(eye.x - camera.x, eye.y - camera.y, eye.z - camera.z);
+        }
         origin.set(reference.x() - camera.x, reference.y() - camera.y, reference.z() - camera.z);
         minimum.set(origin).add(region.minX(), region.minY(), region.minZ());
         maximum.set(origin).add(region.maxX(), region.maxY(), region.maxZ());
@@ -137,12 +148,19 @@ public final class VaporTexture {
 
     private static void upload(Bounds region, VaporVolume.Snapshot previous,
                                VaporVolume.Snapshot current, VaporVolume.Snapshot occupancy) {
+        // The texture uses the newest origin. Align the old frame by world block to keep blending on movement.
+        int dx = previous == null ? 0 : occupancy.origin.x() - previous.origin.x();
+        int dy = previous == null ? 0 : occupancy.origin.y() - previous.origin.y();
+        int dz = previous == null ? 0 : occupancy.origin.z() - previous.origin.z();
+        boolean sameOrigin = dx == 0 && dy == 0 && dz == 0;
         staging.clear();
         for (int z = region.minZ(); z < region.maxZ(); z++) {
             for (int y = region.minY(); y < region.maxY(); y++) {
                 for (int x = region.minX(); x < region.maxX(); x++) {
                     int i = VaporVolume.index(x, y, z);
-                    staging.put((byte) (previous == null ? 0 : previous.density(i)));
+                    int earlier = previous == null ? 0 : sameOrigin ? previous.density(i)
+                            : previous.density(x + dx, y + dy, z + dz);
+                    staging.put((byte) earlier);
                     staging.put((byte) (current == null ? 0 : current.density(i)));
                     staging.put((byte) (occupancy.open(i) ? 255 : 0));
                     staging.put((byte) 0);

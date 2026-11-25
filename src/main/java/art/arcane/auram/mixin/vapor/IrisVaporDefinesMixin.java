@@ -1,5 +1,6 @@
 package art.arcane.auram.mixin.vapor;
 
+import art.arcane.auram.field.VoxelGrid;
 import com.google.common.collect.ImmutableList;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.irisshaders.iris.gl.shader.StandardMacros;
@@ -14,6 +15,7 @@ abstract class IrisVaporDefinesMixin {
     private static ImmutableList<StringPair> auram$vaporDefine(ImmutableList<StringPair> defines) {
         var builder = ImmutableList.<StringPair>builder().addAll(defines)
                 .add(new StringPair("AURAM_VAPOR_BACKEND", ""))
+                .add(new StringPair("AURAM_VAPOR_RADIUS", Integer.toString(VoxelGrid.VAPOR_RADIUS)))
                 .add(new StringPair("AURAM_RF_BACKEND", ""))
                 .add(new StringPair("AURAM_LIGHT_BACKEND", ""));
         // Oculus can load the shader pack before Forge constructs its runtime ModList.

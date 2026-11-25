@@ -8,12 +8,12 @@ import art.arcane.auram.field.VoxelGrid.Position;
 import java.util.Arrays;
 import java.util.List;
 
-import static art.arcane.auram.field.VoxelGrid.BLOCKS;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 
 /** The worker-owned density field. Positions and bounds are in world blocks. */
 final class VaporVolume {
-    static final int SIDE = BLOCKS.side();
-    static final int CELLS = BLOCKS.cells();
+    static final int SIDE = VAPOR.side();
+    static final int CELLS = VAPOR.cells();
     private static final float MAX_DENSITY = 1.0f;
     private static final float RETENTION = 0.975f;
     private static final float MIN_DENSITY = 0.001f;
@@ -24,8 +24,8 @@ final class VaporVolume {
     private static final int PLANE = SIDE * SIDE;
 
     static final class Erosion {
-        private static final int SHIFT = 3;
-        private static final int SIDE_SAMPLES = SIDE >> SHIFT;
+        static final int SHIFT = 3;
+        static final int SIDE_SAMPLES = ((SIDE - 1) >> SHIFT) + 1;
         static final Erosion CLEAR = new Erosion(null);
         private final float[] retention;
 
@@ -44,7 +44,8 @@ final class VaporVolume {
             for (int z = 0; z < SIDE_SAMPLES; z++) {
                 for (int y = 0; y < SIDE_SAMPLES; y++) {
                     for (int x = 0; x < SIDE_SAMPLES; x++) {
-                        float value = lingering.at((x << SHIFT) + halfCell, (y << SHIFT) + halfCell, (z << SHIFT) + halfCell);
+                        float value = lingering.at(Math.min(SIDE - 1, (x << SHIFT) + halfCell),
+                                Math.min(SIDE - 1, (y << SHIFT) + halfCell), Math.min(SIDE - 1, (z << SHIFT) + halfCell));
                         retention[index(x, y, z)] = retentionFor(value);
                     }
                 }
@@ -93,6 +94,15 @@ final class VaporVolume {
             return Byte.toUnsignedInt(density[index]);
         }
 
+        int density(int x, int y, int z) {
+            return VAPOR.contains(x, y, z) ? density(index(x, y, z)) : 0;
+        }
+
+        Bounds boundsAt(Position reference) {
+            return bounds.translateClipped(origin.x() - reference.x(), origin.y() - reference.y(),
+                    origin.z() - reference.z(), SIDE);
+        }
+
         boolean open(int index) {
             return open[index];
         }
@@ -110,6 +120,7 @@ final class VaporVolume {
     private float[] density = new float[CELLS];
     private float[] display = new float[CELLS];
     private float[] next = new float[CELLS];
+    private float[] shiftedDisplay;
     private Bounds active = Bounds.EMPTY;
 
     Snapshot step(VoxelOccupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters) {
@@ -244,8 +255,13 @@ final class VaporVolume {
             int moveY = previous.y() - origin.y();
             int moveZ = previous.z() - origin.z();
             boolean moved = !previous.equals(origin);
-            float[] newDensity = moved ? new float[CELLS] : density;
-            float[] newDisplay = moved ? new float[CELLS] : display;
+            if (moved) {
+                Arrays.fill(next, 0.0f);
+                if (shiftedDisplay == null) shiftedDisplay = new float[CELLS];
+                else Arrays.fill(shiftedDisplay, 0.0f);
+            }
+            float[] newDensity = moved ? next : density;
+            float[] newDisplay = moved ? shiftedDisplay : display;
             Bounds retained = Bounds.EMPTY;
             for (int z = active.minZ(); z < active.maxZ(); z++) {
                 for (int y = active.minY(); y < active.maxY(); y++) {
@@ -266,8 +282,12 @@ final class VaporVolume {
                     }
                 }
             }
-            density = newDensity;
-            display = newDisplay;
+            if (moved) {
+                next = density;
+                shiftedDisplay = display;
+                density = newDensity;
+                display = newDisplay;
+            }
             active = retained;
         }
         open = newOpen;
@@ -275,10 +295,10 @@ final class VaporVolume {
     }
 
     static int index(int x, int y, int z) {
-        return BLOCKS.index(x, y, z);
+        return VAPOR.index(x, y, z);
     }
 
     private static boolean inside(int x, int y, int z) {
-        return BLOCKS.contains(x, y, z);
+        return VAPOR.contains(x, y, z);
     }
 }

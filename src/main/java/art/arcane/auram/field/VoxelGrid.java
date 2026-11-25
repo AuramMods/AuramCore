@@ -6,6 +6,9 @@ public record VoxelGrid(int side, int blocksPerCell) {
     public static final int WINDOW_BLOCKS = 64;
     public static final VoxelGrid BLOCKS = new VoxelGrid(WINDOW_BLOCKS, 1);
     public static final VoxelGrid SECTIONS = new VoxelGrid(SECTION, 1);
+    public static final int VAPOR_RADIUS = 32;
+    // Two guard blocks on each face cover the wind alignment and the texture filter.
+    public static final VoxelGrid VAPOR = new VoxelGrid(2 * VAPOR_RADIUS + 4, 1);
 
     public int cells() {
         return side * side * side;
@@ -17,6 +20,20 @@ public record VoxelGrid(int side, int blocksPerCell) {
 
     public boolean contains(int x, int y, int z) {
         return x >= 0 && x < side && y >= 0 && y < side && z >= 0 && z < side;
+    }
+
+    public Position lastSection(Position origin) {
+        int last = side * blocksPerCell - 1;
+        return new Position(origin.x() + last, origin.y() + last, origin.z() + last).section();
+    }
+
+    public static Position vaporOriginAround(int x, int y, int z) {
+        return new Position(vaporAxisOrigin(x), vaporAxisOrigin(y), vaporAxisOrigin(z));
+    }
+
+    private static int vaporAxisOrigin(int block) {
+        // Snap to the nearest even coordinate so wind's 2-block cells stay aligned in the world.
+        return ((block + 1) & ~1) - VAPOR.side() / 2;
     }
 
     public static Position originAround(int x, int y, int z) {
@@ -58,6 +75,15 @@ public record VoxelGrid(int side, int blocksPerCell) {
         public Bounds expand(int side) {
             return new Bounds(Math.max(0, minX - 1), Math.max(0, minY - 1), Math.max(0, minZ - 1),
                     Math.min(side, maxX + 1), Math.min(side, maxY + 1), Math.min(side, maxZ + 1));
+        }
+
+        public Bounds translateClipped(int x, int y, int z, int side) {
+            if (empty() || (x == 0 && y == 0 && z == 0)) return this;
+            int lowX = Math.max(0, minX + x), highX = Math.min(side, maxX + x);
+            int lowY = Math.max(0, minY + y), highY = Math.min(side, maxY + y);
+            int lowZ = Math.max(0, minZ + z), highZ = Math.min(side, maxZ + z);
+            return lowX >= highX || lowY >= highY || lowZ >= highZ ? EMPTY
+                    : new Bounds(lowX, lowY, lowZ, highX, highY, highZ);
         }
     }
 }

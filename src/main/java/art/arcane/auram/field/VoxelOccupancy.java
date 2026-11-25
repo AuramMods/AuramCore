@@ -1,5 +1,6 @@
 package art.arcane.auram.field;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Map;
 
@@ -12,18 +13,28 @@ public record VoxelOccupancy(Position origin, Map<Position, SectionOccupancy> se
     }
 
     public boolean[] openBlocks() {
-        boolean[] open = new boolean[BLOCKS.cells()];
+        int side = VAPOR.side();
+        boolean[] open = new boolean[VAPOR.cells()];
         for (var entry : sections.entrySet()) {
             Position section = entry.getKey();
             SectionOccupancy occupancy = entry.getValue();
             int x0 = section.x() * SECTION - origin.x();
             int y0 = section.y() * SECTION - origin.y();
             int z0 = section.z() * SECTION - origin.z();
-            if (!BLOCKS.contains(x0, y0, z0)) continue;
-            for (int z = 0; z < SECTION; z++) {
-                for (int y = 0; y < SECTION; y++) {
-                    for (int x = 0; x < SECTION; x++) {
-                        open[BLOCKS.index(x0 + x, y0 + y, z0 + z)] = !occupancy.blocked(x, y, z);
+            int fromX = Math.max(0, -x0), toX = Math.min(SECTION, side - x0);
+            int fromY = Math.max(0, -y0), toY = Math.min(SECTION, side - y0);
+            int fromZ = Math.max(0, -z0), toZ = Math.min(SECTION, side - z0);
+            if (fromX >= toX || fromY >= toY || fromZ >= toZ) continue;
+            boolean air = occupancy.occupied.isEmpty();
+            for (int z = fromZ; z < toZ; z++) {
+                for (int y = fromY; y < toY; y++) {
+                    int row = VAPOR.index(x0 + fromX, y0 + y, z0 + z);
+                    if (air) {
+                        Arrays.fill(open, row, row + toX - fromX, true);
+                    } else {
+                        for (int x = fromX; x < toX; x++) {
+                            open[row + x - fromX] = !occupancy.blocked(x, y, z);
+                        }
                     }
                 }
             }

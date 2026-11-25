@@ -19,17 +19,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static art.arcane.auram.field.VoxelGrid.BLOCKS;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 import static org.lwjgl.opengl.GL43C.*;
 
 /** Render-thread solver. Only sources, terrain changes and small asynchronous reports cross the GL boundary. */
 final class VaporCompute implements AutoCloseable {
     private static final int BINDINGS = 8;
-    private static final int CELLS = BLOCKS.cells();
-    private static final int WEATHER_CELLS = 512;
+    private static final int CELLS = VAPOR.cells();
+    private static final int WEATHER_SIDE = VaporVolume.Erosion.SIDE_SAMPLES;
+    private static final int WEATHER_CELLS = WEATHER_SIDE * WEATHER_SIDE * WEATHER_SIDE;
+    // std430 aligns the uvec2 additions after the float weather array to two words.
+    private static final int WEATHER_WORDS = (WEATHER_CELLS + 1) & ~1;
     private static final int WIND_TAIL_TICKS = 280;
     private static final int REPORT_INTS = 8;
-    private static final int[] INITIAL_REPORT = {64, 64, 64, 0, 0, 0, 0, 0};
+    private static final int[] INITIAL_REPORT = {VAPOR.side(), VAPOR.side(), VAPOR.side(), 0, 0, 0, 0, 0};
 
     record Inputs(VoxelOccupancy occupancy, boolean[] open, WindTopology topology, VaporVolume.Erosion erosion,
                   List<VaporVolume.Source> pulses, List<VaporVolume.Source> emitters,
@@ -45,7 +48,7 @@ final class VaporCompute implements AutoCloseable {
     private final int[] touched = new int[CELLS];
     private int additionCount;
 
-    private IntBuffer upload = MemoryUtil.memAllocInt(CELLS * 2 + WEATHER_CELLS);
+    private IntBuffer upload = MemoryUtil.memAllocInt(CELLS * 2 + WEATHER_WORDS);
     private Program windProgram;
     private Program vaporProgram;
     private int links;
@@ -89,7 +92,7 @@ final class VaporCompute implements AutoCloseable {
             }
             links = buffer(WindTopology.NODES * Integer.BYTES, GL_DYNAMIC_DRAW, false);
             windInput = buffer(160 * 32, GL_STREAM_DRAW, false);
-            vaporInput = buffer((WEATHER_CELLS + 2 * CELLS) * Integer.BYTES, GL_DYNAMIC_DRAW, false);
+            vaporInput = buffer((WEATHER_WORDS + 2 * CELLS) * Integer.BYTES, GL_DYNAMIC_DRAW, false);
             proposals = buffer(CELLS * 8 * Float.BYTES, GL_DYNAMIC_COPY, false);
             capacity = buffer(CELLS * Float.BYTES, GL_DYNAMIC_COPY, false);
             for (Report report : reports) report.buffer = buffer(REPORT_INTS * Integer.BYTES, GL_STREAM_READ, false);
@@ -137,8 +140,8 @@ final class VaporCompute implements AutoCloseable {
             occupancy = input.occupancy;
 
             if (reportSequence == sequence - 1 && nextOrigin.equals(reportOrigin)) bounds = latestReport;
-            bounds = translate(bounds, -sx, -sy, -sz);
-            if (!bounds.empty()) bounds = bounds.expand(BLOCKS.side());
+            bounds = bounds.translateClipped(-sx, -sy, -sz, VAPOR.side());
+            if (!bounds.empty()) bounds = bounds.expand(VAPOR.side());
 
             additionCount = 0;
             if (hasSources) prepareAdditions(input);
@@ -225,7 +228,7 @@ final class VaporCompute implements AutoCloseable {
 
     private void advanceVapor(Inputs input, int volumeTexture, int sx, int sy, int sz) {
         updateWeather(input.erosion);
-        Bounds padded = bounds.expand(BLOCKS.side());
+        Bounds padded = bounds.expand(VAPOR.side());
         Bounds region = new Bounds(padded.minX() & ~3, padded.minY() & ~3, padded.minZ() & ~3,
                 (padded.maxX() + 3) & ~3, (padded.maxY() + 3) & ~3, (padded.maxZ() + 3) & ~3);
         Report report = reserveReport();
@@ -275,14 +278,14 @@ final class VaporCompute implements AutoCloseable {
             int index = touched[i];
             upload.put(index).put(Float.floatToRawIntBits(additions[index]));
             additions[index] = 0;
-            int x = index % BLOCKS.side();
-            int y = index / BLOCKS.side() % BLOCKS.side();
-            int z = index / (BLOCKS.side() * BLOCKS.side());
+            int x = index % VAPOR.side();
+            int y = index / VAPOR.side() % VAPOR.side();
+            int z = index / (VAPOR.side() * VAPOR.side());
             bounds = bounds.include(x, y, z);
         }
-        bounds = bounds.expand(BLOCKS.side());
+        bounds = bounds.expand(VAPOR.side());
         upload.flip();
-        upload(vaporInput, WEATHER_CELLS * Float.BYTES, upload);
+        upload(vaporInput, WEATHER_WORDS * Integer.BYTES, upload);
     }
 
     private void add(int index, float density) {
@@ -294,9 +297,12 @@ final class VaporCompute implements AutoCloseable {
     private void updateWeather(VaporVolume.Erosion updated) {
         if (updated == weather) return;
         upload.clear();
-        for (int z = 0; z < 8; z++) {
-            for (int y = 0; y < 8; y++) {
-                for (int x = 0; x < 8; x++) upload.put(Float.floatToRawIntBits(updated.at(x * 8, y * 8, z * 8)));
+        int step = 1 << VaporVolume.Erosion.SHIFT;
+        for (int z = 0; z < WEATHER_SIDE; z++) {
+            for (int y = 0; y < WEATHER_SIDE; y++) {
+                for (int x = 0; x < WEATHER_SIDE; x++) {
+                    upload.put(Float.floatToRawIntBits(updated.at(x * step, y * step, z * step)));
+                }
             }
         }
         upload.flip();
@@ -357,15 +363,6 @@ final class VaporCompute implements AutoCloseable {
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, selected.buffer);
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, INITIAL_REPORT);
         return selected;
-    }
-
-    private static Bounds translate(Bounds old, int x, int y, int z) {
-        if (old.empty() || (x == 0 && y == 0 && z == 0)) return old;
-        int minX = Math.max(0, old.minX() + x), maxX = Math.min(BLOCKS.side(), old.maxX() + x);
-        int minY = Math.max(0, old.minY() + y), maxY = Math.min(BLOCKS.side(), old.maxY() + y);
-        int minZ = Math.max(0, old.minZ() + z), maxZ = Math.min(BLOCKS.side(), old.maxZ() + z);
-        return minX >= maxX || minY >= maxY || minZ >= maxZ ? Bounds.EMPTY
-                : new Bounds(minX, minY, minZ, maxX, maxY, maxZ);
     }
 
     private static int buffer(int bytes, int usage, boolean initialize) {
@@ -456,7 +453,12 @@ final class VaporCompute implements AutoCloseable {
             }
             int shader = glCreateShader(GL_COMPUTE_SHADER);
             try {
-                glShaderSource(shader, source);
+                int header = source.indexOf('\n') + 1;
+                String dimensions = "#define VAPOR_SIDE " + VAPOR.side()
+                        + "\n#define WIND_SIDE " + WindTopology.GRID.side()
+                        + "\n#define WEATHER_SIDE " + WEATHER_SIDE
+                        + "\n#define WEATHER_SHIFT " + VaporVolume.Erosion.SHIFT + "\n";
+                glShaderSource(shader, source.substring(0, header) + dimensions + source.substring(header));
                 glCompileShader(shader);
                 if (glGetShaderi(shader, GL_COMPILE_STATUS) == GL_FALSE) {
                     throw new IllegalStateException(name + " compile failed: " + glGetShaderInfoLog(shader));

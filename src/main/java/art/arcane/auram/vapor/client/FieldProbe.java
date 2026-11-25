@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 
 import java.util.Arrays;
 
-import static art.arcane.auram.field.VoxelGrid.BLOCKS;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 
 /** Opt-in diagnostics for test scenes. All measurements are local to this client's window. */
 final class FieldProbe implements VaporVolume.FlowMeter {
@@ -103,6 +103,6 @@ final class FieldProbe implements VaporVolume.FlowMeter {
     private static int index(Position world, Position origin) {
         if (world == null) return -1;
         int x = world.x() - origin.x(), y = world.y() - origin.y(), z = world.z() - origin.z();
-        return BLOCKS.contains(x, y, z) ? BLOCKS.index(x, y, z) : -1;
+        return VAPOR.contains(x, y, z) ? VAPOR.index(x, y, z) : -1;
     }
 }

@@ -6,7 +6,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static art.arcane.auram.field.VoxelGrid.BLOCKS;
+import static art.arcane.auram.field.VoxelGrid.VAPOR;
 import static org.junit.Assert.*;
 
 public class WindFieldTest {
@@ -14,7 +14,7 @@ public class WindFieldTest {
 
     @Test
     public void flowsThroughABentDuctWithoutLeakingIntoAdjacentAir() {
-        boolean[] blocks = new boolean[BLOCKS.cells()];
+        boolean[] blocks = new boolean[VAPOR.cells()];
         for (int x = 2; x <= 8; x++) open(blocks, x, 4, 2);
         for (int z = 2; z <= 12; z++) open(blocks, 8, 4, z);
         for (int z = 2; z <= 12; z++) open(blocks, 10, 4, z);
@@ -31,7 +31,7 @@ public class WindFieldTest {
 
     @Test
     public void strongerSourcesReachFartherAndDecayWhenStopped() {
-        boolean[] blocks = new boolean[BLOCKS.cells()];
+        boolean[] blocks = new boolean[VAPOR.cells()];
         for (int x = 2; x < 54; x++) open(blocks, x, 4, 2);
         var topology = new WindTopology(ORIGIN, blocks);
         WindField strong = new WindField();
@@ -47,7 +47,7 @@ public class WindFieldTest {
 
     @Test
     public void opposingSourcesCancelAndAlignedSourcesAreBounded() {
-        boolean[] blocks = new boolean[BLOCKS.cells()];
+        boolean[] blocks = new boolean[VAPOR.cells()];
         for (int x = 2; x < 20; x++) open(blocks, x, 4, 2);
         var topology = new WindTopology(ORIGIN, blocks);
         WindField field = new WindField();
@@ -60,11 +60,11 @@ public class WindFieldTest {
     }
 
     @Test
-    public void gustSurvivesASectionShiftAndDisappearsAfterLeavingTheWindow() {
-        boolean[] blocks = new boolean[BLOCKS.cells()];
+    public void gustSurvivesATwoBlockShiftAndDisappearsAfterLeavingTheWindow() {
+        boolean[] blocks = new boolean[VAPOR.cells()];
         for (int x = 0; x < 60; x++) open(blocks, x, 4, 2);
         var old = new WindTopology(ORIGIN, blocks);
-        var moved = new WindTopology(new Position(16, 0, 0), blocks);
+        var moved = new WindTopology(new Position(2, 0, 0), blocks);
         WindField field = new WindField();
         var pos = new Position(21, 4, 2);
         var gust = new Source(pos, .8f, 0, 0);
@@ -83,7 +83,7 @@ public class WindFieldTest {
     }
 
     private static void open(boolean[] blocks, int x, int y, int z) {
-        blocks[BLOCKS.index(x, y, z)] = true;
+        blocks[VAPOR.index(x, y, z)] = true;
     }
 
     private static void run(WindField field, WindTopology topology, List<Source> sources, int ticks) {

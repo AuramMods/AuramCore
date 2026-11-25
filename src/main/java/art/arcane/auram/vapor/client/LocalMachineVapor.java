@@ -62,10 +62,10 @@ final class LocalMachineVapor {
         var index = LEVELS.get(level);
         if (index == null) return Map.of();
         var result = new LinkedHashMap<Key, VaporNetwork.Emitter>();
-        int x = origin.x() >> 4, z = origin.z() >> 4;
-        int columns = VoxelGrid.WINDOW_BLOCKS / VoxelGrid.SECTION;
-        for (int cx = x - 1; cx <= x + columns; cx++) {
-            for (int cz = z - 1; cz <= z + columns; cz++) {
+        var first = origin.section();
+        var last = VoxelGrid.VAPOR.lastSection(origin);
+        for (int cx = first.x() - 1; cx <= last.x() + 1; cx++) {
+            for (int cz = first.z() - 1; cz <= last.z() + 1; cz++) {
                 var column = index.chunks.get(ChunkPos.asLong(cx, cz));
                 if (column == null) continue;
                 for (var entity : column.values()) {

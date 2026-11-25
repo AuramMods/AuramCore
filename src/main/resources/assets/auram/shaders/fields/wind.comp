@@ -18,10 +18,11 @@ uniform int sourceCount;
 uniform ivec3 shift;
 
 const float MIN_WIND = 0.004;
-const int NODES = 32 * 32 * 32 * 4;
+const int WIND_PLANE = WIND_SIDE * WIND_SIDE;
+const int NODES = WIND_PLANE * WIND_SIDE * 4;
 const ivec3 FACES[6] = ivec3[6](ivec3(1, 0, 0), ivec3(-1, 0, 0), ivec3(0, 1, 0),
     ivec3(0, -1, 0), ivec3(0, 0, 1), ivec3(0, 0, -1));
-const int NODE_STRIDE[6] = int[6](4, -4, 128, -128, 4096, -4096);
+const int NODE_STRIDE[6] = int[6](4, -4, 4 * WIND_SIDE, -4 * WIND_SIDE, 4 * WIND_PLANE, -4 * WIND_PLANE);
 
 vec4 bounded(vec3 vector) {
     float speed = length(vector);
@@ -31,14 +32,14 @@ vec4 bounded(vec3 vector) {
 
 void rebase(int node, uint descriptor) {
     int cell = node / 4;
-    ivec3 base = 2 * ivec3(cell % 32, (cell / 32) % 32, cell / 1024) + shift;
+    ivec3 base = 2 * ivec3(cell % WIND_SIDE, (cell / WIND_SIDE) % WIND_SIDE, cell / WIND_PLANE) + shift;
     vec3 sum = vec3(0);
     float count = 0;
     for (uint part = descriptor >> 24; part != 0u; part &= part - 1u) {
         int bit = findLSB(part);
         ivec3 block = base + ivec3(bit & 1, (bit >> 1) & 1, bit >> 2);
-        if (any(lessThan(block, ivec3(0))) || any(greaterThanEqual(block, ivec3(64)))) continue;
-        int old = oldLabels[block.x + 64 * (block.y + 64 * block.z)];
+        if (any(lessThan(block, ivec3(0))) || any(greaterThanEqual(block, ivec3(VAPOR_SIDE)))) continue;
+        int old = oldLabels[block.x + VAPOR_SIDE * (block.y + VAPOR_SIDE * block.z)];
         if (old < 0) continue;
         sum += currentWind[old].xyz;
         count += 1.0;
