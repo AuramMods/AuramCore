@@ -2,11 +2,15 @@ package art.arcane.auram.smoke;
 
 import art.arcane.auram.util.PortalChunkPreparation;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.phys.AABB;
 import net.minecraftforge.fml.ModList;
 
 import java.util.Map;
@@ -19,6 +23,30 @@ final class ServerLookupSmoke {
         testPortalScope(server);
         if (ModList.get().isLoaded("ftbchunks")) testFtbCache(server);
         if (ModList.get().isLoaded("chunkactivitytracker")) testActivity(server);
+        if (ModList.get().isLoaded("thaumaturge")) testThaumaturgeMigration(server);
+    }
+
+    private static void testThaumaturgeMigration(MinecraftServer server) throws Exception {
+        var level = server.overworld();
+        var hooks = Class.forName("com.leclowndu93150.thaumaturge.event.tick.EntityTickHooks");
+        var tick = hooks.getMethod("tick", Entity.class);
+        var origin = level.getSharedSpawnPos().above(5);
+        String[] animals = {"spider", "creeper", "cow", "pig", "chicken", "sheep", "villager"};
+        for (String animal : animals) {
+            var legacyId = ResourceLocation.parse("thaumaturge:taint_" + animal);
+            var legacy = (Mob) BuiltInRegistries.ENTITY_TYPE.getOptional(legacyId).orElseThrow().create(level);
+            legacy.moveTo(origin, 0, 0);
+            check(level.addFreshEntity(legacy), "legacy mob added " + animal);
+            tick.invoke(null, legacy);
+            check(legacy.isRemoved(), "legacy mob converted " + animal);
+            var normal = BuiltInRegistries.ENTITY_TYPE.get(ResourceLocation.parse("minecraft:" + animal));
+            var nearby = level.getEntitiesOfClass(Mob.class, new AABB(origin).inflate(2), mob -> mob.getType() == normal);
+            check(nearby.size() == 1, "correct replacement " + animal);
+            var replacement = nearby.get(0);
+            tick.invoke(null, replacement);
+            check(!replacement.isRemoved(), "replacement remains on the normal tick path " + animal);
+            replacement.discard();
+        }
     }
 
     private static void testPortalScope(MinecraftServer server) {
