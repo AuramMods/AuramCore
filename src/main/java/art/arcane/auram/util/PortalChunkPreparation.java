@@ -9,10 +9,12 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** A read-only portal lookup that can resume on a later server tick. */
 public final class PortalChunkPreparation {
     private static final ThreadLocal<PortalChunkPreparation> ACTIVE = new ThreadLocal<>();
+    private static final AtomicInteger ACTIVE_LOOKUPS = new AtomicInteger();
     private static final TicketType<ChunkPos> TICKET = TicketType.create(
             "auram_portal_search", Comparator.comparingLong(ChunkPos::toLong), 5);
     private static final PauseLookup WAITING = new PauseLookup();
@@ -29,7 +31,9 @@ public final class PortalChunkPreparation {
     }
 
     public static PortalChunkPreparation active() {
-        return ACTIVE.get();
+        // Ordinary FULL chunk reads never need to look into the thread-local
+        // map when no server is preparing a portal destination.
+        return ACTIVE_LOOKUPS.get() == 0 ? null : ACTIVE.get();
     }
 
     public boolean matches(ServerChunkCache chunks, BlockPos origin) {
@@ -46,15 +50,20 @@ public final class PortalChunkPreparation {
         if (pending != null && chunks.getChunkNow(pending.x, pending.z) == null) return false;
         pending = null;
 
-        PortalChunkPreparation previous = ACTIVE.get();
-        ACTIVE.set(this);
+        PortalChunkPreparation previous = active();
+        ACTIVE_LOOKUPS.incrementAndGet();
         try {
+            ACTIVE.set(this);
             lookup.run();
             return true;
         } catch (PauseLookup pause) {
             return pause == NEEDS_CREATION;
         } finally {
-            restore(previous);
+            try {
+                restore(previous);
+            } finally {
+                ACTIVE_LOOKUPS.decrementAndGet();
+            }
         }
     }
 
@@ -68,7 +77,11 @@ public final class PortalChunkPreparation {
     }
 
     public static void outsideLookup(Runnable action) {
-        PortalChunkPreparation previous = ACTIVE.get();
+        PortalChunkPreparation previous = active();
+        if (previous == null) {
+            action.run();
+            return;
+        }
         ACTIVE.remove();
         try {
             action.run();
@@ -78,7 +91,7 @@ public final class PortalChunkPreparation {
     }
 
     public static void finishBeforeCreation(ServerChunkCache chunks) {
-        PortalChunkPreparation lookup = ACTIVE.get();
+        PortalChunkPreparation lookup = active();
         if (lookup != null && lookup.isDestination(chunks)) throw NEEDS_CREATION;
     }
 

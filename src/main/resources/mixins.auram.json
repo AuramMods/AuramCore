@@ -146,6 +146,9 @@
     "tomsstorage.TerminalRemovalsMixin",
     "tomsstorage.StoredQuantityAccess",
     "ironchest.CrystalChestDisplayMixin",
+    "ftbserver.ForceLoadedChunksMixin",
+    "chunkactivity.ChunkActivityInfoMixin",
+    "chunkactivity.ChunkActivityTrackerMixin",
     "nyctophobia.MushroomHeightMixin",
     "twigs.ObeliskSearchMixin",
     "ftbquests.LootCrateSoundMixin"
