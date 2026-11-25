@@ -24,8 +24,16 @@ public abstract class FieldPacketProbeMixin {
                 Connection connection = (Connection) (Object) this;
                 if (!connection.isMemoryConnection()
                         && connection.getPacketListener() instanceof ServerGamePacketListenerImpl game) {
-                    FieldNetworkSmoke.sent(game.player.getGameProfile().getName(), channel.getPath(),
-                            ((FieldPayloadAccess) payload).auramSmoke$payload().readableBytes());
+                    var data = ((FieldPayloadAccess) payload).auramSmoke$payload();
+                    String effect = channel.getPath();
+                    if (effect.equals("fields") && data.isReadable()) {
+                        effect = switch (data.getUnsignedByte(data.readerIndex())) {
+                            case 0 -> "fields/vapor";
+                            case 1 -> "fields/rf";
+                            default -> effect;
+                        };
+                    }
+                    FieldNetworkSmoke.sent(game.player.getGameProfile().getName(), effect, data.readableBytes());
                 }
             }
             default -> {}

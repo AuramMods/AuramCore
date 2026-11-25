@@ -19,7 +19,7 @@ starting, steady, stopping, and stopped windows. Tick durations measure wall-clo
 time between Forge tick callbacks. Channel counts include the Forge discriminator
 and payload and exclude Minecraft packet framing and compression.
 
-## 1.0.43 baseline
+## Initial 1.0.43 measurement
 
 Forge 47.4.10, Apple M4 Max, Java 17.0.18, Oculus 1.8.0, Embeddium 0.3.31, Distant
 Horizons 3.3.3, AuramBliss, 854×480, 30 FPS cap. Installed AuramCore jar SHA-256
@@ -39,10 +39,15 @@ Horizons 3.3.3, AuramBliss, 854×480, 30 FPS cap. Installed AuramCore jar SHA-25
 | Near client | 0.975 ms | 1.436 ms |
 | Far client | 1.013 ms | 1.662 ms |
 
+The initial fixture's Ender IO banks filled partway through the run, which left
+Mekanism as the sustained RF load. The final fixture drains the two Ender IO
+receivers and caps each terminal conduit, so both branches continue to carry
+traffic. Both benchmark jars use that final topology for the comparison.
+
 The baseline logged a pre-existing invalid `getFuelModule` shadow in the Tinkers
 heating-controller mixin. The harness still reached both rendering clients and all
-sampling phases. Treat heating-controller coverage separately from the other Tinkers
-fixture blocks until that mixin is corrected.
+sampling phases. The machine cycle corrected the shadow mapping and kept the
+heating controller on authoritative vapor data.
 
 ## Machine state used by the client
 
@@ -65,3 +70,40 @@ fixture blocks until that mixin is corrected.
 - The vanilla furnace hook follows cooking progress and resolves covered
   outlets on the server. Botania mana pool vapor follows actual transfer,
   including acceptance through a Mana Void with a full pool.
+
+## Sustained branching comparison
+
+Both trials used the same fire room, casting and smeltery blocks, Botania pool and
+Endoflame, fan, operating SAG Mill, and two active branches on each energy
+network. The hidden clients used the same settings as the initial run with
+Bliss flood-fill lighting enabled. The steady windows covered 199 server ticks
+on 1.0.43 and 200 with the change.
+
+| Effect | 1.0.43 packets | 1.0.43 payload bytes | Updated packets | Updated payload bytes |
+| --- | ---: | ---: | ---: | ---: |
+| Vapor, near | 50 | 37,150 | 50 | 3,100 |
+| Wind, near | 5 | 295 | 0 | 0 |
+| Light, near | 5 | 195 | 5 | 195 |
+| RF, near | 50 | 17,300 | 5 | 120 |
+| Vapor, far | 5 | 230 | 0 | 0 |
+| Total | 115 | 55,170 | 60 | 3,415 |
+
+The updated RF channel sent five 24-byte heartbeats during steady flow. The
+high-frequency vapor messages in this fixture come from the mana pool's
+changing fill and exact transfer-driven emission rate.
+
+| Steady tick duration | 1.0.43 median | 1.0.43 p95 | Updated median | Updated p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Dedicated server | 2.723 ms | 4.726 ms | 2.013 ms | 2.859 ms |
+| Near client | 1.188 ms | 1.562 ms | 0.870 ms | 0.948 ms |
+| Far client | 1.256 ms | 1.607 ms | 0.856 ms | 0.950 ms |
+
+Tick times are individual runs on a shared test host. The packet counts are
+direct payload measurements. Update both the server and client to use the
+filtered and incremental field data. Either side can mix with 1.0.43 over
+the legacy protocol.
+
+Enable `--lights --verify-owned --lifecycle` to check source ownership and
+the live Bliss field textures, with branch directions, RF subscriptions,
+covered furnace outlets, dimension changes, and reconnect. Use
+`--thaumaturge --verify-owned` for the Nitor fixture.

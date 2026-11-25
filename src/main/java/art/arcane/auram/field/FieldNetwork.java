@@ -7,6 +7,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkDirection;
+import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -26,8 +27,9 @@ public final class FieldNetwork {
     private static final int ALL = VAPOR | RF | LIGHT;
     private static final Map<Connection, Interest> INTEREST = new IdentityHashMap<>();
     private static final String VERSION = "1";
+    private static final ResourceLocation NAME = ResourceLocation.fromNamespaceAndPath(Auram.MODID, "fields");
     private static final SimpleChannel CHANNEL = NetworkRegistry.ChannelBuilder
-            .named(ResourceLocation.fromNamespaceAndPath(Auram.MODID, "fields"))
+            .named(NAME)
             .networkProtocolVersion(() -> VERSION)
             .clientAcceptedVersions(NetworkRegistry.acceptMissingOr(VERSION))
             .serverAcceptedVersions(NetworkRegistry.acceptMissingOr(VERSION))
@@ -90,7 +92,7 @@ public final class FieldNetwork {
     }
 
     public static void subscribe(Connection connection, int effects) {
-        if (CHANNEL.isRemotePresent(connection)) {
+        if (hasNegotiatedVersion(connection)) {
             CHANNEL.sendTo(new Subscription(effects), connection, NetworkDirection.PLAY_TO_SERVER);
         }
     }
@@ -126,7 +128,12 @@ public final class FieldNetwork {
 
     public static boolean supportsLocalSources(ServerPlayer player) {
         var connection = player.connection.connection;
-        return connection.isMemoryConnection() || CHANNEL.isRemotePresent(connection);
+        return connection.isMemoryConnection() || INTEREST.containsKey(connection) || hasNegotiatedVersion(connection);
+    }
+
+    private static boolean hasNegotiatedVersion(Connection connection) {
+        var peer = NetworkHooks.getConnectionData(connection);
+        return peer != null && VERSION.equals(peer.getChannels().get(NAME));
     }
 
     @SubscribeEvent

@@ -31,6 +31,9 @@ def arguments():
     parser.add_argument("java", type=Path, help="Native JDK 17 executable")
     parser.add_argument("work", type=Path, help="New directory for the server, clients, and logs")
     parser.add_argument("--client-core", type=Path, help="Different Core jar for both clients")
+    parser.add_argument("--thaumaturge", action="store_true", help="Include the Nitor fixture and its dependencies")
+    parser.add_argument("--lights", action="store_true", help="Enable Bliss flood-fill lighting for both clients")
+    parser.add_argument("--lifecycle", action="store_true", help="Verify modern rendering, re-entry, and subscription changes")
     parser.add_argument("--verify-owned", action="store_true", help="Verify client-owned sources against the scene")
     parser.add_argument("--seconds", type=float, default=10, help="Duration of each sample window")
     return parser.parse_args()
@@ -123,7 +126,7 @@ def client_at(args, stack, port, jars, name):
     game = qa.prepare(profile, work)
     (game / "config/forge-client.toml").write_text("showLoadWarnings=false\n")
     (game / "shaderpacks/AuramBliss.txt").write_text(
-        "VOLUMETRIC_VAPOR=true\nRF_FLOW_STREAKS=true\n")
+        "VOLUMETRIC_VAPOR=true\nRF_FLOW_STREAKS=true\n" + ("LPV_ENABLED=true\n" if args.lights else ""))
     command = qa.launch_command(profile, work, game)
     quickplay = command.index("--quickPlaySingleplayer")
     command[quickplay:quickplay+2] = ["--quickPlayMultiplayer", f"127.0.0.1:{port}"]
@@ -134,7 +137,7 @@ def client_at(args, stack, port, jars, name):
     return launch(stack, [command[0], f"@{arguments_file}"], work)
 
 
-def build(server, log):
+def build(server, log, thaumaturge):
     send(server, "gamerule doFireTick false", "gamerule doDaylightCycle false",
          "gamerule doWeatherCycle false", "gamerule doMobSpawning false", "time set 6000",
          "weather clear", "forceload add 16 16 63 63", "forceload add 190 34 210 52",
@@ -156,6 +159,7 @@ def build(server, log):
          "data merge block 45 148 43 {yaw:90.0f}",
          "fill 27 147 44 31 147 48 tconstruct:seared_bricks",
          "fill 27 148 44 31 148 48 tconstruct:seared_bricks hollow",
+         "fill 28 148 45 30 148 47 minecraft:air",
          "setblock 29 148 44 tconstruct:smeltery_controller[facing=north]",
          'setblock 27 148 46 tconstruct:seared_fuel_tank{tank:{FluidName:"minecraft:lava",Amount:800}}',
          "setblock 28 148 44 tconstruct:seared_glass",
@@ -182,6 +186,8 @@ def build(server, log):
     time.sleep(2)
     send(server, "fieldconduits")
     wait_for(log, server, "FIELD_CONDUITS_READY", timeout=15)
+    if thaumaturge:
+        send(server, "setblock 26 148 44 thaumaturge:nitor_blue")
     send(server, 'data merge block 29 148 44 {tank:{capacity:11520,fluids:[{FluidName:"tconstruct:molten_cobalt",Amount:7200}]}}')
 
 
@@ -190,6 +196,9 @@ def toggle(server, active):
          "setblock 25 149 40 minecraft:" + ("fire" if active else "air"),
          "setblock 21 149 39 minecraft:" + ("soul_fire" if active else "air"),
          "setblock 23 148 42 minecraft:soul_campfire[lit=" + str(active).lower() + "]",
+         'setblock 38 148 46 enderio:sag_mill[facing=south]{EnergyStored:2000000,'
+         'Items:{Items:[{Slot:0,id:"minecraft:coal",Count:64},{Slot:6,id:"enderio:octadic_capacitor",Count:1}]}}'
+         if active else "setblock 38 148 46 minecraft:air",
          "setblock 43 148 29 minecraft:" + ("redstone_block" if active else "air"),
          "setblock 46 148 43 minecraft:" + ("redstone_block" if active else "air"),
          "setblock 34 148 43 minecraft:" + ("redstone_block" if active else "air"),
@@ -204,6 +213,61 @@ def read_samples(log):
             if PROBE in line and '"event":"field_network_phase"' in line]
 
 
+def lifecycle(server, server_log, clients):
+    def observe(player, test):
+        child, log = clients[player]
+        offset = log.stat().st_size
+        send(server, f"fieldaudit {player} {test}")
+        wait_for(log, child, f"FIELD_AUDIT_PASS {test}", timeout=20, offset=offset)
+
+    toggle(server, True)
+    time.sleep(3)
+    observe(PLAYER_NEAR, "active")
+    send(server, f"tp {PLAYER_FAR} 36.5 153 31.5 0 27")
+    time.sleep(4)
+    observe(PLAYER_FAR, "active")
+
+    observe(PLAYER_NEAR, "disable_rf")
+    observe(PLAYER_FAR, "disable_rf")
+    send(server, "fieldnet vapor_only")
+    time.sleep(3)
+    observe(PLAYER_NEAR, "vapor_only")
+    observe(PLAYER_FAR, "vapor_only")
+    send(server, "fieldnet done")
+    observe(PLAYER_NEAR, "enable_rf")
+    observe(PLAYER_FAR, "enable_rf")
+    time.sleep(3)
+    observe(PLAYER_NEAR, "active")
+
+    send(server, f"execute in minecraft:the_nether run tp {PLAYER_NEAR} 0.5 132 0.5")
+    time.sleep(4)
+    observe(PLAYER_NEAR, "outside")
+    send(server, f"execute in minecraft:overworld run tp {PLAYER_NEAR} 36.5 153 31.5 0 27")
+    time.sleep(4)
+    observe(PLAYER_NEAR, "active")
+
+    send(server, "setblock 22 148 39 minecraft:air", "setblock 22 149 40 minecraft:stone")
+    time.sleep(1)
+    observe(PLAYER_NEAR, "covered_furnace")
+    send(server, "setblock 22 149 40 minecraft:air")
+    send(server, "data merge block 22 148 40 {Items:[],CookTime:0s,BurnTime:120s}")
+    time.sleep(1)
+    observe(PLAYER_NEAR, "burn_without_cooking")
+
+    observe(PLAYER_NEAR, "arm_reconnect")
+    child, log = clients[PLAYER_NEAR]
+    joined_at = server_log.stat().st_size
+    replaced_at = log.stat().st_size
+    send(server, f"kick {PLAYER_NEAR} Reconnect audit")
+    wait_for(server_log, server, f"{PLAYER_NEAR} joined the game", timeout=60, offset=joined_at)
+    wait_for(log, child, "Renderer setup complete", offset=replaced_at)
+    send(server, f"tp {PLAYER_NEAR} 36.5 153 31.5 0 27")
+    toggle(server, True)
+    time.sleep(3)
+    observe(PLAYER_NEAR, "active")
+    print("Live fields, textures, warm watcher, covered vent, dimension and reconnect passed", flush=True)
+
+
 def main():
     args = arguments()
     for field in ("pack", "core", "probe", "java", "work", "client_core"):
@@ -212,14 +276,17 @@ def main():
     args.work.mkdir()
     os.environ["PATH"] = str(args.java.parent) + os.pathsep + os.environ["PATH"]
     mod_dir = args.pack / "minecraft/mods"
-    pack_jars = [mod_dir / name for name in SHARED_MODS]
+    mod_names = SHARED_MODS
+    if args.thaumaturge:
+        mod_names += ("thaumaturge-1.1.9.jar", "lithostitched-forge-1.20.1-1.4.11.jar")
+    pack_jars = [mod_dir / name for name in mod_names]
     with socket.socket() as reserved:
         reserved.bind(("127.0.0.1", 0))
         port = reserved.getsockname()[1]
     with ExitStack() as stack:
         server, server_log = server_at(args, stack, port, [args.core, args.probe, *pack_jars])
         wait_for(server_log, server, "Done (")
-        build(server, server_log)
+        build(server, server_log, args.thaumaturge)
         client_jars = [args.client_core or args.core, args.probe, *pack_jars]
         clients = {}
         for player, position in ((PLAYER_NEAR, "36.5 153 31.5 0 27"), (PLAYER_FAR, "201.5 151 39.5 0 20")):
@@ -227,7 +294,7 @@ def main():
             clients[player] = (child, log)
             wait_for(server_log, server, f"{player} joined the game", timeout=240)
             send(server, f"gamemode spectator {player}", f"tp {player} {position}")
-            wait_for(log, child, "Creating pipeline for dimension", timeout=120)
+            wait_for(log, child, "Renderer setup complete", timeout=120)
         time.sleep(6)
         send(server, "fieldnet idle")
         time.sleep(args.seconds)
@@ -247,10 +314,17 @@ def main():
             if args.verify_owned:
                 for phase in ("steady", "stopped"):
                     wait_for(log, child, f"FIELD_LOCAL_OWNERSHIP {phase}", timeout=5)
-        measurements = {"server": read_samples(server_log)}
-        measurements.update({name: read_samples(log) for name, (_, log) in clients.items()})
-        result = args.work / "metrics.json"
-        result.write_text(json.dumps(measurements, indent=2) + "\n")
+        def save():
+            measurements = {"server": read_samples(server_log)}
+            measurements.update({name: read_samples(log) for name, (_, log) in clients.items()})
+            result = args.work / "metrics.json"
+            result.write_text(json.dumps(measurements, indent=2) + "\n")
+            return result
+
+        result = save()
+        if args.lifecycle:
+            lifecycle(server, server_log, clients)
+            save()
         print(result)
 
 

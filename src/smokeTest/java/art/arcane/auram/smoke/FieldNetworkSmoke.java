@@ -62,6 +62,16 @@ public final class FieldNetworkSmoke {
                     System.out.println(PHASE + next);
                     return 1;
                 })));
+        event.getDispatcher().register(Commands.literal("fieldaudit")
+                .requires(source -> source.hasPermission(4))
+                .then(Commands.argument("name", StringArgumentType.word()).then(Commands.argument("test", StringArgumentType.word())
+                        .executes(context -> {
+                            String name = StringArgumentType.getString(context, "name");
+                            var player = context.getSource().getServer().getPlayerList().getPlayerByName(name);
+                            if (player == null) return 0;
+                            player.sendSystemMessage(Component.literal("FIELD_NET_AUDIT " + StringArgumentType.getString(context, "test")));
+                            return 1;
+                        }))));
         event.getDispatcher().register(Commands.literal("fieldconduits")
                 .requires(source -> source.hasPermission(4))
                 .executes(context -> {
@@ -92,9 +102,20 @@ public final class FieldNetworkSmoke {
             cable.getCapability(ForgeCapabilities.ENERGY, Direction.WEST)
                     .ifPresent(energy -> energy.receiveEnergy(80_000, false));
         }
+        FieldNetworkConduits.drainBanks(level);
+        drain(level, new BlockPos(47, 148, 22), Direction.EAST);
+        drain(level, new BlockPos(43, 148, 18), Direction.NORTH);
         if (level.getBlockEntity(POOL) instanceof ManaPoolBlockEntity pool) pool.receiveMana(100);
     }
 
+
+    private static void drain(ServerLevel level, BlockPos pos, Direction side) {
+        var receiver = level.getBlockEntity(pos);
+        if (receiver != null) {
+            receiver.getCapability(ForgeCapabilities.ENERGY, side)
+                    .ifPresent(energy -> energy.extractEnergy(80_000, false));
+        }
+    }
 
     private static synchronized void advanceServer(String next) {
         SERVER.advance(next, Map.of("pre_compression_payload", PAYLOAD));
