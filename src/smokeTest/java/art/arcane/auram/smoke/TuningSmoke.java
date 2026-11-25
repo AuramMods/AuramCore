@@ -63,10 +63,14 @@ public final class TuningSmoke {
         final int warmupBatches=Integer.getInteger("auram.tuning.warmupBatches",5);
         final int measuredBatches=Integer.getInteger("auram.tuning.measuredBatches",20);
         final int measuredOrigin=Integer.getInteger("auram.tuning.measuredOrigin",80);
+        final int minimumMeasuredTicks = Integer.getInteger("auram.tuning.minimumMeasuredTicks", 0);
+        final TicketType<ChunkPos> replayTicket = TicketType.create("auram_tuning", Comparator.comparingLong(ChunkPos::toLong));
         final int entities=Integer.getInteger("auram.tuning.entities",128);
         final List<Job> pending=new ArrayList<>();
         final Map<Long,ChunkAccess> generated=new TreeMap<>();
         final List<Double> ticks=new ArrayList<>(),intervals=new ArrayList<>(),batches=new ArrayList<>();
+        final List<Double> chunkReadinessMs = new ArrayList<>();
+        final List<String> slowTicks = new ArrayList<>();
         final List<ArmorStand> fixture=new ArrayList<>();
         final com.sun.management.ThreadMXBean threads=(com.sun.management.ThreadMXBean)ManagementFactory.getThreadMXBean();
         final com.sun.management.OperatingSystemMXBean os=(com.sun.management.OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
@@ -74,7 +78,7 @@ public final class TuningSmoke {
         CompoundTag expected;
         int phase,queued,completed,tickNumber,peakPool,peakActive;
         final Map<String, Object> schedulingAtStart;
-        long tickStart,lastTickStart,start,lastBatch,cpuStart,allocatedStart,mainCpuStart,peakHeap,nbtSaves;
+        long tickStart,lastTickStart,start,lastBatch,chunkFinishedAt,cpuStart,allocatedStart,mainCpuStart,peakHeap,nbtSaves;
         Recording recording;
 
         Run(MinecraftServer server) throws Exception {
@@ -116,7 +120,10 @@ public final class TuningSmoke {
             while(pending.size()<batchSize && queued<total) {
                 int origin = phase == 1 ? 20 : measuredOrigin;
                 int x = origin + queued % 10, z = origin + queued / 10;
-                pending.add(new Job(new ChunkPos(x,z),level.getChunkSource().getChunkFuture(x,z,ChunkStatus.FULL,true)));
+                var position = new ChunkPos(x, z);
+                long requestedAt = System.nanoTime();
+                level.getChunkSource().addRegionTicket(replayTicket, position, 0, position);
+                pending.add(new Job(position, requestedAt));
                 queued++;
             }
         }
@@ -136,19 +143,25 @@ public final class TuningSmoke {
         void endTick() throws Exception {
             if(phase==0)return;
             if(phase==2) {
-                ticks.add((System.nanoTime()-tickStart)/1e6);
+                double tickMs = (System.nanoTime()-tickStart)/1e6;
+                ticks.add(tickMs);
+                if (tickMs > 50) slowTicks.add(tickNumber + "," + System.currentTimeMillis() + "," + tickMs);
                 peakHeap=Math.max(peakHeap,ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().getUsed());
                 Object executor=Util.backgroundExecutor();
                 if(executor instanceof ForkJoinPool pool) {peakPool=Math.max(peakPool,pool.getPoolSize());peakActive=Math.max(peakActive,pool.getActiveThreadCount());}
             }
             for(Iterator<Job> iterator=pending.iterator();iterator.hasNext();) {
-                Job job=iterator.next();if(!job.future.isDone())continue;
-                ChunkAccess chunk=job.future.join().left().orElseThrow();
+                Job job=iterator.next();
+                ChunkAccess chunk = level.getChunkSource().getChunkNow(job.position.x, job.position.z);
+                if (chunk == null) continue;
+                level.getChunkSource().removeRegionTicket(replayTicket, job.position, 0, job.position);
                 iterator.remove();completed++;
                 if(phase==2) {
+                    chunkReadinessMs.add((System.nanoTime() - job.requestedAt) / 1e6);
                     generated.put(job.position.toLong(),chunk);
                     if(completed%batchSize==0) {
                         long now=System.nanoTime();batches.add((now-lastBatch)/1e9);lastBatch=now;
+                        if (completed == measuredBatches * batchSize) chunkFinishedAt = now;
                         LogUtils.getLogger().info("[AURAM TUNING] Measured {}/{} FULL chunks",completed,measuredBatches*batchSize);
                     }
                 }
@@ -158,13 +171,14 @@ public final class TuningSmoke {
                 recording=new Recording();
                 recording.enable("jdk.GCPhasePause").withThreshold(Duration.ZERO);
                 recording.enable("jdk.ObjectAllocationSample").with("throttle","100/s").withStackTrace();
+                recording.enable("jdk.ExecutionSample").withPeriod(Duration.ofMillis(10)).withStackTrace();
                 recording.setMaxSize(64L*1024*1024);recording.start();
                 LithoStartProbe.start();
                 cpuStart=os.getProcessCpuTime();allocatedStart=allocatedBytes();
                 mainCpuStart=threads.getCurrentThreadCpuTime();start=lastBatch=System.nanoTime();
                 Files.writeString(Path.of("auram-tuning-started.txt"),"Measured workload started\n");
                 LogUtils.getLogger().info("[AURAM TUNING] Warmup complete; starting {} batches",measuredBatches);
-            } else if(phase==2 && completed==measuredBatches*batchSize) finish();
+            } else if(phase==2 && completed==measuredBatches*batchSize && ticks.size() >= minimumMeasuredTicks) finish();
             if(tickNumber>36000)throw new AssertionError("Live benchmark exceeded 30 minutes");
         }
         long allocatedBytes() {
@@ -176,9 +190,19 @@ public final class TuningSmoke {
             long allocated=allocatedBytes()-allocatedStart,cpu=os.getProcessCpuTime()-cpuStart,mainCpu=threads.getCurrentThreadCpuTime()-mainCpuStart;
             recording.stop();recording.dump(Path.of("tuning.jfr"));recording.close();
             Map<String,Object> result=new LinkedHashMap<>();
-            result.put("measured_full_chunks",completed);result.put("elapsed_seconds",seconds);result.put("full_chunks_per_second",completed/seconds);
+            double chunkSeconds = (chunkFinishedAt - start) / 1e9;
+            result.put("measured_full_chunks",completed);result.put("elapsed_seconds",seconds);
+            result.put("cold_chunk_seconds", chunkSeconds);result.put("full_chunks_per_second",completed/chunkSeconds);
             result.put("warmup_batches",warmupBatches);result.put("measured_batches",measuredBatches);result.put("chunks_per_batch",batchSize);
             result.put("tick_ms",statistics(ticks));result.put("tick_interval_ms",statistics(intervals));result.put("chunk_batch_seconds",statistics(batches));
+            result.put("individual_chunk_ready_ms", statistics(chunkReadinessMs));
+            Map<Integer, Long> over = new LinkedHashMap<>();
+            for (int threshold : new int[]{50, 100, 250, 1000}) {
+                over.put(threshold, ticks.stream().filter(time -> time > threshold).count());
+            }
+            result.put("tick_counts_above_ms", over);
+            Files.writeString(Path.of("tuning-slow-ticks.csv"), "tick,end_epoch_ms,tick_ms\n"
+                    + String.join("\n", slowTicks) + "\n");
             result.put("process_cpu_seconds",cpu/1e9);result.put("server_thread_cpu_seconds",mainCpu/1e9);
             result.put("live_java_thread_allocated_bytes_delta",allocated);result.put("peak_sampled_heap_bytes",peakHeap);
             result.put("heap_end",ManagementFactory.getMemoryMXBean().getHeapMemoryUsage().toString());
@@ -207,10 +231,10 @@ public final class TuningSmoke {
                 }
             }
             result.put("generated_block_fingerprint",HexFormat.of().formatHex(digest.digest()));
-            result.put("scope","Fresh playerless disposable server, fixed seed 104729, contiguous synchronous FULL chunk requests, forced origin and fixed capability-heavy entity NBT serialization load; startup/fingerprint/shutdown excluded from workload metrics. Entity objects are serialized directly rather than selected through player-dependent world tracking.");
+            result.put("scope","Playerless disposable server, contiguous vanilla generation tickets, forced origin and fixed entity NBT serialization load. Chunk throughput ends at the last completed request. Startup, fingerprinting and shutdown are outside workload metrics.");
             Files.writeString(Path.of("tuning-benchmark.json"),new GsonBuilder().setPrettyPrinting().create().toJson(result)+"\n");
             Files.writeString(Path.of("auram-tuning-pass.txt"),"PASS live FULL chunk workload, tick/allocation/GC metrics and block fingerprint\n");
-            LogUtils.getLogger().info("[AURAM TUNING] PASS {} chunks/s, {} ticks",completed/seconds,ticks.size());
+            LogUtils.getLogger().info("[AURAM TUNING] PASS {} chunks/s, {} ticks",completed/chunkSeconds,ticks.size());
             active=null;server.halt(false);
         }
         Map<String,Object> summarizeRecording() throws Exception {
@@ -244,10 +268,11 @@ public final class TuningSmoke {
                 .map(entry->Map.<String,Object>of("name",entry.getKey(),"sampled_weight_bytes",entry.getValue())).toList();
     }
     private static Map<String,Object> statistics(List<Double> values) {
-        if(values.isEmpty())return Map.of("count",0,"median",0,"p95",0,"p99",0,"max",0);
+        if(values.isEmpty())return Map.of("count",0,"median",0,"p95",0,"p99",0,"p99_9",0,"max",0);
         double[] sorted=values.stream().mapToDouble(Double::doubleValue).sorted().toArray();
         return Map.of("count",sorted.length,"median",sorted[(sorted.length-1)/2],"p95",sorted[(int)Math.ceil(sorted.length*.95)-1],
-                "p99",sorted[(int)Math.ceil(sorted.length*.99)-1],"max",sorted[sorted.length-1]);
+                "p99",sorted[(int)Math.ceil(sorted.length*.99)-1],
+                "p99_9",sorted[(int)Math.ceil(sorted.length*.999)-1],"max",sorted[sorted.length-1]);
     }
-    private record Job(ChunkPos position,CompletableFuture<Either<ChunkAccess,ChunkHolder.ChunkLoadingFailure>> future) { }
+    private record Job(ChunkPos position, long requestedAt) { }
 }

@@ -33,6 +33,8 @@ parser.add_argument('--runtime-parent', type=Path, help='Directory for disposabl
 parser.add_argument('--no-mixin-export', action='store_true', help='Disable class-file export during throughput measurements')
 parser.add_argument('--server-template', type=Path, help='Copy a complete exported server pack instead of a minimal mod set')
 parser.add_argument('--world-template', type=Path, help='Copy a saved world for a continuation run')
+parser.add_argument('--view-distance', type=int, default=2)
+parser.add_argument('--simulation-distance', type=int, default=2)
 parser.add_argument('--threadtweak-workers', type=int, help='Override main workers in this disposable fixture only')
 parser.add_argument('--identity-candidate', action='store_true', help='Enable the experimental identity shortcut in the test mod only')
 args = parser.parse_args()
@@ -150,7 +152,8 @@ ground = '{"block":"minecraft:stone","height":71},' if args.mode == 'ftbrtp' els
     'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1},'
     f'{ground}'
     '{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\n'
-    f'level-seed={args.seed}\nmax-tick-time=-1\nview-distance=2\nsimulation-distance=2\nspawn-protection=0\n')
+    f'level-seed={args.seed}\nmax-tick-time=-1\nview-distance={args.view_distance}\n'
+    f'simulation-distance={args.simulation_distance}\nspawn-protection=0\n')
 if args.mode in {'ring-search', 'worldgen-bench', 'tuning', 'structureprobes', 'well', 'terrain', 'density', 'heightcache', 'mappingperf', 'wrought', 'sparse', 'terrainbatch', 'boundedslice', 'twigs', 'lithostarts', 'bronzeparity', 'scatterparity', 'regionparity', 'aquiferparity', 'surfacejitter', 'surfaceterrain'}:
     settings = (runtime/'server.properties').read_text().splitlines()
     (runtime/'server.properties').write_text('\n'.join(
