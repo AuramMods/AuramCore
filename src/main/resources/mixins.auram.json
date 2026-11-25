@@ -143,7 +143,9 @@
     "minecraft.EntityLookupTypeMixin",
     "minecraft.DroppedItemTagSelectorMixin",
     "tomsstorage.TerminalIdMixin",
+    "tomsstorage.TerminalRemovalsMixin",
     "tomsstorage.StoredQuantityAccess",
+    "ironchest.CrystalChestDisplayMixin",
     "nyctophobia.MushroomHeightMixin",
     "twigs.ObeliskSearchMixin",
     "ftbquests.LootCrateSoundMixin"

@@ -133,6 +133,10 @@ public final class PatchSmokeMod {
             }
             if (System.getProperty("auram.smoke", "").equals("terminal")) {
                 TerminalSyncSmoke.run(event.getServer());
+                if (net.minecraftforge.fml.ModList.get().isLoaded("ironchest")) {
+                    var result = CrystalChestSmoke.run(event.getServer());
+                    Files.writeString(Path.of("crystal-chest-benchmark.json"), new com.google.gson.Gson().toJson(result) + "\n");
+                }
                 Files.writeString(Path.of("auram-terminal-pass.txt"), "PASS capability-heavy terminal packets and comparisons\n");
                 return;
             }

@@ -5,6 +5,8 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
@@ -15,6 +17,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -127,9 +134,81 @@ public final class TerminalSyncSmoke {
         result.put("control_provider_comparisons",oldCalls);result.put("candidate_provider_comparisons",newCalls);
         result.put("control_median_10_updates_ms",a[12]);result.put("candidate_median_10_updates_ms",b[12]);
         result.put("control_batch_ms",oldTimes);result.put("candidate_batch_ms",newTimes);
+        result.put("live_terminal", exerciseLiveTerminal(server, player, terminal, receive, asList, stored, inventory));
         result.put("scope","128 real Mekanism powered items plus mutable capability payloads; alternating paired update order; 5 warmup and 25 measured batches.");
         Files.writeString(Path.of("terminal-benchmark.json"),new GsonBuilder().setPrettyPrinting().create().toJson(result)+"\n");
-        LogUtils.getLogger().info("[AURAM TERMINAL] PASS {}",result);
+        LogUtils.getLogger().info("[AURAM TERMINAL] PASS {} paired packet checks and 2 live viewers", paired);
+    }
+
+    private static Map<String, Object> exerciseLiveTerminal(MinecraftServer server, ServerPlayer first,
+            Class<?> syncType, Method receive, Method asList, Class<?> stored, ItemStack[] inventory) throws Exception {
+        var level = server.overworld();
+        BlockPos pos = level.getSharedSpawnPos().above(16);
+        var block = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse("toms_storage:ts.storage_terminal")).orElseThrow();
+        var state = block.defaultBlockState();
+        var facing = (net.minecraft.world.level.block.state.properties.DirectionProperty)
+                block.getStateDefinition().getProperty("facing");
+        state = state.setValue(facing, Direction.NORTH);
+        level.setBlockAndUpdate(pos, state);
+        var tile = level.getBlockEntity(pos);
+        check(tile instanceof net.minecraft.world.MenuProvider, "real terminal was placed");
+        var update = tile.getClass().getMethod("updateServer");
+        var snapshot = tile.getClass().getMethod("getStacks");
+        BlockPos chestPos = pos.north();
+        level.setBlockAndUpdate(chestPos, Blocks.CHEST.defaultBlockState());
+        level.setBlockAndUpdate(chestPos.above(), Blocks.HOPPER.defaultBlockState().setValue(HopperBlock.FACING, Direction.DOWN));
+        var chest = (ChestBlockEntity) level.getBlockEntity(chestPos);
+        var hopper = (HopperBlockEntity) level.getBlockEntity(chestPos.above());
+        for (int slot = 0; slot < 24; slot++) chest.setItem(slot, inventory[slot].copy());
+        var tagged = new ItemStack(Items.STONE, 3);
+        tagged.getOrCreateTag().putInt("variant", 10);
+        chest.setItem(24, tagged);
+        chest.setItem(25, new ItemStack(Items.STONE, 2));
+        hopper.setItem(0, tagged.copyWithCount(4));
+        ServerPlayer second = new ServerPlayer(server, level, new GameProfile(UUID.randomUUID(), "AuramTerminal2"));
+        second.connection = new ServerGamePacketListenerImpl(server,new Connection(PacketFlow.SERVERBOUND),second) {
+            @Override public void send(Packet<?> packet) { }
+        };
+        var provider = (net.minecraft.world.MenuProvider) tile;
+        AbstractContainerMenu menuA = provider.createMenu(1, first.getInventory(), first);
+        AbstractContainerMenu menuB = provider.createMenu(2, second.getInventory(), second);
+        first.containerMenu = menuA;
+        second.containerMenu = menuB;
+        Object clientA = syncType.getConstructor().newInstance();
+        Object clientB = syncType.getConstructor().newInstance();
+        var states = new ArrayList<Map<String, Long>>();
+        for (int step = 0; step < 4; step++) {
+            if (step == 1) {
+                HopperBlockEntity.pushItemsTick(level, hopper.getBlockPos(), hopper.getBlockState(), hopper);
+                check(chest.getItem(24).getCount() == 4, "hopper inserted a tagged stack into the chest");
+            }
+            if (step == 2) chest.setItem(25, ItemStack.EMPTY);
+            snapshot.invoke(tile);
+            update.invoke(tile);
+            for (var menu : List.of(menuA, menuB)) {
+                TerminalPacketProbe.start();
+                menu.broadcastChanges();
+                var packets = TerminalPacketProbe.stop();
+                if (step != 3) check(!packets.isEmpty(), "a viewer did not receive the inventory update");
+                for (CompoundTag packet : packets) receive.invoke(menu == menuA ? clientA : clientB, packet);
+            }
+            var observed = clientState(asList.invoke(clientA), stored);
+            check(observed.equals(clientState(asList.invoke(clientB), stored)), "live viewers received different inventory states");
+            check(observed.get("minecraft:stone:{variant:10}") == (step == 0 ? 3L : 4L), "tagged count changed");
+            check(observed.getOrDefault("minecraft:stone:null", 0L) == (step < 2 ? 2L : 0L), "removal or stack distinction changed");
+            states.add(observed);
+        }
+        var batches = new double[21];
+        for (int batch = -5; batch < batches.length; batch++) {
+            long start = System.nanoTime();
+            for (int refresh = 0; refresh < 300; refresh++) {
+                snapshot.invoke(tile);
+                update.invoke(tile);
+            }
+            if (batch >= 0) batches[batch] = (System.nanoTime() - start) / 1e6;
+        }
+        Arrays.sort(batches);
+        return Map.of("views", 2, "paired_states", states, "median_300_rebuilds_ms", batches[10]);
     }
 
     private static Map<Object,Long> snapshot(ItemStack[] stacks,Constructor<?> copy,int step) throws Exception {
