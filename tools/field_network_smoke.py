@@ -31,6 +31,7 @@ def arguments():
     parser.add_argument("java", type=Path, help="Native JDK 17 executable")
     parser.add_argument("work", type=Path, help="New directory for the server, clients, and logs")
     parser.add_argument("--client-core", type=Path, help="Different Core jar for both clients")
+    parser.add_argument("--verify-owned", action="store_true", help="Verify client-owned sources against the scene")
     parser.add_argument("--seconds", type=float, default=10, help="Duration of each sample window")
     return parser.parse_args()
 
@@ -111,6 +112,8 @@ def client_at(args, stack, port, jars, name):
                 "--max-fps", "30", "--heap", "4g", "--companion",
                 str(args.pack / "minecraft/mods/auramphoton-compat-0.1.0-dh333.jar"),
                 f"--java-option={TEST_OPTION}", "--java-option=-Dforge.disableVersionCheck=true"]
+    if args.verify_owned:
+        sys.argv.append("--java-option=-Dauram.fields.verifyOwnership=true")
     for jar in jars:
         sys.argv.extend(("--probe", str(jar)))
     try:
@@ -241,6 +244,9 @@ def main():
         send(server, "fieldnet done")
         for child, log in clients.values():
             wait_for(log, child, '"phase":"stopped"', timeout=20)
+            if args.verify_owned:
+                for phase in ("steady", "stopped"):
+                    wait_for(log, child, f"FIELD_LOCAL_OWNERSHIP {phase}", timeout=5)
         measurements = {"server": read_samples(server_log)}
         measurements.update({name: read_samples(log) for name, (_, log) in clients.items()})
         result = args.work / "metrics.json"

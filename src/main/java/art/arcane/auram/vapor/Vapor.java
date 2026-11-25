@@ -68,14 +68,13 @@ public final class Vapor {
         return setLocalEmitter(level, id, position, position, densityPerTick);
     }
 
-    /** Sets a client-owned source at a vent adjacent to its owning block. */
+    /** Sets a client-owned source with a separate anchor and vent. */
     public static boolean setLocalEmitter(Level level, ResourceLocation id, BlockPos anchor, BlockPos vent,
                                           float densityPerTick) {
         ClientFieldSources.requireClientThread(level);
         validateDensity(densityPerTick);
         var key = new Key(id, anchor);
         if (densityPerTick == 0) return ClientFieldSources.VAPOR.stop(level, key);
-        if (anchor.distManhattan(vent) > 1) throw new IllegalArgumentException("Vapor vent must touch its anchor");
         if (level.isOutsideBuildHeight(vent)) return false;
         return ClientFieldSources.VAPOR.set(level, key, new VaporNetwork.Emitter(id, vent.immutable(), densityPerTick));
     }

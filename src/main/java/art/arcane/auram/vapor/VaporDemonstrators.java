@@ -1,18 +1,23 @@
 package art.arcane.auram.vapor;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.FieldNetwork;
 import art.arcane.auram.mixin.minecraft.ExplosionRadiusAccess;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AbstractFurnaceBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraftforge.common.util.LogicalSidedProvider;
 import net.minecraftforge.event.level.ChunkEvent;
+import net.minecraftforge.event.level.ChunkWatchEvent;
 import net.minecraftforge.event.level.ExplosionEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID)
@@ -30,10 +35,13 @@ public final class VaporDemonstrators {
     private static final int TNT_VAPOR_RADIUS = 7;
 
     private record BlockEmitter(ResourceLocation id, float rate, boolean ventAbove) {
-        void start(ServerLevel level, BlockPos pos) {
-            BlockPos anchor = pos.immutable();
+        void start(Level level, BlockPos anchor) {
             BlockPos vent = ventAbove ? anchor.above() : anchor;
-            VaporSources.set(level, anchor, new VaporNetwork.Emitter(id, vent, rate));
+            if (level instanceof ServerLevel server) {
+                VaporSources.set(server, anchor, new VaporNetwork.Emitter(id, vent, rate));
+            } else {
+                Vapor.setLocalEmitter(level, id, anchor, vent, rate);
+            }
         }
     }
 
@@ -55,22 +63,44 @@ public final class VaporDemonstrators {
         }
     }
 
-    static boolean open(ServerLevel level, BlockPos pos) {
+    static boolean open(Level level, BlockPos pos) {
         if (!level.hasChunkAt(pos)) return false;
         return !VaporObstacles.blocksVapor(level, pos, level.getBlockState(pos));
     }
 
-    public static void blockChanged(ServerLevel level, BlockPos pos, BlockState before, BlockState after) {
-        BlockEmitter previous = blockEmitter(before);
-        BlockEmitter current = blockEmitter(after);
-        if (previous != current) {
-            if (previous != null && (current == null || !previous.id().equals(current.id()))) {
-                VaporSources.stop(level, previous.id(), pos);
-            }
-            if (current != null) current.start(level, pos);
+    public static boolean legacyViewers(ServerLevel level) {
+        for (var player : level.players()) {
+            if (VaporNetwork.available(player) && !FieldNetwork.supportsLocalSources(player)) return true;
         }
-        if (before.getBlock() instanceof AbstractFurnaceBlock && before.getBlock() != after.getBlock()) {
-            Vapor.stopEmitter(level, FURNACE, pos);
+        return false;
+    }
+
+    static boolean clientOwned(ResourceLocation provider) {
+        return provider.equals(FIRE) || provider.equals(LAVA_CAULDRON) || provider.equals(NITOR)
+                || provider.equals(BotaniaVapor.ENDOFLAME);
+    }
+
+    public static void blockChanged(Level level, BlockPos pos, BlockState before, BlockState after) {
+        if (level.isClientSide() || level instanceof ServerLevel server && legacyViewers(server)) {
+            BlockEmitter previous = blockEmitter(before);
+            BlockEmitter current = blockEmitter(after);
+            if (previous != current) {
+                if (previous != null && (current == null || !previous.id().equals(current.id()))) {
+                    Vapor.stopEmitter(level, previous.id(), pos);
+                }
+                if (current != null) current.start(level, pos);
+            }
+        }
+        if (level.isClientSide() && before.getBlock() != after.getBlock()) {
+            ResourceLocation previous = before.getBlock().builtInRegistryHolder().key().location();
+            if (previous.getNamespace().equals("botania")
+                    && (previous.getPath().equals("endoflame") || previous.getPath().equals("floating_endoflame"))) {
+                Vapor.stopEmitter(level, BotaniaVapor.ENDOFLAME, pos);
+            }
+        }
+        if (level instanceof ServerLevel server && before.getBlock() instanceof AbstractFurnaceBlock
+                && before.getBlock() != after.getBlock()) {
+            Vapor.stopEmitter(server, FURNACE, pos);
         }
     }
 
@@ -85,14 +115,22 @@ public final class VaporDemonstrators {
 
     @SubscribeEvent
     public static void loadEmitters(ChunkEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) return;
-        if (level.getServer().isSameThread()) readEmitters(level, chunk);
-        else level.getServer().execute(() -> readEmitters(level, chunk));
+        if (!(event.getLevel() instanceof Level level) || !level.isClientSide()
+                || !(event.getChunk() instanceof LevelChunk chunk)) return;
+        LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT).execute(() -> readEmitters(level, chunk));
     }
 
-    private static void readEmitters(ServerLevel level, LevelChunk chunk) {
+    @SubscribeEvent
+    public static void watchEmitters(ChunkWatchEvent.Watch event) {
+        if (VaporNetwork.available(event.getPlayer()) && !FieldNetwork.supportsLocalSources(event.getPlayer())) {
+            readEmitters(event.getLevel(), event.getChunk());
+        }
+    }
+
+    private static void readEmitters(Level level, LevelChunk chunk) {
         // Read the provided sections directly. Looking up neighboring chunks in a load event can block promotion.
         var pos = chunk.getPos();
+        if (level.isClientSide() && level.getChunkSource().getChunkNow(pos.x, pos.z) != chunk) return;
         var sections = chunk.getSections();
         for (int sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
             var section = sections[sectionIndex];

@@ -17,17 +17,18 @@ import net.minecraftforge.fml.common.Mod;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 /** Client-owned sources live as long as their owning level and anchor chunk. */
 @Mod.EventBusSubscriber(modid = Auram.MODID)
 public final class ClientFieldSources {
-    public static final Sources<VaporNetwork.Emitter> VAPOR = new Sources<>(2048);
-    public static final Sources<WindNetwork.Emitter> WIND = new Sources<>(4096);
+    public static final Sources<VaporNetwork.Emitter> VAPOR = new Sources<>(2048, VaporNetwork.Emitter::position);
+    public static final Sources<WindNetwork.Emitter> WIND = new Sources<>(4096, emitter -> emitter.flow().position());
 
     private ClientFieldSources() {}
 
@@ -63,27 +64,33 @@ public final class ClientFieldSources {
 
     public static final class Sources<T> {
         private final int capacity;
+        private final Function<T, BlockPos> vent;
         private final Map<Level, Tracked<T>> levels = new IdentityHashMap<>();
 
-        private Sources(int capacity) {
+        private Sources(int capacity, Function<T, BlockPos> vent) {
             this.capacity = capacity;
+            this.vent = vent;
         }
 
         public boolean set(Level level, Key key, T value) {
             requireClientThread(level);
             if (level.isOutsideBuildHeight(key.anchor()) || !level.hasChunkAt(key.anchor())) return false;
             var tracked = levels.computeIfAbsent(level, unused -> new Tracked<>());
-            var section = tracked.chunks.computeIfAbsent(chunk(key.anchor()), unused -> new LinkedHashMap<>());
-            if (section.containsKey(key)) {
-                section.put(key, value);
-                return true;
+            T previous = tracked.sources.get(key);
+            if (value.equals(previous)) return true;
+            long ventChunk = chunk(vent.apply(value));
+            if (previous == null) {
+                if (tracked.sources.size() >= capacity) return false;
+                add(tracked.anchors, chunk(key.anchor()), key);
+                add(tracked.vents, ventChunk, key);
+            } else {
+                long previousChunk = chunk(vent.apply(previous));
+                if (previousChunk != ventChunk) {
+                    remove(tracked.vents, previousChunk, key);
+                    add(tracked.vents, ventChunk, key);
+                }
             }
-            if (tracked.size == capacity) {
-                if (section.isEmpty()) tracked.chunks.remove(chunk(key.anchor()));
-                return false;
-            }
-            section.put(key, value);
-            tracked.size++;
+            tracked.sources.put(key, value);
             return true;
         }
 
@@ -91,11 +98,11 @@ public final class ClientFieldSources {
             requireClientThread(level);
             var tracked = levels.get(level);
             if (tracked == null) return false;
-            long chunk = chunk(key.anchor());
-            var section = tracked.chunks.get(chunk);
-            if (section == null || section.remove(key) == null) return false;
-            if (section.isEmpty()) tracked.chunks.remove(chunk);
-            if (--tracked.size == 0) levels.remove(level);
+            T previous = tracked.sources.remove(key);
+            if (previous == null) return false;
+            remove(tracked.anchors, chunk(key.anchor()), key);
+            remove(tracked.vents, chunk(vent.apply(previous)), key);
+            if (tracked.sources.isEmpty()) levels.remove(level);
             return true;
         }
 
@@ -103,24 +110,19 @@ public final class ClientFieldSources {
             return levels.containsKey(level);
         }
 
-        /** Visits only owned anchors in columns touching this voxel window. */
+        /** Visits only emitters with vents in columns touching the voxel window. */
         public void collect(Level level, VoxelGrid.Position origin, List<T> into) {
             var tracked = levels.get(level);
             if (tracked == null) return;
-            int minX = origin.x() - 1, minY = origin.y() - 1, minZ = origin.z() - 1;
-            int maxX = origin.x() + VoxelGrid.WINDOW_BLOCKS;
-            int maxY = origin.y() + VoxelGrid.WINDOW_BLOCKS;
-            int maxZ = origin.z() + VoxelGrid.WINDOW_BLOCKS;
-            for (int x = minX >> 4; x <= maxX >> 4; x++) {
-                for (int z = minZ >> 4; z <= maxZ >> 4; z++) {
-                    var entries = tracked.chunks.get(ChunkPos.asLong(x, z));
+            int firstX = origin.x() >> 4, firstZ = origin.z() >> 4;
+            for (int x = firstX; x < firstX + VoxelGrid.WINDOW_BLOCKS / 16; x++) {
+                for (int z = firstZ; z < firstZ + VoxelGrid.WINDOW_BLOCKS / 16; z++) {
+                    var entries = tracked.vents.get(ChunkPos.asLong(x, z));
                     if (entries == null) continue;
-                    for (var entry : entries.entrySet()) {
-                        BlockPos anchor = entry.getKey().anchor();
-                        if (anchor.getX() >= minX && anchor.getX() <= maxX && anchor.getY() >= minY
-                                && anchor.getY() <= maxY && anchor.getZ() >= minZ && anchor.getZ() <= maxZ) {
-                            into.add(entry.getValue());
-                        }
+                    for (Key key : entries) {
+                        T source = tracked.sources.get(key);
+                        int y = vent.apply(source).getY();
+                        if (y >= origin.y() && y < origin.y() + VoxelGrid.WINDOW_BLOCKS) into.add(source);
                     }
                 }
             }
@@ -129,9 +131,24 @@ public final class ClientFieldSources {
         private void unload(Level level, long chunk) {
             var tracked = levels.get(level);
             if (tracked == null) return;
-            var removed = tracked.chunks.remove(chunk);
-            if (removed != null) tracked.size -= removed.size();
-            if (tracked.size == 0) levels.remove(level);
+            var removed = tracked.anchors.remove(chunk);
+            if (removed != null) {
+                for (Key key : removed) {
+                    T source = tracked.sources.remove(key);
+                    remove(tracked.vents, chunk(vent.apply(source)), key);
+                }
+            }
+            if (tracked.sources.isEmpty()) levels.remove(level);
+        }
+
+        private static void add(Map<Long, Set<Key>> index, long chunk, Key key) {
+            index.computeIfAbsent(chunk, unused -> new LinkedHashSet<>()).add(key);
+        }
+
+        private static void remove(Map<Long, Set<Key>> index, long chunk, Key key) {
+            var column = index.get(chunk);
+            column.remove(key);
+            if (column.isEmpty()) index.remove(chunk);
         }
 
         private static long chunk(BlockPos anchor) {
@@ -140,8 +157,9 @@ public final class ClientFieldSources {
     }
 
     private static final class Tracked<T> {
-        private final Map<Long, Map<Key, T>> chunks = new HashMap<>();
-        private int size;
+        private final Map<Key, T> sources = new HashMap<>();
+        private final Map<Long, Set<Key>> anchors = new HashMap<>();
+        private final Map<Long, Set<Key>> vents = new HashMap<>();
     }
 
     /** Old frames identify sources by provider and vent. Match each owned source with at most one old copy. */

@@ -1,5 +1,6 @@
 package art.arcane.auram.mixin.minecraft;
 
+import art.arcane.auram.vapor.VaporDemonstrators;
 import art.arcane.auram.vapor.client.VaporClient;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -13,6 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class VaporBlockUpdateMixin {
     @Inject(method = "sendBlockUpdated", at = @At("TAIL"))
     private void auram$vaporBlockChanged(BlockPos pos, BlockState before, BlockState after, int flags, CallbackInfo ci) {
-        if (before != after) VaporClient.blockChanged((ClientLevel) (Object) this, pos);
+        if (before == after) return;
+        var level = (ClientLevel) (Object) this;
+        VaporDemonstrators.blockChanged(level, pos, before, after);
+        VaporClient.blockChanged(level, pos);
     }
 }

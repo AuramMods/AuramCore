@@ -1,6 +1,7 @@
 package art.arcane.auram.wind;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.FieldNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -101,7 +102,9 @@ public final class WindSources {
                 UUID playerId = player.getUUID();
                 present.add(playerId);
                 BlockPos origin = player.blockPosition();
+                boolean ownsVisuals = FieldNetwork.supportsLocalSources(player);
                 List<Emitter> selected = emitters.values().stream()
+                        .filter(emitter -> !ownsVisuals || !OpenBlocksWind.FAN.equals(emitter.id()))
                         .filter(emitter -> nearby(emitter.flow().position(), origin)
                                 && level.hasChunkAt(emitter.flow().position()))
                         .sorted(Comparator.<Emitter>comparingDouble(emitter ->

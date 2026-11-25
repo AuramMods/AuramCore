@@ -1,6 +1,7 @@
 package art.arcane.auram.vapor;
 
 import art.arcane.auram.Auram;
+import art.arcane.auram.field.FieldNetwork;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -116,8 +117,10 @@ public final class VaporSources {
         }
 
         private void sendTo(ServerLevel level, ServerPlayer player) {
+            boolean ownsVisuals = FieldNetwork.supportsLocalSources(player);
             List<VaporNetwork.Emitter> nearby = emitters.values().stream()
                     .map(ActiveEmitter::emitter)
+                    .filter(emitter -> !ownsVisuals || !VaporDemonstrators.clientOwned(emitter.id()))
                     .filter(emitter -> emitter.position().distToCenterSqr(player.position()) <= RANGE * RANGE
                             && level.hasChunkAt(emitter.position()))
                     .sorted(Comparator.<VaporNetwork.Emitter>comparingDouble(emitter -> emitter.position()
