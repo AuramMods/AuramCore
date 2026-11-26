@@ -58,9 +58,12 @@ public final class ModelClientSmoke {
     private static final String MODE = "memory-models";
     private static final boolean TITLE_ONLY = Boolean.getBoolean("auram.smoke.modelTitleOnly");
     private static final boolean TARGETED = Boolean.getBoolean("auram.smoke.targetedModels");
+    private static final boolean QUAD_DETAILS = Boolean.getBoolean("auram.smoke.modelQuadDetails");
+    private static final int OVERRIDE_PHASE = TITLE_ONLY || QUAD_DETAILS ? 4 : 6;
     private static final String OVERRIDE = "file/Auram QA Models";
     private static final ResourceLocation CASING = ResourceLocation.parse("create:andesite_casing");
     private static final ResourceLocation CONNECTED_SPRITE = ResourceLocation.parse("create:block/andesite_casing_connected");
+    private static final List<String> TEST_ITEMS = List.of("auram:rock", "auram:deepslate_diamond_rock", "draconicevolution:draconic_bow");
     private static final List<Map<String, Object>> checks = new ArrayList<>();
     private static final List<Long> frameNanos = new ArrayList<>();
     private static CompletableFuture<?> pending;
@@ -135,6 +138,13 @@ public final class ModelClientSmoke {
                         level.setBlockAndUpdate(base.offset(2, 1, 4), casing.defaultBlockState());
                     }
                     player.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
+                    if (QUAD_DETAILS) {
+                        int slot = 1;
+                        for (String id : TEST_ITEMS) {
+                            var item = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(id));
+                            player.getInventory().setItem(slot++, new ItemStack(item));
+                        }
+                    }
                     player.teleportTo(level, base.getX() + 0.5, base.getY() + 1, base.getZ() + 0.5, 0, 5);
                     return base;
                 });
@@ -149,11 +159,11 @@ public final class ModelClientSmoke {
             } else if (phase >= 3 && pending.isDone() && frames >= 90) {
                 pending.join();
                 inspectStage(client);
-                if (phase >= (TITLE_ONLY ? 5 : 7)) {
+                if (phase > OVERRIDE_PHASE) {
                     finish(client);
                     return;
                 }
-                int enableAt = TITLE_ONLY ? 3 : 5;
+                int enableAt = OVERRIDE_PHASE - 1;
                 if (phase == enableAt || phase == enableAt + 1) {
                     var repo = client.getResourcePackRepository();
                     repo.reload();
@@ -202,8 +212,9 @@ public final class ModelClientSmoke {
         var sword = client.getItemRenderer().getModel(new ItemStack(Items.DIAMOND_SWORD), client.level, client.player, 0);
         String swordDigest = modelFingerprint(sword, null);
         if (phase == 3) defaultSword = swordDigest;
-        check(swordDigest.equals(defaultSword) == (phase != (TITLE_ONLY ? 4 : 6)), "Resource-pack change applied and reverted the item model");
+        check(swordDigest.equals(defaultSword) == (phase != OVERRIDE_PHASE), "Resource-pack change applied and reverted the item model");
         result.put("sword", swordDigest);
+        if (QUAD_DETAILS) result.put("sword_quads", describeQuads(sword));
         if (client.level != null) {
             if (TARGETED) result.put("connected_casing", inspectConnectedCasing(client));
             var transmitter = Class.forName("mekanism.client.render.transmitter.RenderTransmitterBase");
@@ -259,16 +270,19 @@ public final class ModelClientSmoke {
     private static Map<String, Object> inspectSelectedModels(Minecraft client) throws Exception {
         var manager = client.getModelManager();
         var variants = new TreeMap<String, String>();
+        var detailedVariants = new TreeMap<String, List<Map<String, Object>>>();
         // A registry-wide traversal would materialize the lazy models being measured.
-        for (String id : List.of("auram:rock", "auram:deepslate_diamond_rock", "draconicevolution:draconic_bow")) {
+        for (String id : TEST_ITEMS) {
             var item = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(id));
             check(item != null && item != Items.AIR, "Registered model test item " + id);
             var model = client.getItemRenderer().getModel(new ItemStack(item), client.level, client.player, 0);
             check(model != manager.getMissingModel(), "Model is present for " + id);
             variants.put(id, modelFingerprint(model, null));
+            if (QUAD_DETAILS) detailedVariants.put(id, describeQuads(model));
         }
         var result = new TreeMap<String, Object>();
         result.put("variants", variants);
+        if (QUAD_DETAILS) result.put("variant_quads", detailedVariants);
         var iris = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
         var shaderActive = iris.getMethod("isShaderPackInUse").invoke(iris.getMethod("getInstance").invoke(null));
         check(Boolean.TRUE.equals(shaderActive), "The shader pack is active");
@@ -318,11 +332,37 @@ public final class ModelClientSmoke {
     }
 
     private static String modelFingerprint(BakedModel model, BlockState state) throws Exception {
+        return model.getClass().getName() + "/" + model.isCustomRenderer() + "/" + quadFingerprint(modelQuads(model, state));
+    }
+
+    private static List<BakedQuad> modelQuads(BakedModel model, BlockState state) {
         var quads = new ArrayList<BakedQuad>(model.getQuads(state, null, RandomSource.create(104729), ModelData.EMPTY, null));
         for (Direction face : Direction.values()) {
             quads.addAll(model.getQuads(state, face, RandomSource.create(104729), ModelData.EMPTY, null));
         }
-        return model.getClass().getName() + "/" + model.isCustomRenderer() + "/" + quadFingerprint(quads);
+        return quads;
+    }
+
+    private static List<Map<String, Object>> describeQuads(BakedModel model) {
+        var result = new ArrayList<Map<String, Object>>();
+        for (var quad : modelQuads(model, null)) {
+            var sprite = quad.getSprite();
+            var data = quad.getVertices();
+            int stride = data.length / 4;
+            var geometry = new ArrayList<int[]>(4);
+            var uv = new ArrayList<double[]>(4);
+            for (int vertex = 0; vertex < data.length; vertex += stride) {
+                geometry.add(Arrays.copyOfRange(data, vertex, vertex + 4));
+                double u = (Float.intBitsToFloat(data[vertex + 4]) - sprite.getU0())
+                        / (double) (sprite.getU1() - sprite.getU0());
+                double v = (Float.intBitsToFloat(data[vertex + 5]) - sprite.getV0())
+                        / (double) (sprite.getV1() - sprite.getV0());
+                uv.add(new double[]{u * sprite.contents().width(), v * sprite.contents().height()});
+            }
+            result.add(Map.of("sprite", sprite.contents().name().toString(), "side", quad.getDirection().getName(),
+                    "tint", quad.getTintIndex(), "geometry", geometry, "uv_texels", uv));
+        }
+        return result;
     }
 
     private static String quadFingerprint(List<?> quads) throws Exception {
