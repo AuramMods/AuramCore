@@ -48,7 +48,6 @@ final class MenuBackdrop {
 
         texture = new DynamicTexture(COLUMNS, rows, false);
         minecraft.getTextureManager().register(TEXTURE, texture);
-        texture.setFilter(true, false);
         var image = texture.getPixels();
         for (int row = 0; row < rows; row++) {
             for (int column = 0; column < COLUMNS; column++) {
@@ -56,6 +55,7 @@ final class MenuBackdrop {
             }
         }
         texture.upload();
+        texture.setFilter(true, false);
         view = framed;
     }
 
