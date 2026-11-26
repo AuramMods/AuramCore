@@ -170,6 +170,7 @@
     "tweak.DedicatedMainSchedulingMixin"
   ],
   "client": [
+    "apotheosis.BossSpawnBeamMixin",
     "fastanim.AllayEntityModelMixin",
     "fastanim.ArmorStandArmorEntityModelMixin",
     "fastanim.ArmorStandEntityModelMixin",
