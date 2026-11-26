@@ -19,6 +19,7 @@
     "tweak.SlimeRandomSourceMixin",
     "tweak.UtilSchedulingMixin",
     "forge.LocalConfigSyncMixin",
+    "forge.ConfigSyncBatchMixin",
     "forge.FurnaceFuelUseMixin",
     "worldedit.ForgePropertyCacheMixin",
     "worldedit.BlockStateNeighborTableMixin",
