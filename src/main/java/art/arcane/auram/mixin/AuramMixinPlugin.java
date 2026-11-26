@@ -55,6 +55,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
+            case "art.arcane.auram.mixin.menu.FtbJournalLayoutMixin" ->
+                    "dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen";
             case "art.arcane.auram.mixin.supplementaries.CartographerPreviewMixin",
                     "art.arcane.auram.mixin.supplementaries.AdventurerMapPreviewMixin" ->
                     "jeresources.collection.TradeList";
