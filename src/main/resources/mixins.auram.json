@@ -28,6 +28,7 @@
     "voxy.LandingChunkDeliveryMixin",
     "voxy.ServerLodGenerationMixin",
     "voxy.ServerLodStreamMixin",
+    "projecte.UnitFractionArithmeticMixin",
     "verdant.WoodRecipeGenerationMixin",
     "veinst.VeinstToolMixin",
     "minecraft.EntitySupportMixin",
