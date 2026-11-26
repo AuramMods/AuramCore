@@ -20,6 +20,7 @@
     "tweak.UtilSchedulingMixin",
     "forge.LocalConfigSyncMixin",
     "forge.ConfigSyncBatchMixin",
+    "kubejs.BotaniaBrewRegistryMixin",
     "forge.FurnaceFuelUseMixin",
     "regionsunexplored.FurnaceFuelLookupMixin",
     "worldedit.ForgePropertyCacheMixin",
