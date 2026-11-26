@@ -97,6 +97,16 @@ public final class WorldStartupClientSmoke {
                 }
                 return;
             }
+            if (Boolean.getBoolean("auram.smoke.worldEditParity")) {
+                var server = client.getSingleplayerServer();
+                server.submit(() -> {
+                    try {
+                        WorldEditNeighborTableParity.run();
+                    } catch (Exception e) {
+                        throw new CompletionException(e);
+                    }
+                }).join();
+            }
             if (phase == 1) {
                 freshMillis = elapsedMillis;
                 phase = 3;

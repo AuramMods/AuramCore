@@ -66,7 +66,7 @@ public final class ForgeRemoteClientSmoke {
 
     @SubscribeEvent
     public static void loggedOut(ClientPlayerNetworkEvent.LoggingOut event) {
-        if (WorldLoadCapture.WINDOW_NANOS > 0 && connecting && !done) {
+        if (WorldLoadCapture.WINDOW_NANOS > 0 && connecting && !done && event.getPlayer() != null) {
             WorldLoadCapture.mark("remote_logged_out_during_capture");
         }
     }
