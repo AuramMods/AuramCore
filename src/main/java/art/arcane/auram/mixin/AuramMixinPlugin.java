@@ -68,6 +68,9 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
             case "art.arcane.auram.mixin.botania.EndoflameEffectsMixin" ->
                     "vazkii.botania.common.block.flower.generating.EndoflameBlockEntity";
             case "art.arcane.auram.mixin.botania.ManaPoolRendererMixin" -> "net.irisshaders.iris.api.v0.IrisApi";
+            case "art.arcane.auram.mixin.inventoryparticles.ClickParticlesMixin",
+                    "art.arcane.auram.mixin.inventoryparticles.CreativeSlotWrapperAccess" ->
+                    "net.lopymine.ip.mixin.ScreenHandlerMixin";
             case "art.arcane.auram.mixin.terrablender.BiomeFillMixin" -> "terrablender.worldgen.noise.Area";
             case "art.arcane.auram.mixin.relics.FluidCollisionMixin" -> "it.hurts.sskirillss.relics.mixin.EntityMixin";
             case "art.arcane.auram.mixin.bettercaves.AquiferPositionMixin" ->
