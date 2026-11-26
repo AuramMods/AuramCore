@@ -10,9 +10,13 @@ import net.minecraft.util.Mth;
 
 final class MenuBackdrop {
     private static final ResourceLocation TEXTURE = new ResourceLocation(Auram.MODID, "menu_backdrop");
-    private static final int COLUMNS = 128;
-    private static final int[] BLUR = {1, 4, 7, 10, 7, 4, 1};
-    private static final int WEIGHT = 34;
+    // Approximate the area where a radius-one disk overlaps each of the nine texels.
+    private static final int[][] DISK_WEIGHTS = {
+            {5, 29, 5},
+            {29, 64, 29},
+            {5, 29, 5}
+    };
+    private static final int DISK_WEIGHT = 200;
     private static final long RETRY_NANOS = 300_000_000L;
 
     private MapMenuView view;
@@ -38,25 +42,22 @@ final class MenuBackdrop {
         if (view != null || now < retryAfter) return;
         retryAfter = now + RETRY_NANOS;
 
-        int rows = Mth.clamp(Math.round((float) COLUMNS * height / width), 24, COLUMNS);
-        int[] pixels = new int[COLUMNS * rows];
-        var framed = FtbMapMenu.snapshot(minecraft.player, x, z, width, height, pixels, COLUMNS, rows);
-        if (framed == null) return;
-        var scratch = new int[pixels.length];
-        blur(pixels, scratch, COLUMNS, rows, true);
-        blur(scratch, pixels, COLUMNS, rows, false);
+        var snapshot = FtbMapMenu.snapshot(minecraft.player, x, z, width, height);
+        if (snapshot == null) return;
 
-        texture = new DynamicTexture(COLUMNS, rows, false);
+        int columns = snapshot.columns();
+        int rows = snapshot.rows();
+        texture = new DynamicTexture(columns, rows, false);
         minecraft.getTextureManager().register(TEXTURE, texture);
         var image = texture.getPixels();
         for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < COLUMNS; column++) {
-                image.setPixelRGBA(column, row, pixels[row * COLUMNS + column]);
+            for (int column = 0; column < columns; column++) {
+                image.setPixelRGBA(column, row, blurPixel(snapshot.pixels(), columns, rows, column, row));
             }
         }
         texture.upload();
         texture.setFilter(true, false);
-        view = framed;
+        view = snapshot.view();
     }
 
     void render(GuiGraphics graphics, int width, int height, float opacity) {
@@ -85,22 +86,18 @@ final class MenuBackdrop {
         retryAfter = 0;
     }
 
-    private static void blur(int[] source, int[] target, int width, int height, boolean horizontal) {
-        int radius = BLUR.length / 2;
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int red = 0, green = 0, blue = 0;
-                for (int offset = -radius; offset <= radius; offset++) {
-                    int column = horizontal ? Mth.clamp(x + offset, 0, width - 1) : x;
-                    int row = horizontal ? y : Mth.clamp(y + offset, 0, height - 1);
-                    int color = source[row * width + column];
-                    int weight = BLUR[offset + radius];
-                    red += (color & 255) * weight;
-                    green += (color >>> 8 & 255) * weight;
-                    blue += (color >>> 16 & 255) * weight;
-                }
-                target[y * width + x] = 0xff000000 | (blue / WEIGHT << 16) | (green / WEIGHT << 8) | red / WEIGHT;
+    private static int blurPixel(int[] source, int width, int height, int x, int y) {
+        int red = 0, green = 0, blue = 0;
+        for (int dy = -1; dy <= 1; dy++) {
+            int row = Mth.clamp(y + dy, 0, height - 1) * width;
+            for (int dx = -1; dx <= 1; dx++) {
+                int color = source[row + Mth.clamp(x + dx, 0, width - 1)];
+                int weight = DISK_WEIGHTS[dy + 1][dx + 1];
+                red += (color & 255) * weight;
+                green += (color >>> 8 & 255) * weight;
+                blue += (color >>> 16 & 255) * weight;
             }
         }
+        return 0xff000000 | (blue / DISK_WEIGHT << 16) | (green / DISK_WEIGHT << 8) | red / DISK_WEIGHT;
     }
 }

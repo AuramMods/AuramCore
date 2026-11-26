@@ -28,8 +28,7 @@ final class FtbMapMenu {
         LargeMapScreen.openMap();
     }
 
-    static MapMenuView snapshot(LocalPlayer player, double x, double z, int width, int height,
-                                int[] pixels, int columns, int rows) {
+    static Snapshot snapshot(LocalPlayer player, double x, double z, int width, int height) {
         var map = MapDimension.getCurrent().orElse(null);
         if (map == null || !map.dimension.equals(player.level().dimension()) || !available(player)) return null;
 
@@ -42,6 +41,11 @@ final class FtbMapMenu {
             if (zoom == 0) return null;
             double spanX = MapMenuView.halfSpan(width, zoom);
             double spanZ = MapMenuView.halfSpan(height, zoom);
+            // Map raster pixels represent blocks. Follow the framed span so each texel
+            // covers about one map pixel, even when missing tiles force a tighter zoom.
+            int columns = Mth.ceil(2 * spanX);
+            int rows = Mth.ceil(2 * spanZ);
+            int[] pixels = new int[columns * rows];
             for (int row = 0; row < rows; row++) {
                 int worldZ = Mth.floor(z + (2 * (row + 0.5) / rows - 1) * spanZ);
                 for (int column = 0; column < columns; column++) {
@@ -51,9 +55,11 @@ final class FtbMapMenu {
                             ? raster.pixel((worldX & ~15) + 8, (worldZ & ~15) + 8) : pixel;
                 }
             }
-            return new MapMenuView(map.dimension, x, z, zoom);
+            return new Snapshot(new MapMenuView(map.dimension, x, z, zoom), columns, rows, pixels);
         }
     }
+
+    record Snapshot(MapMenuView view, int columns, int rows, int[] pixels) {}
 
     private static final class Raster {
         private final MapDimension map;

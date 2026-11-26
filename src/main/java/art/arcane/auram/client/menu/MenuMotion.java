@@ -6,7 +6,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.util.Mth;
 
 final class MenuMotion {
-    private static final long FADE_NANOS = 1_000_000_000L;
+    private static final long FADE_NANOS = 500_000_000L;
     private final MenuFrame frame = new MenuFrame();
     private long openedAt;
     private long closedAt;
