@@ -1,10 +1,16 @@
 #version 150
 
 uniform sampler2D Sampler0;
+uniform float Frost;
+uniform float Opacity;
 in vec2 texCoord0;
 out vec4 fragColor;
 
 void main() {
+    if (Frost == 0.0) {
+        fragColor = vec4(texture(Sampler0, texCoord0).rgb, Opacity);
+        return;
+    }
     vec2 stepUV = 1.0 / vec2(textureSize(Sampler0, 0));
     vec3 color = vec3(0.0);
     for (int y = -1; y <= 1; ++y) {
@@ -13,5 +19,5 @@ void main() {
             color += texture(Sampler0, sampleUV).rgb * float((2 - abs(x)) * (2 - abs(y)));
         }
     }
-    fragColor = vec4(mix(color / 16.0, vec3(0.035, 0.065, 0.10), 0.70), 1.0);
+    fragColor = vec4(mix(color / 16.0, vec3(0.035, 0.065, 0.10), 0.70), Opacity);
 }

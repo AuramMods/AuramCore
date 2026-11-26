@@ -2,6 +2,7 @@ package art.arcane.auram.client.menu;
 
 import art.arcane.auram.Auram;
 import art.arcane.auram.mixin.menu.PauseScreenAccess;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.PauseScreen;
@@ -21,40 +22,49 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
 public final class AuramMenu {
     public static final int BAR_HEIGHT = 30;
-    private static final long FADE_NANOS = 1_000_000_000L;
     private static final MenuBackdrop backdrop = new MenuBackdrop();
     private static final MenuGlass glass = new MenuGlass();
+    private static final MenuMotion motion = new MenuMotion();
     private static final Tab[] tabs = Tab.values();
     private static ClientLevel world;
     private static double centerX;
     private static double centerZ;
     private static Tab lastTab;
+    private static Screen renderedScreen;
     private static long fadeStart;
     private static int capturedMouseButton = -1;
 
     private AuramMenu() {}
 
     enum Tab {
-        SYSTEM("system"), MAP("map"), JOURNAL("journal"), SKILLS("skills");
+        SYSTEM("system", ""), MAP("map", "key.ftbchunks.map"), JOURNAL("journal", "key.ftbquests.quests"),
+        SKILLS("skills", "key.adapt.open_skills");
 
         private final Component title;
+        private final String binding;
 
-        Tab(String name) {
+        Tab(String name, String binding) {
             title = Component.translatable("gui.auram.menu." + name);
+            this.binding = binding;
         }
     }
 
     private static Tab tab(Screen screen) {
-        if (screen instanceof PauseScreen && ((PauseScreenAccess) screen).auram$hasPauseMenu()) return Tab.SYSTEM;
-        if (screen instanceof OpeningSkills) return Tab.SKILLS;
+        if (isSystem(screen)) return Tab.SYSTEM;
+        if (screen instanceof SkillsStatus) return Tab.SKILLS;
         if (MenuIntegrations.loaded(Tab.MAP) && FtbMapMenu.matches(screen)) return Tab.MAP;
         if (MenuIntegrations.loaded(Tab.JOURNAL) && MenuIntegrations.isJournal(screen)) return Tab.JOURNAL;
         if (MenuIntegrations.loaded(Tab.SKILLS) && MenuIntegrations.isSkillScreen(screen)) return Tab.SKILLS;
         return null;
+    }
+
+    public static boolean isSystem(Screen screen) {
+        return screen instanceof PauseScreen && ((PauseScreenAccess) screen).auram$hasPauseMenu();
     }
 
     private static boolean active(Screen screen) {
@@ -86,13 +96,19 @@ public final class AuramMenu {
             world = client.level;
             centerX = client.player.getX();
             centerZ = client.player.getZ();
+            motion.startOpen(now);
         }
         if (lastTab != currentTab) {
-            fadeStart = lastTab != null || currentTab == Tab.MAP ? now : 0;
+            fadeStart = lastTab != null ? now : 0;
             lastTab = currentTab;
         }
         backdrop.prepare(client, available(client, Tab.MAP), centerX, centerZ,
                 event.getScreen().width, event.getScreen().height, now);
+        motion.captureOpening(client, event.getGuiGraphics(), now);
+        if (currentTab == Tab.JOURNAL) {
+            // FTB Quests opts out of the default screen background.
+            backdrop.render(event.getGuiGraphics(), event.getScreen().width, event.getScreen().height, 1);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -112,10 +128,8 @@ public final class AuramMenu {
         if (selected == null) return;
         var client = Minecraft.getInstance();
         var graphics = event.getGuiGraphics();
-        float progress = Mth.clamp((System.nanoTime() - fadeStart) / (float) FADE_NANOS, 0.0F, 1.0F);
-        if (progress < 1.0F) {
-            // Exponential ease-out with both endpoints normalized for a one-second fade.
-            float cover = (float) ((Math.pow(2, -8 * progress) - 1.0 / 256.0) / (1 - 1.0 / 256.0));
+        float cover = MenuMotion.cover(fadeStart, System.nanoTime());
+        if (cover > 0) {
             graphics.pose().pushPose();
             graphics.pose().translate(0, 0, 1000);
             backdrop.render(graphics, screen.width, screen.height, cover);
@@ -124,7 +138,7 @@ public final class AuramMenu {
 
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 1100);
-        glass.draw(client, graphics, screen.width, screen.height, selected == Tab.JOURNAL ? BAR_HEIGHT : 0, BAR_HEIGHT);
+        glass.draw(client, graphics, screen.width, screen.height, BAR_HEIGHT);
         graphics.hLine(0, screen.width - 1, BAR_HEIGHT - 1, 0xff354956);
 
         var visible = visibleTabs(client);
@@ -139,6 +153,20 @@ public final class AuramMenu {
             left = right;
         }
         graphics.pose().popPose();
+        motion.drawOpening(graphics);
+        renderedScreen = screen;
+    }
+
+    @SubscribeEvent
+    public static void closing(ScreenEvent.Closing event) {
+        if (event.getScreen() == renderedScreen && active(event.getScreen())) {
+            motion.captureClosing(Minecraft.getInstance());
+            renderedScreen = null;
+        }
+    }
+
+    public static void drawClosing(GuiGraphics graphics) {
+        motion.drawClosing(Minecraft.getInstance(), graphics);
     }
 
     private static void drawTab(GuiGraphics graphics, Minecraft client, Tab tab, int left, int right,
@@ -155,22 +183,32 @@ public final class AuramMenu {
                 (BAR_HEIGHT - client.font.lineHeight) / 2, text);
     }
 
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public static void mouseDown(ScreenEvent.MouseButtonPressed.Pre event) {
         var screen = event.getScreen();
-        if (!active(screen) || event.getMouseY() < 0 || event.getMouseY() >= BAR_HEIGHT) return;
+        if (!active(screen)) return;
         var selected = tab(screen);
         if (selected == null || nativeModal(screen, selected)) return;
+        var client = Minecraft.getInstance();
+        if (event.getMouseY() < 0 || event.getMouseY() >= BAR_HEIGHT) {
+            if (event.isCanceled()) return;
+            var target = boundTab(client, key -> key.matchesMouse(event.getButton()) && key.getKeyModifier().isActive(null));
+            if (target != null) {
+                event.setCanceled(true);
+                capturedMouseButton = event.getButton();
+                openTab(client, selected, target);
+            }
+            return;
+        }
         event.setCanceled(true);
         capturedMouseButton = event.getButton();
         if (event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
 
-        var client = Minecraft.getInstance();
         var visible = visibleTabs(client);
         int width = tabWidth(screen.width, visible.size());
         double offset = event.getMouseX() - (screen.width - width * visible.size()) / 2;
         if (offset < 0 || offset >= width * visible.size()) return;
-        openTab(client, screen, selected, visible.get((int) (offset / width)));
+        openTab(client, selected, visible.get((int) (offset / width)));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -194,17 +232,54 @@ public final class AuramMenu {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void nextTab(ScreenEvent.KeyPressed.Pre event) {
-        if (!active(event.getScreen()) || event.getKeyCode() != GLFW.GLFW_KEY_TAB
-                || (event.getModifiers() & GLFW.GLFW_MOD_CONTROL) == 0) return;
+    public static void menuKeys(ScreenEvent.KeyPressed.Pre event) {
+        if (!active(event.getScreen())) return;
         var selected = tab(event.getScreen());
-        if (selected == null || nativeModal(event.getScreen(), selected)) return;
+        if (selected == null) return;
         var client = Minecraft.getInstance();
+        if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE) {
+            event.setCanceled(true);
+            client.setScreen(null);
+            return;
+        }
+        if (nativeModal(event.getScreen(), selected)) return;
+        var target = boundTab(client, key -> key.matches(event.getKeyCode(), event.getScanCode())
+                && matchesModifier(key, event.getModifiers()));
+        if (target != null) {
+            event.setCanceled(true);
+            openTab(client, selected, target);
+            return;
+        }
+        if (event.getKeyCode() != GLFW.GLFW_KEY_TAB || (menuModifiers(event.getModifiers()) & GLFW.GLFW_MOD_CONTROL) == 0) return;
         var visible = visibleTabs(client);
         int direction = (event.getModifiers() & GLFW.GLFW_MOD_SHIFT) == 0 ? 1 : -1;
         int index = Math.floorMod(visible.indexOf(selected) + direction, visible.size());
         event.setCanceled(true);
-        openTab(client, event.getScreen(), selected, visible.get(index));
+        openTab(client, selected, visible.get(index));
+    }
+
+    private static Tab boundTab(Minecraft client, Predicate<KeyMapping> pressed) {
+        for (var mapping : client.options.keyMappings) {
+            for (var tab : tabs) {
+                if (mapping.getName().equals(tab.binding) && available(client, tab) && pressed.test(mapping)) return tab;
+            }
+        }
+        return null;
+    }
+
+    private static boolean matchesModifier(KeyMapping binding, int modifiers) {
+        int mask = switch (binding.getKeyModifier()) {
+            case SHIFT -> GLFW.GLFW_MOD_SHIFT;
+            case CONTROL -> GLFW.GLFW_MOD_CONTROL;
+            case ALT -> GLFW.GLFW_MOD_ALT;
+            case NONE -> 0;
+        };
+        return mask == menuModifiers(modifiers);
+    }
+
+    private static int menuModifiers(int modifiers) {
+        if (Minecraft.ON_OSX && (modifiers & GLFW.GLFW_MOD_SUPER) != 0) modifiers |= GLFW.GLFW_MOD_CONTROL;
+        return modifiers & (GLFW.GLFW_MOD_SHIFT | GLFW.GLFW_MOD_CONTROL | GLFW.GLFW_MOD_ALT);
     }
 
     private static boolean nativeModal(Screen screen, Tab tab) {
@@ -219,7 +294,7 @@ public final class AuramMenu {
         return Mth.clamp((width - 12) / count, 1, 94);
     }
 
-    private static void openTab(Minecraft client, Screen from, Tab selected, Tab target) {
+    private static void openTab(Minecraft client, Tab selected, Tab target) {
         if (selected == target) return;
         client.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1));
         switch (target) {
@@ -227,10 +302,8 @@ public final class AuramMenu {
             case MAP -> FtbMapMenu.open();
             case JOURNAL -> MenuIntegrations.openJournal();
             case SKILLS -> {
-                if (MenuIntegrations.requestSkills() && client.screen == from) {
-                    // The Adapt server reply has to arrive even when the System tab paused singleplayer.
-                    client.setScreen(new OpeningSkills(from));
-                }
+                var result = MenuIntegrations.openSkills();
+                if (result != MenuIntegrations.SkillsResult.OPEN) client.setScreen(new SkillsStatus(result));
             }
         }
     }
@@ -246,17 +319,19 @@ public final class AuramMenu {
         backdrop.close(client);
         world = null;
         lastTab = null;
+        renderedScreen = null;
         fadeStart = 0;
         capturedMouseButton = -1;
     }
 
-    private static final class OpeningSkills extends Screen {
-        private final Screen previous;
+    private static final class SkillsStatus extends Screen {
         private final long expires = System.nanoTime() + 4_000_000_000L;
+        private long nextCheck;
+        private MenuIntegrations.SkillsResult result;
 
-        private OpeningSkills(Screen previous) {
+        private SkillsStatus(MenuIntegrations.SkillsResult result) {
             super(Tab.SKILLS.title);
-            this.previous = previous;
+            this.result = result;
         }
 
         @Override
@@ -266,18 +341,21 @@ public final class AuramMenu {
 
         @Override
         public void tick() {
-            if (System.nanoTime() >= expires) onClose();
-        }
-
-        @Override
-        public void onClose() {
-            minecraft.setScreen(previous);
+            long now = System.nanoTime();
+            if (result != MenuIntegrations.SkillsResult.WAITING || now < nextCheck) return;
+            nextCheck = now + 500_000_000L;
+            result = MenuIntegrations.openSkills();
         }
 
         @Override
         public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
             renderBackground(graphics);
-            graphics.drawCenteredString(font, Component.translatable("gui.auram.menu.opening_skills"),
+            String message = switch (result) {
+                case OPEN, WAITING -> System.nanoTime() < expires ? "opening_skills" : "skills_unavailable";
+                case DISABLED -> "skills_disabled";
+                case UNAVAILABLE -> "skills_unavailable";
+            };
+            graphics.drawCenteredString(font, Component.translatable("gui.auram.menu." + message),
                     width / 2, height / 2, 0xe6fffa);
         }
     }

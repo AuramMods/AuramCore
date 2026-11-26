@@ -7,6 +7,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraftforge.fml.ModList;
 import org.slf4j.Logger;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 final class MenuIntegrations {
@@ -17,9 +18,7 @@ final class MenuIntegrations {
     private static final String ADAPT_SCREEN = ADAPT + "client.screen.AdaptScreen";
 
     private static Method openJournal;
-    private static Method adaptClient;
-    private static Method adaptNet;
-    private static Method openSkills;
+    private static AdaptSkills adaptSkills;
     private static Method skillContent;
     private static boolean failedJournal;
     private static boolean failedSkills;
@@ -31,7 +30,7 @@ final class MenuIntegrations {
             case SYSTEM -> true;
             case MAP -> ModList.get().isLoaded("ftbchunks");
             case JOURNAL -> ModList.get().isLoaded("ftbquests") && !failedJournal;
-            case SKILLS -> ModList.get().isLoaded("adapt") && !failedSkills;
+            case SKILLS -> ModList.get().isLoaded("adapt");
         };
     }
 
@@ -61,7 +60,7 @@ final class MenuIntegrations {
     }
 
     static boolean isSkillScreen(Screen screen) {
-        if (!screen.getClass().getName().equals(ADAPT_WRAPPER)) return false;
+        if (failedSkills || !screen.getClass().getName().equals(ADAPT_WRAPPER)) return false;
         try {
             if (skillContent == null) {
                 skillContent = screen.getClass().getDeclaredMethod("content");
@@ -78,22 +77,47 @@ final class MenuIntegrations {
         return false;
     }
 
-    static boolean requestSkills() {
+    enum SkillsResult { OPEN, WAITING, DISABLED, UNAVAILABLE }
+
+    static SkillsResult openSkills() {
+        if (failedSkills) return SkillsResult.UNAVAILABLE;
         try {
-            if (openSkills == null) {
-                var client = Class.forName(ADAPT + "client.AdaptClient");
-                adaptClient = client.getMethod("instance");
-                adaptNet = client.getMethod("net");
-                var screens = Class.forName(ADAPT + "client.screen.ClientScreens");
-                openSkills = screens.getDeclaredMethod("openSkills", adaptNet.getReturnType());
-                openSkills.setAccessible(true);
+            if (adaptSkills == null) adaptSkills = AdaptSkills.link();
+            Object client = adaptSkills.instance.invoke(null);
+            if (client == null) return SkillsResult.WAITING;
+            Object net = adaptSkills.net.invoke(client);
+            if (!(boolean) adaptSkills.nativeUi.invoke(net)) return SkillsResult.DISABLED;
+            Object state = adaptSkills.state.invoke(net);
+            if (!(boolean) adaptSkills.hasCapability.invoke(state, 1)) return SkillsResult.WAITING;
+
+            Object sink = adaptSkills.routes.invoke(adaptSkills.sinks.invoke(net));
+            // Open the root of the already-negotiated screens locally. Adapt still owns
+            // the displayed player data and sends actual skill actions to its server.
+            if (!adaptSkills.router.isInstance(sink)) {
+                return SkillsResult.UNAVAILABLE;
             }
-            Object client = adaptClient.invoke(null);
-            return client != null && (boolean) openSkills.invoke(null, adaptNet.invoke(client));
+            adaptSkills.open.invoke(sink, adaptSkills.skills.newInstance());
+            return SkillsResult.OPEN;
         } catch (ReflectiveOperationException | LinkageError error) {
             failedSkills = true;
-            LOGGER.warn("Auram could not request the Adapt Skills screen", error);
-            return false;
+            LOGGER.warn("Auram could not open the Adapt Skills screen", error);
+            return SkillsResult.UNAVAILABLE;
+        }
+    }
+
+    private record AdaptSkills(Method instance, Method net, Method nativeUi, Method state, Method hasCapability,
+                               Method sinks, Method routes, Class<?> router, Method open, Constructor<?> skills) {
+        static AdaptSkills link() throws ReflectiveOperationException {
+            Class<?> client = Class.forName(ADAPT + "client.AdaptClient");
+            Method net = client.getMethod("net");
+            Class<?> netType = net.getReturnType();
+            Method sinks = netType.getMethod("sinks");
+            Method state = netType.getMethod("state");
+            Class<?> router = Class.forName(ADAPT + "client.screen.ScreenRouter");
+            Class<?> route = Class.forName(ADAPT + "client.protocol.Route");
+            return new AdaptSkills(client.getMethod("instance"), net, netType.getMethod("nativeUi"), state,
+                    state.getReturnType().getMethod("has", int.class), sinks, sinks.getReturnType().getMethod("routes"),
+                    router, router.getMethod("open", route), Class.forName(route.getName() + "$Skills").getConstructor());
         }
     }
 

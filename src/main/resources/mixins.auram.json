@@ -277,6 +277,8 @@
     "ftbchunks.RenderMapSurfaceMixin",
     "menu.PauseScreenAccess",
     "menu.FtbJournalLayoutMixin",
+    "menu.MenuGameRendererMixin",
+    "menu.OptionsBackToSystemMixin",
     "journeymap.ImageHolderAccess",
     "journeymap.FullscreenGridAccess",
     "journeymap.MiniMapGridAccess",

@@ -10,9 +10,9 @@ import net.minecraft.util.Mth;
 
 final class MenuBackdrop {
     private static final ResourceLocation TEXTURE = new ResourceLocation(Auram.MODID, "menu_backdrop");
-    private static final int COLUMNS = 96;
-    private static final int[] BLUR = {1, 4, 7, 10, 12, 10, 7, 4, 1};
-    private static final int WEIGHT = 56;
+    private static final int COLUMNS = 128;
+    private static final int[] BLUR = {1, 4, 7, 10, 7, 4, 1};
+    private static final int WEIGHT = 34;
     private static final long RETRY_NANOS = 300_000_000L;
 
     private MapMenuView view;
@@ -68,7 +68,7 @@ final class MenuBackdrop {
         }
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        graphics.setColor(0.45F, 0.49F, 0.56F, opacity);
+        graphics.setColor(0.42F, 0.46F, 0.53F, opacity);
         var image = texture.getPixels();
         graphics.blit(TEXTURE, 0, 0, width, height, 0, 0, image.getWidth(), image.getHeight(),
                 image.getWidth(), image.getHeight());
