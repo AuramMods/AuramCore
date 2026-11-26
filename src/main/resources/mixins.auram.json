@@ -21,6 +21,7 @@
     "forge.LocalConfigSyncMixin",
     "forge.FurnaceFuelUseMixin",
     "worldedit.ForgePropertyCacheMixin",
+    "worldedit.BlockStateNeighborTableMixin",
     "verdant.WoodRecipeGenerationMixin",
     "veinst.VeinstToolMixin",
     "minecraft.EntitySupportMixin",
