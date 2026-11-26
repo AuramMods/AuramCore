@@ -40,6 +40,7 @@ public final class CombinedMemorySmoke {
     private static final String ADDRESS = System.getProperty("auram.smoke.address");
     private static final String SAVED_WORLD = System.getProperty("auram.smoke.memorySavedWorld");
     private static final boolean STARTUP_ONLY = Boolean.getBoolean("auram.smoke.prismStartupOnly");
+    private static final boolean VOXY_ATLAS_ONLY = Boolean.getBoolean("auram.smoke.voxyAtlasLifecycle");
     private static final long DWELL_NANOS = 1_000_000_000L
             * Integer.getInteger("auram.smoke.memoryDwellSeconds", 60);
     private static final List<Map<String, Object>> checkpoints = new ArrayList<>();
@@ -148,15 +149,26 @@ public final class CombinedMemorySmoke {
                     stage = 9;
                     return;
                 }
+                if (VOXY_ATLAS_ONLY) recordVoxyAtlas(client, "overworld", true);
                 teleport(client, Level.NETHER, 124, 66, 856);
             }
             case 2 -> {
                 if (!warmed(client, Level.NETHER, 124, 856)) return;
+                if (VOXY_ATLAS_ONLY) recordVoxyAtlas(client, "nether", false);
                 record("nether-warm", client);
             }
             case 3 -> {
                 if (Boolean.getBoolean("auram.smoke.waitForNetherHeapDump")
                         && !Files.isRegularFile(Path.of("nether-heap-dump-complete.txt"))) return;
+                if (VOXY_ATLAS_ONLY) {
+                    if (!"0".equals(Files.readString(Path.of("nether-heap-dump-complete.txt")).strip())) {
+                        throw new IllegalStateException("The Voxy atlas heap dump failed");
+                    }
+                    Files.writeString(Path.of(MODE + "-pass.txt"), "PASS Voxy atlas dimension transition\n");
+                    stage = 10;
+                    client.stop();
+                    return;
+                }
                 teleport(client, Level.OVERWORLD, 992, 155, 6848);
             }
             case 4 -> {
@@ -219,17 +231,53 @@ public final class CombinedMemorySmoke {
                 .append(dimension).append(',').append(VoxyMeshes.sectionCount(client)).append('\n');
     }
 
+    private static void recordVoxyAtlas(Minecraft client, String dimension, boolean prime) throws Exception {
+        var renderer = VoxyMeshes.renderer(client);
+        if (renderer == null) throw new IllegalStateException("The Voxy renderer is unavailable");
+        var pipeline = field(renderer, "pipeline");
+        var shaderClass = Class.forName("me.cortex.voxy.client.compat.distant.DistantBlockShader");
+        if (prime) {
+            var pipelineClass = Class.forName("me.cortex.voxy.client.core.AbstractRenderPipeline");
+            var getShader = shaderClass.getMethod("get", pipelineClass, boolean.class);
+            getShader.invoke(null, pipeline, false);
+            getShader.invoke(null, pipeline, true);
+        }
+        var ownerField = shaderClass.getDeclaredField("patchedOwner");
+        ownerField.setAccessible(true);
+        var owner = ownerField.get(null);
+        if (prime && owner != pipeline) throw new IllegalStateException("The test could not prime the distant shader cache");
+        var bakery = field(field(field(renderer, "modelService"), "factory"), "bakery2");
+        var sampler = (int[]) field(field(bakery, "rasterizer"), "samplerTexture");
+        if (sampler == null || sampler.length == 0) throw new IllegalStateException("The active Voxy atlas is missing");
+        Files.writeString(Path.of("voxy-atlas-" + dimension + ".json"), new GsonBuilder().setPrettyPrinting().create().toJson(Map.of(
+                "atlasPixels", sampler.length,
+                "meshSections", VoxyMeshes.sectionCount(client),
+                "ownerPresent", owner != null,
+                "ownerIsActive", owner == pipeline,
+                "staleOwner", owner != null && owner != pipeline)) + "\n");
+    }
+
+    private static Object field(Object receiver, String name) throws ReflectiveOperationException {
+        var field = receiver.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        return field.get(receiver);
+    }
+
     private static final class VoxyMeshes {
         private static java.lang.reflect.Method rendererGetter;
         private static java.lang.reflect.Method sectionCount;
         private static java.lang.reflect.Field geometryData;
 
-        static int sectionCount(Minecraft client) throws ReflectiveOperationException {
+        static Object renderer(Minecraft client) throws ReflectiveOperationException {
             if (rendererGetter == null) {
                 var provider = Class.forName("me.cortex.voxy.client.core.IGetVoxyRenderSystem");
                 rendererGetter = provider.getMethod("voxy$getRenderSystem");
             }
-            var renderer = rendererGetter.invoke(client.levelRenderer);
+            return rendererGetter.invoke(client.levelRenderer);
+        }
+
+        static int sectionCount(Minecraft client) throws ReflectiveOperationException {
+            var renderer = renderer(client);
             if (renderer == null) return 0;
             if (geometryData == null) {
                 geometryData = renderer.getClass().getDeclaredField("geometryData");
