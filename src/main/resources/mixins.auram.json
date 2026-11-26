@@ -29,6 +29,8 @@
     "voxy.ServerLodGenerationMixin",
     "voxy.ServerLodStreamMixin",
     "projecte.UnitFractionArithmeticMixin",
+    "almostunified.RecipeLinkOutputMixin",
+    "almostunified.CraftingDuplicateGroupsMixin",
     "verdant.WoodRecipeGenerationMixin",
     "veinst.VeinstToolMixin",
     "minecraft.EntitySupportMixin",
