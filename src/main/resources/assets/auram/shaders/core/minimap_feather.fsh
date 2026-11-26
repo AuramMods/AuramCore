@@ -20,10 +20,11 @@ void main() {
     if (color.a < 0.1) {
         discard;
     }
-    if (radiusSquared > 0.81) {
+    const float featherStart = 0.85;
+    if (radiusSquared > featherStart * featherStart) {
         // Normalize the exponential to reach zero at the rim. Ease the endpoints so
         // the feather meets the opaque center and the background smoothly.
-        float edge = smoothstep(0.9, 1.0, sqrt(radiusSquared));
+        float edge = smoothstep(featherStart, 1.0, sqrt(radiusSquared));
         color.a *= (exp2(-2.0 * edge) - 0.25) / 0.75;
     }
     fragColor = color * ColorModulator;
