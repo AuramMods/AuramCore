@@ -21,6 +21,7 @@
     "forge.LocalConfigSyncMixin",
     "forge.ConfigSyncBatchMixin",
     "forge.FurnaceFuelUseMixin",
+    "regionsunexplored.FurnaceFuelLookupMixin",
     "worldedit.ForgePropertyCacheMixin",
     "worldedit.BlockStateNeighborTableMixin",
     "voxy.LandingChunkDeliveryMixin",
