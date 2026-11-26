@@ -43,8 +43,10 @@ public final class CombinedMemorySmoke {
             * Integer.getInteger("auram.smoke.memoryDwellSeconds", 60);
     private static final List<Map<String, Object>> checkpoints = new ArrayList<>();
     private static final List<Long> frames = new ArrayList<>();
+    private static final StringBuilder lodSamples = new StringBuilder("uptime_ms,stage,dimension,mesh_sections\n");
     private static long previousFrame;
     private static long settledAt;
+    private static long nextLodSample;
     private static int stage, ticks;
     private static CompletableFuture<Void> reload;
 
@@ -129,6 +131,7 @@ public final class CombinedMemorySmoke {
     }
 
     private static void savedWorldRoute(Minecraft client) throws Exception {
+        sampleLods(client);
         switch (stage) {
             case 0 -> {
                 if (!(client.screen instanceof TitleScreen) || ++ticks < 40) return;
@@ -160,7 +163,8 @@ public final class CombinedMemorySmoke {
                 teleport(client, Level.NETHER, 124, 66, 856);
             }
             case 6 -> {
-                if (!settled(client, Level.NETHER, 124, 856)) return;
+                if (!settled(client, Level.NETHER, 124, 856)
+                        || System.nanoTime() - settledAt < 15_000_000_000L) return;
                 record("nether-return", client);
                 reload = client.reloadResourcePacks();
             }
@@ -182,8 +186,41 @@ public final class CombinedMemorySmoke {
         }
         stage++;
         ticks = 0;
-        settledAt = stage == 5 ? System.nanoTime() : 0;
+        settledAt = stage == 5 || stage == 6 ? System.nanoTime() : 0;
         previousFrame = 0;
+    }
+
+    private static void sampleLods(Minecraft client) throws ReflectiveOperationException {
+        if (stage != 2 && stage != 6) return;
+        long now = System.nanoTime();
+        if (now < nextLodSample) return;
+        nextLodSample = now + 200_000_000L;
+        String dimension = client.level == null ? "" : client.level.dimension().location().toString();
+        lodSamples.append(ManagementFactory.getRuntimeMXBean().getUptime()).append(',')
+                .append(stage == 2 ? "nether-warm" : "nether-return").append(',')
+                .append(dimension).append(',').append(VoxyMeshes.sectionCount(client)).append('\n');
+    }
+
+    private static final class VoxyMeshes {
+        private static java.lang.reflect.Method rendererGetter;
+        private static java.lang.reflect.Method sectionCount;
+        private static java.lang.reflect.Field geometryData;
+
+        static int sectionCount(Minecraft client) throws ReflectiveOperationException {
+            if (rendererGetter == null) {
+                var provider = Class.forName("me.cortex.voxy.client.core.IGetVoxyRenderSystem");
+                rendererGetter = provider.getMethod("voxy$getRenderSystem");
+            }
+            var renderer = rendererGetter.invoke(client.levelRenderer);
+            if (renderer == null) return 0;
+            if (geometryData == null) {
+                geometryData = renderer.getClass().getDeclaredField("geometryData");
+                geometryData.setAccessible(true);
+                sectionCount = geometryData.getType().getMethod("getSectionCount");
+            }
+            var geometry = geometryData.get(renderer);
+            return (int) sectionCount.invoke(geometry);
+        }
     }
 
     private static boolean warmed(Minecraft client, ResourceKey<Level> dimension, int x, int z) {
@@ -254,6 +291,7 @@ public final class CombinedMemorySmoke {
                 "dimension", client.level == null ? "" : client.level.dimension().location().toString()));
         frames.clear();
         Files.writeString(Path.of("combined-client.json"), new GsonBuilder().setPrettyPrinting().create().toJson(checkpoints) + "\n");
+        if (SAVED_WORLD != null) Files.writeString(Path.of("combined-voxy-meshes.csv"), lodSamples);
         Files.writeString(Path.of("combined-" + name + ".txt"), name + "\n");
         System.out.println("Completed memory route checkpoint " + name);
     }

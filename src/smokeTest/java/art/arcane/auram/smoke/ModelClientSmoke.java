@@ -55,6 +55,7 @@ import java.util.concurrent.CompletableFuture;
 public final class ModelClientSmoke {
     private static final String MODE = "memory-models";
     private static final boolean TITLE_ONLY = Boolean.getBoolean("auram.smoke.modelTitleOnly");
+    private static final boolean TARGETED = Boolean.getBoolean("auram.smoke.targetedModels");
     private static final String OVERRIDE = "file/Auram QA Models";
     private static final List<Map<String, Object>> checks = new ArrayList<>();
     private static final List<Long> frameNanos = new ArrayList<>();
@@ -181,7 +182,7 @@ public final class ModelClientSmoke {
     }
 
     private static void inspectStage(Minecraft client) throws Exception {
-        Map<String, Object> result = inspectRegistry(client);
+        Map<String, Object> result = TARGETED ? inspectSelectedModels(client) : inspectRegistry(client);
         ModelBakery bakery = client.getModelManager().getModelBakery();
         // Avoid retaining old bakeries while testing repeated reloads.
         int bakeryId = System.identityHashCode(bakery);
@@ -217,6 +218,28 @@ public final class ModelClientSmoke {
             image.writeToFile(Path.of("model-stage-" + phase + ".png"));
         }
         checks.add(result);
+        if (TARGETED && Boolean.getBoolean("auram.smoke.modelHeapDumps") && (phase == 3 || phase == 7)) {
+            var diagnostic = ManagementFactory.getPlatformMXBean(com.sun.management.HotSpotDiagnosticMXBean.class);
+            diagnostic.dumpHeap(Path.of("model-stage-" + phase + ".hprof").toAbsolutePath().toString(), true);
+        }
+    }
+
+    private static Map<String, Object> inspectSelectedModels(Minecraft client) throws Exception {
+        var manager = client.getModelManager();
+        var variants = new TreeMap<String, String>();
+        // A registry-wide traversal would materialize the lazy models being measured.
+        for (String id : List.of("auram:rock", "auram:rock_deepslate", "draconicevolution:draconic_bow")) {
+            var model = manager.getModel(new ModelResourceLocation(ResourceLocation.parse(id), "inventory"));
+            check(model != manager.getMissingModel(), "Model is present for " + id);
+            variants.put(id, modelFingerprint(model, null));
+        }
+        var result = new TreeMap<String, Object>();
+        result.put("variants", variants);
+        var iris = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
+        result.put("shader_active", iris.getMethod("isShaderPackInUse").invoke(iris.getMethod("getInstance").invoke(null)));
+        result.put("dynamic_resources", Arrays.stream(manager.getModelBakery().getClass().getInterfaces())
+                .anyMatch(type -> type.getName().equals("org.embeddedt.modernfix.duck.IExtendedModelBakery")));
+        return result;
     }
 
     private static Map<String, Object> inspectRegistry(Minecraft client) throws Exception {
