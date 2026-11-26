@@ -47,7 +47,11 @@
     "DhTicketProbeMixin",
     "DhDeliveryProbeMixin",
     "WorldEditStartupProbeMixin",
-    "WorldEditStateMapProbeMixin"
+    "WorldEditStateMapProbeMixin",
+    "JoinPacketEncodeProbeMixin",
+    "JoinPacketDecodeProbeMixin",
+    "FtbQuestSyncProbeMixin",
+    "ProjectEMapProbeMixin"
   ],
   "client": [
     "TitleFadeAccess",
