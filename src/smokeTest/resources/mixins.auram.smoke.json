@@ -45,7 +45,9 @@
     "DhQueueProbeMixin",
     "DhPriorityPolicyProbeMixin",
     "DhTicketProbeMixin",
-    "DhDeliveryProbeMixin"
+    "DhDeliveryProbeMixin",
+    "WorldEditStartupProbeMixin",
+    "WorldEditStateMapProbeMixin"
   ],
   "client": [
     "TitleFadeAccess",

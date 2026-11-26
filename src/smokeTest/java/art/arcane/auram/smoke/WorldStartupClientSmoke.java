@@ -44,6 +44,7 @@ public final class WorldStartupClientSmoke {
             System.out.println("Auram world startup smoke opening from " + client.screen.getClass().getSimpleName());
             phase = 1;
             start = System.nanoTime();
+            WorldLoadClientCapture.begin();
             if (Boolean.getBoolean("auram.smoke.worldTemplate")) {
                 client.createWorldOpenFlows().loadLevel(client.screen, SAVE);
                 return;
@@ -66,9 +67,13 @@ public final class WorldStartupClientSmoke {
                 || (phase != 1 && phase != 2 && phase != 4 && phase != 5)) return;
         Minecraft client = Minecraft.getInstance();
         if (client.level == null || client.player == null) return;
-        if (phase != 4 && (client.screen != null || client.getOverlay() != null)) return;
+        if (WorldLoadCapture.WINDOW_NANOS == 0 && phase != 4 && (client.screen != null || client.getOverlay() != null)) return;
         long elapsedMillis = (System.nanoTime() - start) / 1_000_000;
         try {
+            if ((phase == 1 || phase == 2) && WorldLoadCapture.WINDOW_NANOS > 0) {
+                if (!WorldLoadClientCapture.awaitPlayableWindow(client)) return;
+                elapsedMillis = WorldLoadClientCapture.playableMillis(start);
+            }
             if (phase == 5) {
                 if (client.level.dimension().location().toString().equals(DH_DIMENSION)) beginDhMeasurement(client);
                 return;
@@ -117,6 +122,11 @@ public final class WorldStartupClientSmoke {
                             if (error != null) client.tell(() -> fail(client, error));
                         });
                     }
+                    return;
+                }
+                if (Boolean.getBoolean("auram.smoke.skipReopen")) {
+                    Files.writeString(Path.of("auram-world-startup-pass.txt"), "fresh_ms=%d%n".formatted(freshMillis));
+                    client.stop();
                     return;
                 }
                 if (Boolean.getBoolean("auram.smoke.smoothScroll")) SmoothScrollSmoke.run(client);
@@ -193,6 +203,7 @@ public final class WorldStartupClientSmoke {
             client.clearLevel(title);
             start = System.nanoTime();
             phase = 2;
+            WorldLoadClientCapture.begin();
             client.createWorldOpenFlows().loadLevel(title, SAVE);
         } catch (Throwable error) {
             fail(client, error);

@@ -37,6 +37,9 @@ parser.add_argument('--dh-preset', choices=('balanced', 'aggressive'))
 parser.add_argument('--dh-overworld-batches', type=int, default=0)
 parser.add_argument('--dh-dimension', default='minecraft:overworld')
 parser.add_argument('--world-template', type=Path, help='Copy the same disposable integrated save into each run')
+parser.add_argument('--world-load-seconds', type=int, default=0,
+                    help='Capture playable frames, JEI readiness, and tick timings after joining')
+parser.add_argument('--early-inventory', action='store_true', help='Open inventory on the first playable frame')
 parser.add_argument('--jfr', action='store_true', help='Record the client with Java Flight Recorder')
 parser.add_argument('--tooltip-layout', action='store_true', help='Render and check tooltips during startup smoke')
 parser.add_argument('--smooth-scroll', action='store_true', help='Run scroll interactions in the disposable world')
@@ -116,6 +119,10 @@ if args.dh_seconds:
                       f'-Dauram.dh.overworldBatches={args.dh_overworld_batches}'])
 if args.world_template:
     jvm_flags.append('-Dauram.smoke.worldTemplate=true')
+if args.world_load_seconds:
+    jvm_flags.append(f'-Dauram.smoke.worldLoadSeconds={args.world_load_seconds}')
+if args.early_inventory:
+    jvm_flags.append('-Dauram.smoke.earlyInventory=true')
 if args.jfr:
     jvm_flags.append('-XX:StartFlightRecording=filename=auram-world-startup.jfr,settings=profile,dumponexit=true')
 jvm_args = '"' + ' '.join(jvm_flags) + '"'
@@ -225,12 +232,15 @@ for run in range(1,args.runs+1):
         (game/marker).unlink(missing_ok=True)
     shutil.copy2(args.pack/'minecraft/options.txt',game/'options.txt')
     options = game/'options.txt'
-    lines = [line for line in options.read_text().splitlines() if not line.startswith('soundCategory_master:')]
+    muted_options = {'soundCategory_master': '0.0', 'narrator': '0', 'onboardAccessibility': 'false'}
+    lines = [line for line in options.read_text().splitlines() if line.partition(':')[0] not in muted_options]
     if world_test:
         lines = ['pauseOnLostFocus:false' if line == 'pauseOnLostFocus:true' else line for line in lines]
     if args.dh_seconds:
         lines = ['maxFps:60' if line.startswith('maxFps:') else line for line in lines]
-    options.write_text('\n'.join([*lines, 'soundCategory_master:0.0'])+'\n')
+    options.write_text('\n'.join([*lines, *(f'{k}:{v}' for k, v in muted_options.items())])+'\n')
+    for previous in game.glob('world-load-*.csv'):
+        previous.unlink()
     log=game/'logs/latest.log'
     if log.exists(): log.unlink()
     start=time.monotonic()
@@ -284,6 +294,8 @@ for run in range(1,args.runs+1):
         path = game/artifact_name
         if path.exists():
             shutil.copy2(path, args.output/f'{run}-{artifact_name}')
+    for timing in game.glob('world-load-*.csv'):
+        shutil.copy2(timing, args.output / f'{run}-{timing.name}')
     if (game/'startup-menu.png').exists():shutil.copy2(game/'startup-menu.png',args.output/f'menu-{run}.png')
     results.append(record)
     (args.output/'results.json').write_text(json.dumps(summary,indent=2)+'\n')
