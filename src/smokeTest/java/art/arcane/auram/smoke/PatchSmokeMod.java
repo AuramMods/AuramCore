@@ -58,6 +58,11 @@ public final class PatchSmokeMod {
             return;
         }
         try {
+            if (smokeMode.equals("naturalsnow")) {
+                NaturalSnowSmoke.run(event.getServer());
+                Files.writeString(Path.of("auram-naturalsnow-pass.txt"), "PASS winter, snowy biome, altitude, and snow coating cases\n");
+                return;
+            }
             if (smokeMode.equals("serverlookups")) {
                 ServerLookupSmoke.run(event.getServer());
                 Files.writeString(Path.of("auram-serverlookups-pass.txt"), "PASS portal, claims and chunk activity lookup cases\n");
