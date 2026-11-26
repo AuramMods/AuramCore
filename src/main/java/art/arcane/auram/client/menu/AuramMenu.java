@@ -238,6 +238,8 @@ public final class AuramMenu {
         if (selected == null) return;
         var client = Minecraft.getInstance();
         if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE) {
+            // Adapt handles prompts and parent pages before closing the Skills root.
+            if (selected == Tab.SKILLS && !(event.getScreen() instanceof SkillsStatus)) return;
             event.setCanceled(true);
             client.setScreen(null);
             return;
