@@ -59,6 +59,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
                     "art.arcane.auram.mixin.supplementaries.AdventurerMapPreviewMixin" ->
                     "jeresources.collection.TradeList";
             case "art.arcane.auram.mixin.cyclic.JeiCraftingRegistrationMixin",
+                    "art.arcane.auram.mixin.industrialforegoing.StoneWorkCraftingLookupMixin",
+                    "art.arcane.auram.mixin.industrialforegoing.StoneWorkRecipeRegistrationMixin",
                     "art.arcane.auram.mixin.jerm.JeiRepairIngredientsMixin",
                     "art.arcane.auram.mixin.mekanism.JeiReplicatorRecipeMixin",
                     "art.arcane.auram.mixin.psychedelicraft.JeiFluidFocusMixin" ->

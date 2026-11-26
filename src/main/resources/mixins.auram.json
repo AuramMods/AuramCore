@@ -256,6 +256,8 @@
     "tweak.CreativeScrollMixin",
     "akashictome.HudPreviewMixin",
     "cyclic.JeiCraftingRegistrationMixin",
+    "industrialforegoing.StoneWorkCraftingLookupMixin",
+    "industrialforegoing.StoneWorkRecipeRegistrationMixin",
     "jerm.JeiRepairIngredientsMixin",
     "mekanism.JeiReplicatorRecipeMixin",
     "supplementaries.CartographerPreviewMixin",
