@@ -39,6 +39,7 @@ public final class CombinedMemorySmoke {
     private static final String WORLD = "auram-full-memory-qa";
     private static final String ADDRESS = System.getProperty("auram.smoke.address");
     private static final String SAVED_WORLD = System.getProperty("auram.smoke.memorySavedWorld");
+    private static final boolean STARTUP_ONLY = Boolean.getBoolean("auram.smoke.prismStartupOnly");
     private static final long DWELL_NANOS = 1_000_000_000L
             * Integer.getInteger("auram.smoke.memoryDwellSeconds", 60);
     private static final List<Map<String, Object>> checkpoints = new ArrayList<>();
@@ -142,6 +143,11 @@ public final class CombinedMemorySmoke {
             case 1 -> {
                 if (client.level == null || client.getSingleplayerServer() == null
                         || !settled(client, client.level.dimension(), null, null)) return;
+                if (STARTUP_ONLY) {
+                    record("joined", client);
+                    stage = 9;
+                    return;
+                }
                 teleport(client, Level.NETHER, 124, 66, 856);
             }
             case 2 -> {
@@ -178,6 +184,18 @@ public final class CombinedMemorySmoke {
                 if (!settled(client, Level.NETHER, 124, 856)) return;
                 record("post-full-gc", client);
                 Files.writeString(Path.of(MODE + "-pass.txt"), "PASS saved-world memory route\n");
+                stage = 10;
+                client.stop();
+                return;
+            }
+            case 9 -> {
+                Path gcStatus = Path.of("startup-gc-complete.txt");
+                if (!Files.isRegularFile(gcStatus)) return;
+                if (!"0".equals(Files.readString(gcStatus).strip())) {
+                    throw new IllegalStateException("The startup benchmark full GC failed");
+                }
+                record("post-full-gc", client);
+                Files.writeString(Path.of(MODE + "-pass.txt"), "PASS saved-world Prism startup\n");
                 stage = 10;
                 client.stop();
                 return;
