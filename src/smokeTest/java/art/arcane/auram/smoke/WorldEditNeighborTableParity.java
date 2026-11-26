@@ -25,6 +25,7 @@ final class WorldEditNeighborTableParity {
         var toMinecraft = adapter.getMethod("adapt", state);
         var with = state.getMethod("with", property, Object.class);
 
+        verifyRegisteredIds(state);
         var redwood = ForgeRegistries.BLOCKS.getValue(ResourceLocation.parse("regions_unexplored:redwood_stairs"));
         if (redwood == null) throw new IllegalStateException("The fixture requires Regions Unexplored redwood stairs");
         var vanilla = verifyNeighbors(Blocks.OAK_STAIRS.defaultBlockState(), toWorldEdit, toMinecraft, with);
@@ -32,6 +33,26 @@ final class WorldEditNeighborTableParity {
         verifySchematic(vanilla, modded);
 
         WorldLoadCapture.mark("worldedit_first_use_end");
+    }
+
+    private static void verifyRegisteredIds(Class<?> stateClass) throws ReflectiveOperationException {
+        var blockType = Class.forName("com.sk89q.worldedit.world.block.BlockType");
+        var registry = (Iterable<?>) blockType.getField("REGISTRY").get(null);
+        var states = blockType.getMethod("getAllStates");
+        var ids = Class.forName("com.sk89q.worldedit.internal.block.BlockStateIdAccess");
+        var getId = ids.getMethod("getBlockStateId", stateClass);
+        var byId = ids.getMethod("getBlockStateById", int.class);
+        int count = 0;
+        for (Object block : registry) {
+            for (Object state : (Iterable<?>) states.invoke(block)) {
+                int id = (int) getId.invoke(null, state);
+                if (byId.invoke(null, id) != state) {
+                    throw new IllegalStateException("WorldEdit state ID " + id + " did not round trip for " + block);
+                }
+                count++;
+            }
+        }
+        System.out.println("WorldEdit state IDs round-tripped: " + count);
     }
 
     private static Object verifyNeighbors(BlockState original, Method toWorldEdit, Method toMinecraft, Method with)
@@ -52,6 +73,9 @@ final class WorldEditNeighborTableParity {
                 }
                 canonical = result;
             }
+        }
+        if (with.invoke(block, facing, new Object()) != block) {
+            throw new IllegalStateException("Invalid WorldEdit property value changed the block");
         }
         return canonical;
     }
@@ -91,6 +115,20 @@ final class WorldEditNeighborTableParity {
             if (!Objects.equals(vanilla, get.invoke(restored, first))
                     || !Objects.equals(modded, get.invoke(restored, second))) {
                 throw new IllegalStateException("WorldEdit schematic changed a block state");
+            }
+            var holder = Class.forName("com.sk89q.worldedit.session.ClipboardHolder");
+            var extent = Class.forName("com.sk89q.worldedit.extent.Extent");
+            var target = arrayType.getConstructor(Class.forName("com.sk89q.worldedit.regions.Region")).newInstance(region);
+            Object paste = holder.getMethod("createPaste", extent)
+                    .invoke(holder.getConstructor(clipboardType).newInstance(restored), target);
+            paste.getClass().getMethod("to", vector).invoke(paste, first);
+            var operation = paste.getClass().getMethod("build").invoke(paste);
+            Class.forName("com.sk89q.worldedit.function.operation.Operations")
+                    .getMethod("complete", Class.forName("com.sk89q.worldedit.function.operation.Operation"))
+                    .invoke(null, operation);
+            if (!Objects.equals(vanilla, get.invoke(target, first))
+                    || !Objects.equals(modded, get.invoke(target, second))) {
+                throw new IllegalStateException("WorldEdit paste changed a block state");
             }
         }
     }

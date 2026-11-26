@@ -38,9 +38,13 @@ public final class CombinedMemorySmoke {
     private static final String MODE = "memory-combined";
     private static final String WORLD = "auram-full-memory-qa";
     private static final String ADDRESS = System.getProperty("auram.smoke.address");
+    private static final String SAVED_WORLD = System.getProperty("auram.smoke.memorySavedWorld");
+    private static final long DWELL_NANOS = 1_000_000_000L
+            * Integer.getInteger("auram.smoke.memoryDwellSeconds", 60);
     private static final List<Map<String, Object>> checkpoints = new ArrayList<>();
     private static final List<Long> frames = new ArrayList<>();
     private static long previousFrame;
+    private static long settledAt;
     private static int stage, ticks;
     private static CompletableFuture<Void> reload;
 
@@ -53,13 +57,14 @@ public final class CombinedMemorySmoke {
             if (client.screen instanceof DisconnectedScreen) {
                 throw new IllegalStateException("Connection ended before route checkpoint " + stage);
             }
+            if (SAVED_WORLD != null) {
+                savedWorldRoute(client);
+                return;
+            }
             switch (stage) {
                 case 0 -> {
                     if (!(client.screen instanceof TitleScreen) || ++ticks < 40) return;
-                    if (GLFW.glfwGetWindowAttrib(client.getWindow().getWindow(), GLFW.GLFW_VISIBLE) != GLFW.GLFW_FALSE
-                            || client.options.getSoundSourceVolume(SoundSource.MASTER) != 0) {
-                        throw new AssertionError("The client must be hidden and muted");
-                    }
+                    verifyHiddenAndMuted(client);
                     record("startup", client);
                     join(client, true);
                 }
@@ -120,6 +125,88 @@ public final class CombinedMemorySmoke {
             stage = 10;
             error.printStackTrace();
             client.stop();
+        }
+    }
+
+    private static void savedWorldRoute(Minecraft client) throws Exception {
+        switch (stage) {
+            case 0 -> {
+                if (!(client.screen instanceof TitleScreen) || ++ticks < 40) return;
+                verifyHiddenAndMuted(client);
+                record("startup", client);
+                client.createWorldOpenFlows().loadLevel(new TitleScreen(), SAVED_WORLD);
+            }
+            case 1 -> {
+                if (client.level == null || client.getSingleplayerServer() == null
+                        || !settled(client, client.level.dimension(), null, null)) return;
+                teleport(client, Level.NETHER, 124, 66, 856);
+            }
+            case 2 -> {
+                if (!warmed(client, Level.NETHER, 124, 856)) return;
+                record("nether-warm", client);
+            }
+            case 3 -> {
+                if (Boolean.getBoolean("auram.smoke.waitForNetherHeapDump")
+                        && !Files.isRegularFile(Path.of("nether-heap-dump-complete.txt"))) return;
+                teleport(client, Level.OVERWORLD, 992, 155, 6848);
+            }
+            case 4 -> {
+                if (!settled(client, Level.OVERWORLD, 992, 6848)) return;
+                record("overworld-recording-start", client);
+            }
+            case 5 -> {
+                if (!warmed(client, Level.OVERWORLD, 992, 6848)) return;
+                record("overworld-recording-end", client);
+                teleport(client, Level.NETHER, 124, 66, 856);
+            }
+            case 6 -> {
+                if (!settled(client, Level.NETHER, 124, 856)) return;
+                record("nether-return", client);
+                reload = client.reloadResourcePacks();
+            }
+            case 7 -> {
+                if (!reload.isDone() || !settled(client, Level.NETHER, 124, 856)) return;
+                reload.join();
+                record("reloaded", client);
+                System.gc();
+            }
+            case 8 -> {
+                if (!settled(client, Level.NETHER, 124, 856)) return;
+                record("post-full-gc", client);
+                Files.writeString(Path.of(MODE + "-pass.txt"), "PASS saved-world memory route\n");
+                stage = 10;
+                client.stop();
+                return;
+            }
+            default -> throw new IllegalStateException("Unexpected saved-world route stage " + stage);
+        }
+        stage++;
+        ticks = 0;
+        settledAt = stage == 5 ? System.nanoTime() : 0;
+        previousFrame = 0;
+    }
+
+    private static boolean warmed(Minecraft client, ResourceKey<Level> dimension, int x, int z) {
+        if (!settled(client, dimension, x, z)) return false;
+        long now = System.nanoTime();
+        if (settledAt == 0) settledAt = now;
+        return now - settledAt >= DWELL_NANOS;
+    }
+
+    private static void teleport(Minecraft client, ResourceKey<Level> dimension, int x, int y, int z) {
+        var server = client.getSingleplayerServer();
+        var uuid = client.player.getUUID();
+        server.execute(() -> {
+            var player = server.getPlayerList().getPlayer(uuid);
+            player.setGameMode(GameType.SPECTATOR);
+            player.teleportTo(server.getLevel(dimension), x + 0.5, y, z + 0.5, 0, 0);
+        });
+    }
+
+    private static void verifyHiddenAndMuted(Minecraft client) {
+        if (GLFW.glfwGetWindowAttrib(client.getWindow().getWindow(), GLFW.GLFW_VISIBLE) != GLFW.GLFW_FALSE
+                || client.options.getSoundSourceVolume(SoundSource.MASTER) != 0) {
+            throw new AssertionError("The client must be hidden and muted");
         }
     }
 
