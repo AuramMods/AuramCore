@@ -5,7 +5,9 @@ import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelBakery;
 import net.minecraft.client.resources.model.ModelResourceLocation;
@@ -57,6 +59,8 @@ public final class ModelClientSmoke {
     private static final boolean TITLE_ONLY = Boolean.getBoolean("auram.smoke.modelTitleOnly");
     private static final boolean TARGETED = Boolean.getBoolean("auram.smoke.targetedModels");
     private static final String OVERRIDE = "file/Auram QA Models";
+    private static final ResourceLocation CASING = ResourceLocation.parse("create:andesite_casing");
+    private static final ResourceLocation CONNECTED_SPRITE = ResourceLocation.parse("create:block/andesite_casing_connected");
     private static final List<Map<String, Object>> checks = new ArrayList<>();
     private static final List<Long> frameNanos = new ArrayList<>();
     private static CompletableFuture<?> pending;
@@ -123,6 +127,13 @@ public final class ModelClientSmoke {
                     check(pipe != null && pipe != Blocks.AIR, "Mekanism pipe is registered");
                     level.setBlockAndUpdate(base.offset(0, 1, 3), pipe.defaultBlockState());
                     level.setBlockAndUpdate(base.offset(1, 1, 3), pipe.defaultBlockState());
+                    if (TARGETED) {
+                        Block casing = ForgeRegistries.BLOCKS.getValue(CASING);
+                        check(casing != null && casing != Blocks.AIR, "Create andesite casing is registered");
+                        level.setBlockAndUpdate(base.offset(-2, 1, 4), casing.defaultBlockState());
+                        level.setBlockAndUpdate(base.offset(-1, 1, 4), casing.defaultBlockState());
+                        level.setBlockAndUpdate(base.offset(2, 1, 4), casing.defaultBlockState());
+                    }
                     player.getInventory().setItem(0, new ItemStack(Items.DIAMOND_SWORD));
                     player.teleportTo(level, base.getX() + 0.5, base.getY() + 1, base.getZ() + 0.5, 0, 5);
                     return base;
@@ -194,6 +205,7 @@ public final class ModelClientSmoke {
         check(swordDigest.equals(defaultSword) == (phase != (TITLE_ONLY ? 4 : 6)), "Resource-pack change applied and reverted the item model");
         result.put("sword", swordDigest);
         if (client.level != null) {
+            if (TARGETED) result.put("connected_casing", inspectConnectedCasing(client));
             var transmitter = Class.forName("mekanism.client.render.transmitter.RenderTransmitterBase");
             var bake = transmitter.getDeclaredMethod("getBakedQuads", List.class,
                     net.minecraft.client.renderer.texture.TextureAtlasSprite.class, Level.class);
@@ -224,6 +236,26 @@ public final class ModelClientSmoke {
         }
     }
 
+    private static Map<String, String> inspectConnectedCasing(Minecraft client) throws Exception {
+        var atlas = client.getModelManager().getAtlas(InventoryMenu.BLOCK_ATLAS);
+        var connectedSprite = atlas.getSprite(CONNECTED_SPRITE);
+        check(connectedSprite.contents().name().equals(CONNECTED_SPRITE), "Create connected sprite is stitched");
+        var joined = casingFace(client, platform.offset(-2, 1, 4), connectedSprite);
+        var isolated = casingFace(client, platform.offset(2, 1, 4), connectedSprite);
+        check(!joined.equals(isolated), "Create uses a different texture tile for a connected casing");
+        return Map.of("joined", joined, "isolated", isolated);
+    }
+
+    private static String casingFace(Minecraft client, BlockPos pos, TextureAtlasSprite connectedSprite) throws Exception {
+        var state = client.level.getBlockState(pos);
+        check(CASING.equals(ForgeRegistries.BLOCKS.getKey(state.getBlock())), "Create andesite casing reached the client");
+        var model = client.getBlockRenderer().getBlockModel(state);
+        var data = model.getModelData(client.level, pos, state, ModelData.EMPTY);
+        var quads = model.getQuads(state, Direction.SOUTH, RandomSource.create(104729), data, RenderType.solid());
+        check(!quads.isEmpty(), "Create andesite casing has south-facing quads");
+        return quadFingerprint(quads, connectedSprite);
+    }
+
     private static Map<String, Object> inspectSelectedModels(Minecraft client) throws Exception {
         var manager = client.getModelManager();
         var variants = new TreeMap<String, String>();
@@ -236,7 +268,9 @@ public final class ModelClientSmoke {
         var result = new TreeMap<String, Object>();
         result.put("variants", variants);
         var iris = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-        result.put("shader_active", iris.getMethod("isShaderPackInUse").invoke(iris.getMethod("getInstance").invoke(null)));
+        var shaderActive = iris.getMethod("isShaderPackInUse").invoke(iris.getMethod("getInstance").invoke(null));
+        check(Boolean.TRUE.equals(shaderActive), "The shader pack is active");
+        result.put("shader_active", shaderActive);
         result.put("dynamic_resources", Arrays.stream(manager.getModelBakery().getClass().getInterfaces())
                 .anyMatch(type -> type.getName().equals("org.embeddedt.modernfix.duck.IExtendedModelBakery")));
         return result;
@@ -290,18 +324,26 @@ public final class ModelClientSmoke {
     }
 
     private static String quadFingerprint(List<?> quads) throws Exception {
+        return quadFingerprint(quads, null);
+    }
+
+    private static String quadFingerprint(List<?> quads, TextureAtlasSprite shiftedSprite) throws Exception {
         var data = new StringBuilder();
         for (Object object : quads) {
             var quad = (BakedQuad) object;
             // Sprite packing can vary across reloads. Compare positions and sprite-relative UVs.
             var vertices = quad.getVertices();
-            var sprite = quad.getSprite();
+            var sprite = shiftedSprite == null ? quad.getSprite() : shiftedSprite;
             data.append(sprite.contents().name()).append('/').append(quad.getDirection()).append('/').append(quad.getTintIndex());
             int stride = vertices.length / 4;
             for (int i = 0; i < vertices.length; i += stride) {
                 for (int j = 0; j < 4; j++) data.append('/').append(vertices[i + j]);
                 float u = (Float.intBitsToFloat(vertices[i + 4]) - sprite.getU0()) / (sprite.getU1() - sprite.getU0());
                 float v = (Float.intBitsToFloat(vertices[i + 5]) - sprite.getV0()) / (sprite.getV1() - sprite.getV0());
+                if (shiftedSprite != null) {
+                    check(u >= -0.001f && u <= 1.001f && v >= -0.001f && v <= 1.001f,
+                            "Create connected UVs address the connected atlas sprite");
+                }
                 // Atlas sizes reach 16K in Auram. Normalize to remove float
                 // cancellation when the same sprite moves between atlas slots.
                 data.append('/').append(Math.round(u * 256)).append('/').append(Math.round(v * 256));
