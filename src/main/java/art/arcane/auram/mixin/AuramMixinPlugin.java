@@ -82,6 +82,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
             case "art.arcane.auram.mixin.dimdoors.PlayerCollisionMixin" -> "org.dimdev.dimdoors.mixin.ServerPlayNetworkHandlerMixin";
             case "art.arcane.auram.mixin.distanthorizons.ChunkMapDemandMixin" ->
                     "com.seibel.distanthorizons.core.generation.WorldGenerationQueue";
+            case "art.arcane.auram.mixin.voxy.LandingChunkDeliveryMixin" ->
+                    "me.cortex.voxy.server.ServerLodService";
             case "art.arcane.auram.mixin.ftbessentials.RtpBiomeWaitMixin" -> "dev.ftb.mods.ftbessentials.command.TeleportCommands";
             case "art.arcane.auram.mixin.lithostitched.StructureStartTerrainMixin" ->
                     "dev.worldgen.lithostitched.worldgen.structure.AlternateJigsawGenerator";
