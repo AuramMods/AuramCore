@@ -275,7 +275,6 @@
     "ftbchunks.MapRegionSurfaceMixin",
     "ftbchunks.MapDimensionSurfaceMixin",
     "ftbchunks.MinimapOverlayMixin",
-    "ftbchunks.MinimapZoomConfigMixin",
     "ftbchunks.MinimapZoomMixin",
     "ftbchunks.RegionMapSurfaceMixin",
     "ftbchunks.RenderMapSurfaceMixin",

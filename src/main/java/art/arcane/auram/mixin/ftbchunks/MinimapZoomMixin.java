@@ -29,6 +29,13 @@ abstract class MinimapZoomMixin {
     @Unique private float auram$zoomBeforeInput;
     @Unique private int auram$textureChunks = MinimapZoom.STOCK_TEXTURE_CHUNKS;
 
+    @Inject(method = "init", at = @At(value = "INVOKE", target =
+            "Ldev/ftb/mods/ftbchunks/client/FTBChunksClientConfig;init()V"))
+    private void auram$allowWiderZoomBeforeConfigLoad(CallbackInfo callback) {
+        // Widen the range before FTB reads and clamps a saved minimap zoom.
+        FTBChunksClientConfig.MINIMAP_ZOOM.range(MinimapZoom.EXTRA_WIDE_ZOOM, 4.0);
+    }
+
     @Inject(method = "changeZoom", at = @At("HEAD"))
     private void auram$captureCurrentZoom(boolean zoomIn, CallbackInfoReturnable<?> callback) {
         auram$zoomBeforeInput = getZoom();
