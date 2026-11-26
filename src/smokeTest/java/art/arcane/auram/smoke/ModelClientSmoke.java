@@ -260,8 +260,10 @@ public final class ModelClientSmoke {
         var manager = client.getModelManager();
         var variants = new TreeMap<String, String>();
         // A registry-wide traversal would materialize the lazy models being measured.
-        for (String id : List.of("auram:rock", "auram:rock_deepslate", "draconicevolution:draconic_bow")) {
-            var model = manager.getModel(new ModelResourceLocation(ResourceLocation.parse(id), "inventory"));
+        for (String id : List.of("auram:rock", "auram:deepslate_diamond_rock", "draconicevolution:draconic_bow")) {
+            var item = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(id));
+            check(item != null && item != Items.AIR, "Registered model test item " + id);
+            var model = client.getItemRenderer().getModel(new ItemStack(item), client.level, client.player, 0);
             check(model != manager.getMissingModel(), "Model is present for " + id);
             variants.put(id, modelFingerprint(model, null));
         }
