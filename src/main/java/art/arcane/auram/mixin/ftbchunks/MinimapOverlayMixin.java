@@ -11,6 +11,7 @@ import com.mojang.blaze3d.vertex.Tesselator;
 import dev.ftb.mods.ftbchunks.client.FTBChunksClient;
 import dev.ftb.mods.ftbchunks.client.FTBChunksClientConfig;
 import net.minecraft.resources.ResourceLocation;
+import org.lwjgl.opengl.GL14;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -42,6 +43,10 @@ abstract class MinimapOverlayMixin {
             // The terrain quad's UVs already carry its moving center and zoom. The shader clips
             // the circle itself, so this draw does not need FTB's depth-only hard mask.
             RenderSystem.disableDepthTest();
+            // Other HUD draws can change blending without invalidating the cached shader blend mode.
+            RenderSystem.enableBlend();
+            RenderSystem.blendEquation(GL14.GL_FUNC_ADD);
+            RenderSystem.defaultBlendFunc();
             MinimapFeather.use(centerU, centerV, uvRadius);
         }
         draw.call(tessellator);
