@@ -30,6 +30,7 @@
     "StructureStartScopeProbeMixin",
     "LithoStartProjectionProbeMixin",
     "StructureStartParityProbeMixin",
+    "StructureTemplateLoadProbeMixin",
     "BlueprintBiomeOrderSmokeMixin",
     "SurfaceWorkProbeMixin",
     "SurfaceContextProbeMixin",
