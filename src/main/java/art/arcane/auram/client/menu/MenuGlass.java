@@ -28,25 +28,46 @@ public final class MenuGlass {
                 loaded -> shader = loaded);
     }
 
-    void draw(Minecraft client, GuiGraphics graphics, int width, int height, int railWidth, int expandedWidth) {
+    void drawTop(Minecraft client, GuiGraphics graphics, int width, int height, int barHeight) {
         var main = client.getMainRenderTarget();
-        if (shader == null || main.viewWidth < 1 || main.viewHeight < 1 || width <= 0) {
-            graphics.fill(0, 0, railWidth, height, 0xf31b2634);
+        if (shader == null || main.viewWidth < 1 || height <= barHeight) {
+            graphics.fill(0, 0, width, barHeight, 0xf31b2634);
             return;
         }
         graphics.flush();
-        float railPixels = (float) main.viewWidth * railWidth / width;
-        // Include the pixels just beyond the sidebar so its blur can sample across the edge.
-        int sourceWidth = Math.min(main.viewWidth, Math.max(1, (int) Math.ceil((float) main.viewWidth * expandedWidth / width) + 16));
-        strip.capture(client, sourceWidth, main.viewHeight, Math.max(1, sourceWidth / 8), Math.max(1, main.viewHeight / 8));
-        drawFrame(graphics, strip.texture(), railWidth, height, railPixels / sourceWidth, 1, 1);
+        int barPixels = Math.max(1, Math.round((float) main.viewHeight * barHeight / height));
+        int sourceHeight = Math.min(main.viewHeight, barPixels * 2);
+        strip.capture(client, main.viewWidth, 0, sourceHeight, Math.max(1, main.viewWidth / 8), Math.max(1, sourceHeight / 8));
+        drawFrame(graphics, strip.texture(), width, barHeight, 1, 1.0F - (float) barPixels / sourceHeight, 1, 1);
+    }
+
+    void drawRail(Minecraft client, GuiGraphics graphics, int width, int height, int top, int railWidth, int expandedWidth) {
+        var main = client.getMainRenderTarget();
+        int sourceTop = Math.round((float) main.viewHeight * top / height);
+        int sourceHeight = main.viewHeight - sourceTop;
+        if (shader == null || main.viewWidth < 1 || sourceHeight < 1 || width <= 0) {
+            graphics.fill(0, top, railWidth, height, 0xf31b2634);
+            return;
+        }
+        graphics.flush();
+        float scale = (float) main.viewWidth / width;
+        int sourceWidth = Math.min(main.viewWidth, Math.max(1, (int) Math.ceil(scale * expandedWidth) + 16));
+        strip.capture(client, sourceWidth, sourceTop, sourceHeight, Math.max(1, sourceWidth / 8), Math.max(1, sourceHeight / 8));
+        graphics.pose().pushPose();
+        graphics.pose().translate(0, top, 0);
+        drawFrame(graphics, strip.texture(), railWidth, height - top, scale * railWidth / sourceWidth, 0, 1, 1);
+        graphics.pose().popPose();
+    }
+
+    void close() {
+        strip.close();
     }
 
     static boolean ready() {
         return shader != null;
     }
 
-    static void drawFrame(GuiGraphics graphics, int texture, int width, int height, float rightU,
+    static void drawFrame(GuiGraphics graphics, int texture, int width, int height, float rightU, float bottomV,
                           float frost, float opacity) {
         RenderSystem.disableDepthTest();
         RenderSystem.enableBlend();
@@ -60,8 +81,8 @@ public final class MenuGlass {
         var buffer = tessellator.getBuilder();
         buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         buffer.vertex(pose, 0, 0, 0).uv(0, 1).endVertex();
-        buffer.vertex(pose, 0, height, 0).uv(0, 0).endVertex();
-        buffer.vertex(pose, width, height, 0).uv(rightU, 0).endVertex();
+        buffer.vertex(pose, 0, height, 0).uv(0, bottomV).endVertex();
+        buffer.vertex(pose, width, height, 0).uv(rightU, bottomV).endVertex();
         buffer.vertex(pose, width, 0, 0).uv(rightU, 1).endVertex();
         tessellator.end();
         RenderSystem.disableBlend();

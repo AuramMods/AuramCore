@@ -11,6 +11,7 @@ import java.util.List;
 
 public final class AuramAdvancementsScreen extends AdvancementsScreen {
     private final ClientAdvancements advancements;
+    private final AdvancementCategoryRail categoryRail = new AdvancementCategoryRail();
     private boolean panning;
 
     AuramAdvancementsScreen(ClientAdvancements advancements) {
@@ -34,7 +35,8 @@ public final class AuramAdvancementsScreen extends AdvancementsScreen {
         }
 
         ((AdvancementCanvas) selected).auram$drawCanvas(graphics);
-        boolean overControl = AuramMenu.sidebarContains(mouseX, mouseY, height);
+        boolean overControl = mouseY < AuramMenu.BAR_HEIGHT
+                || categoryRail.contains(mouseX, mouseY, height);
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 400);
         selected.drawTooltips(graphics, overControl ? -1 : mouseX, mouseY, 0, 0);
@@ -43,9 +45,37 @@ public final class AuramAdvancementsScreen extends AdvancementsScreen {
 
     @Override
     public boolean mouseClicked(double x, double y, int button) {
-        if (button != 0) return false;
-        panning = selectedCategory() != null;
+        var categories = categories();
+        categoryRail.dismiss(x, y, height, categories.size());
+        if (!categories.isEmpty() && categoryRail.contains(x, y, height)) {
+            int row = categoryRail.rowAt(y, height, categories.size());
+            if (button == 0 && row >= 0) selectCategory(categories.get(row));
+            return true;
+        }
+        panning = button == 0 && selectedCategory() != null;
         return panning;
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double delta) {
+        int count = access().auram$tabs().size();
+        if (count == 0 || !categoryRail.contains(x, y, height)) return false;
+        categoryRail.scroll(delta, height, count);
+        return true;
+    }
+
+    @Override
+    public void removed() {
+        categoryRail.close();
+        super.removed();
+    }
+
+    void renderCategoryRail(GuiGraphics graphics, int mouseX, int mouseY) {
+        categoryRail.draw(minecraft, graphics, width, height, mouseX, mouseY, categories(), selectedCategory());
+    }
+
+    void dismissCategoryRail() {
+        categoryRail.dismiss();
     }
 
     @Override
@@ -63,16 +93,15 @@ public final class AuramAdvancementsScreen extends AdvancementsScreen {
         return true;
     }
 
-    List<AdvancementTab> categories() {
-        var roots = access().auram$tabs().values();
-        return roots.size() > 1 ? List.copyOf(roots) : List.of();
+    private List<AdvancementTab> categories() {
+        return List.copyOf(access().auram$tabs().values());
     }
 
-    AdvancementTab selectedCategory() {
+    private AdvancementTab selectedCategory() {
         return access().auram$selectedTab();
     }
 
-    void selectCategory(AdvancementTab category) {
+    private void selectCategory(AdvancementTab category) {
         if (category != selectedCategory()) advancements.setSelectedTab(category.getAdvancement(), true);
     }
 

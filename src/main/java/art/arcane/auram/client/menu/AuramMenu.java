@@ -2,6 +2,7 @@ package art.arcane.auram.client.menu;
 
 import art.arcane.auram.Auram;
 import art.arcane.auram.mixin.menu.PauseScreenAccess;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,6 +14,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
@@ -21,15 +23,19 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
 public final class AuramMenu {
-    public static final int RAIL_WIDTH = 36;
+    public static final int BAR_HEIGHT = 30;
+    private static final int ICON_SIZE = 16;
+    private static final int ICON_TAB_WIDTH = 36;
+    private static final int TAB_GAP = 4;
     private static final MenuBackdrop backdrop = new MenuBackdrop();
-    private static final MenuSidebar sidebar = new MenuSidebar();
+    private static final MenuGlass glass = new MenuGlass();
     private static final MenuMotion motion = new MenuMotion();
     private static final Tab[] tabs = Tab.values();
     private static ClientLevel world;
@@ -44,19 +50,19 @@ public final class AuramMenu {
 
     enum Tab {
         SYSTEM("gui.auram.menu.system", "", "menu_gear"),
-        MAP("gui.auram.menu.map", "key.ftbchunks.map", "menu_map"),
-        JOURNAL("gui.auram.menu.journal", "key.ftbquests.quests", "menu_journal"),
-        SKILLS("gui.auram.menu.skills", "key.adapt.open_skills", "menu_skills"),
+        MAP("gui.auram.menu.map", "key.ftbchunks.map", null),
+        JOURNAL("gui.auram.menu.journal", "key.ftbquests.quests", null),
+        SKILLS("gui.auram.menu.skills", "key.adapt.open_skills", null),
         ADVANCEMENTS("gui.advancements", "key.advancements", "menu_trophy");
 
-        final Component title;
+        private final Component title;
         private final String binding;
-        final ResourceLocation icon;
+        private final ResourceLocation icon;
 
         Tab(String titleKey, String binding, String icon) {
             title = Component.translatable(titleKey);
             this.binding = binding;
-            this.icon = new ResourceLocation(Auram.MODID, "textures/gui/" + icon + ".png");
+            this.icon = icon == null ? null : new ResourceLocation(Auram.MODID, "textures/gui/" + icon + ".png");
         }
     }
 
@@ -77,10 +83,6 @@ public final class AuramMenu {
                 && client.player != null && client.level != null) {
             event.setNewScreen(new AuramAdvancementsScreen(client.player.connection.getAdvancements()));
         }
-    }
-
-    static boolean sidebarContains(double x, double y, int height) {
-        return sidebar.contains(x, y, height);
     }
 
     public static boolean isSystem(Screen screen) {
@@ -162,8 +164,22 @@ public final class AuramMenu {
 
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 1100);
-        sidebar.draw(client, graphics, screen.width, screen.height, event.getMouseX(), event.getMouseY(),
-                selected, sidebarRows(client, screen), !nativeModal(screen, selected));
+        glass.drawTop(client, graphics, screen.width, screen.height, BAR_HEIGHT);
+        graphics.hLine(0, screen.width - 1, BAR_HEIGHT - 1, 0xff354956);
+
+        boolean enabled = !nativeModal(screen, selected);
+        Component tooltip = null;
+        for (var slot : tabSlots(client, screen.width)) {
+            boolean hovered = enabled && slot.contains(event.getMouseX(), event.getMouseY());
+            drawTab(graphics, client, slot, slot.tab() == selected, hovered);
+            if (hovered && slot.tab().icon != null) tooltip = slot.tab().title;
+        }
+        if (screen instanceof AuramAdvancementsScreen advancements) {
+            advancements.renderCategoryRail(graphics, event.getMouseX(), event.getMouseY());
+        }
+        if (tooltip != null) {
+            graphics.renderTooltip(client.font, tooltip, event.getMouseX(), BAR_HEIGHT + 12);
+        }
         graphics.pose().popPose();
         motion.drawOpening(graphics);
         renderedScreen = screen;
@@ -181,6 +197,31 @@ public final class AuramMenu {
         motion.drawClosing(Minecraft.getInstance(), graphics);
     }
 
+    private static void drawTab(GuiGraphics graphics, Minecraft client, TabSlot slot,
+                                boolean selected, boolean hovered) {
+        int left = slot.left();
+        int right = slot.right();
+        int text = 0xd0dce4;
+        if (selected || hovered) {
+            graphics.fillGradient(left + 2, 1, right - 2, BAR_HEIGHT - 1, 0x05308ca0,
+                    selected ? 0x633aa2aa : 0x3a54b3ba);
+            graphics.hLine(left + 9, right - 10, BAR_HEIGHT - 2, selected ? 0xff9feee5 : 0x9059bec1);
+            graphics.hLine(left + 13, right - 14, BAR_HEIGHT - 3, selected ? 0x55a6ede4 : 0x3059bec1);
+            text = selected ? 0xe6fffa : 0xffffff;
+        }
+        int center = (left + right) / 2;
+        if (slot.tab().icon == null) {
+            graphics.drawCenteredString(client.font, slot.tab().title, center,
+                    (BAR_HEIGHT - client.font.lineHeight) / 2, text);
+        } else {
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            graphics.blit(slot.tab().icon, center - ICON_SIZE / 2, (BAR_HEIGHT - ICON_SIZE) / 2,
+                    0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+            RenderSystem.disableBlend();
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true)
     public static void mouseDown(ScreenEvent.MouseButtonPressed.Pre event) {
         var screen = event.getScreen();
@@ -188,7 +229,7 @@ public final class AuramMenu {
         var selected = tab(screen);
         if (selected == null || nativeModal(screen, selected)) return;
         var client = Minecraft.getInstance();
-        if (!sidebar.contains(event.getMouseX(), event.getMouseY(), screen.height)) {
+        if (event.getMouseY() < 0 || event.getMouseY() >= BAR_HEIGHT) {
             if (event.isCanceled()) return;
             var target = boundTab(client, key -> key.matchesMouse(event.getButton()) && key.getKeyModifier().isActive(null));
             if (target != null) {
@@ -198,17 +239,16 @@ public final class AuramMenu {
             }
             return;
         }
+        if (screen instanceof AuramAdvancementsScreen advancements) advancements.dismissCategoryRail();
         event.setCanceled(true);
         capturedMouseButton = event.getButton();
         if (event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
 
-        var rows = sidebarRows(client, screen);
-        int row = sidebar.rowAt(event.getMouseY(), screen.height, rows.size());
-        if (row < 0) return;
-        if (row < rows.tabs().size()) {
-            openTab(client, selected, rows.tabs().get(row));
-        } else if (screen instanceof AuramAdvancementsScreen advancements) {
-            advancements.selectCategory(rows.categories().get(row - rows.tabs().size()));
+        for (var slot : tabSlots(client, screen.width)) {
+            if (slot.contains(event.getMouseX(), event.getMouseY())) {
+                openTab(client, selected, slot.tab());
+                return;
+            }
         }
     }
 
@@ -227,13 +267,9 @@ public final class AuramMenu {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void mouseScroll(ScreenEvent.MouseScrolled.Pre event) {
-        var screen = event.getScreen();
-        if (!active(screen) || !sidebar.contains(event.getMouseX(), event.getMouseY(), screen.height)) return;
+        if (!active(event.getScreen()) || event.getMouseY() < 0 || event.getMouseY() >= BAR_HEIGHT) return;
         var selected = tab(event.getScreen());
-        if (selected != null && !nativeModal(screen, selected)) {
-            sidebar.scroll(event.getScrollDelta(), screen.height, sidebarRows(Minecraft.getInstance(), screen).size());
-            event.setCanceled(true);
-        }
+        if (selected != null && !nativeModal(event.getScreen(), selected)) event.setCanceled(true);
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -293,15 +329,30 @@ public final class AuramMenu {
         return (tab == Tab.MAP || tab == Tab.JOURNAL) && MenuIntegrations.nativeModal(screen);
     }
 
-    private static MenuSidebar.Rows sidebarRows(Minecraft client, Screen screen) {
-        var tabs = visibleTabs(client);
-        return screen instanceof AuramAdvancementsScreen advancements
-                ? new MenuSidebar.Rows(tabs, advancements.categories(), advancements.selectedCategory())
-                : new MenuSidebar.Rows(tabs, List.of(), null);
-    }
-
     private static List<Tab> visibleTabs(Minecraft client) {
         return Arrays.stream(tabs).filter(tab -> available(client, tab)).toList();
+    }
+
+    private static List<TabSlot> tabSlots(Minecraft client, int width) {
+        var visible = visibleTabs(client);
+        var slots = new ArrayList<TabSlot>(visible.size());
+        int labelStart = ICON_TAB_WIDTH + TAB_GAP;
+        int labelWidth = Mth.clamp((width - 2 * labelStart) / Math.max(1, visible.size() - 2), 1, 94);
+        slots.add(new TabSlot(Tab.SYSTEM, 0, ICON_TAB_WIDTH));
+        int left = labelStart;
+        for (var tab : visible) {
+            if (tab.icon != null) continue;
+            slots.add(new TabSlot(tab, left, left + labelWidth));
+            left += labelWidth;
+        }
+        slots.add(new TabSlot(Tab.ADVANCEMENTS, width - ICON_TAB_WIDTH, width));
+        return slots;
+    }
+
+    private record TabSlot(Tab tab, int left, int right) {
+        boolean contains(double x, double y) {
+            return x >= left && x < right && y >= 0 && y < BAR_HEIGHT;
+        }
     }
 
     private static void openTab(Minecraft client, Tab selected, Tab target) {
@@ -328,7 +379,6 @@ public final class AuramMenu {
 
     private static void reset(Minecraft client) {
         backdrop.close(client);
-        sidebar.reset();
         world = null;
         lastTab = null;
         renderedScreen = null;

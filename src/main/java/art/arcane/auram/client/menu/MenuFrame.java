@@ -9,7 +9,7 @@ import org.lwjgl.opengl.GL30;
 final class MenuFrame {
     private TextureTarget target;
 
-    void capture(Minecraft client, int sourceWidth, int sourceHeight, int width, int height) {
+    void capture(Minecraft client, int sourceWidth, int sourceTop, int sourceHeight, int width, int height) {
         var main = client.getMainRenderTarget();
         int originalRead = GL30.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
         int originalDraw = GL30.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
@@ -22,11 +22,19 @@ final class MenuFrame {
             }
             GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
             GlStateManager._glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, target.frameBufferId);
-            GL30.glBlitFramebuffer(0, main.viewHeight - sourceHeight, sourceWidth, main.viewHeight,
+            int top = main.viewHeight - sourceTop;
+            GL30.glBlitFramebuffer(0, top - sourceHeight, sourceWidth, top,
                     0, 0, width, height, GL30.GL_COLOR_BUFFER_BIT, GL30.GL_LINEAR);
         } finally {
             GlStateManager._glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, originalRead);
             GlStateManager._glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, originalDraw);
+        }
+    }
+
+    void close() {
+        if (target != null) {
+            target.destroyBuffers();
+            target = null;
         }
     }
 
