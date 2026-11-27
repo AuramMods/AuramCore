@@ -27,7 +27,7 @@ final class MenuIntegrations {
 
     static boolean loaded(AuramMenu.Tab tab) {
         return switch (tab) {
-            case SYSTEM -> true;
+            case SYSTEM, ADVANCEMENTS -> true;
             case MAP -> ModList.get().isLoaded("ftbchunks");
             case JOURNAL -> ModList.get().isLoaded("ftbquests") && !failedJournal;
             case SKILLS -> ModList.get().isLoaded("adapt");

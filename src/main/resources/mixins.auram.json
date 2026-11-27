@@ -279,6 +279,8 @@
     "ftbchunks.RegionMapSurfaceMixin",
     "ftbchunks.RenderMapSurfaceMixin",
     "menu.PauseScreenAccess",
+    "menu.AdvancementsLayoutMixin",
+    "menu.TipsOverlayMixin",
     "menu.FtbJournalLayoutMixin",
     "menu.MenuGameRendererMixin",
     "menu.OptionsBackToSystemMixin",
