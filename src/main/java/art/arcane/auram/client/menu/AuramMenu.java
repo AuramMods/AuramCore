@@ -163,7 +163,7 @@ public final class AuramMenu {
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 1100);
         sidebar.draw(client, graphics, screen.width, screen.height, event.getMouseX(), event.getMouseY(),
-                selected, visibleTabs(client), !nativeModal(screen, selected));
+                selected, sidebarRows(client, screen), !nativeModal(screen, selected));
         graphics.pose().popPose();
         motion.drawOpening(graphics);
         renderedScreen = screen;
@@ -202,8 +202,14 @@ public final class AuramMenu {
         capturedMouseButton = event.getButton();
         if (event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) return;
 
-        var target = sidebar.tabAt(event.getMouseY(), screen.height, visibleTabs(client));
-        if (target != null) openTab(client, selected, target);
+        var rows = sidebarRows(client, screen);
+        int row = sidebar.rowAt(event.getMouseY(), screen.height, rows.size());
+        if (row < 0) return;
+        if (row < rows.tabs().size()) {
+            openTab(client, selected, rows.tabs().get(row));
+        } else if (screen instanceof AuramAdvancementsScreen advancements) {
+            advancements.selectCategory(rows.categories().get(row - rows.tabs().size()));
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -225,7 +231,7 @@ public final class AuramMenu {
         if (!active(screen) || !sidebar.contains(event.getMouseX(), event.getMouseY(), screen.height)) return;
         var selected = tab(event.getScreen());
         if (selected != null && !nativeModal(screen, selected)) {
-            sidebar.scroll(event.getScrollDelta(), screen.height, visibleTabs(Minecraft.getInstance()).size());
+            sidebar.scroll(event.getScrollDelta(), screen.height, sidebarRows(Minecraft.getInstance(), screen).size());
             event.setCanceled(true);
         }
     }
@@ -285,6 +291,13 @@ public final class AuramMenu {
 
     private static boolean nativeModal(Screen screen, Tab tab) {
         return (tab == Tab.MAP || tab == Tab.JOURNAL) && MenuIntegrations.nativeModal(screen);
+    }
+
+    private static MenuSidebar.Rows sidebarRows(Minecraft client, Screen screen) {
+        var tabs = visibleTabs(client);
+        return screen instanceof AuramAdvancementsScreen advancements
+                ? new MenuSidebar.Rows(tabs, advancements.categories(), advancements.selectedCategory())
+                : new MenuSidebar.Rows(tabs, List.of(), null);
     }
 
     private static List<Tab> visibleTabs(Minecraft client) {
