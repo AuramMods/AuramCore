@@ -41,15 +41,16 @@ final class FtbMapMenu {
             if (zoom == 0) return null;
             double spanX = MapMenuView.halfSpan(width, zoom);
             double spanZ = MapMenuView.halfSpan(height, zoom);
-            // Map raster pixels represent blocks. Follow the framed span so each texel
-            // covers about one map pixel, even when missing tiles force a tighter zoom.
+            // Keep one texel per native map pixel so the backdrop filter sees consecutive blocks.
             int columns = Mth.ceil(2 * spanX);
             int rows = Mth.ceil(2 * spanZ);
+            int firstX = Mth.floor(x - columns * 0.5 + 0.5);
+            int firstZ = Mth.floor(z - rows * 0.5 + 0.5);
             int[] pixels = new int[columns * rows];
             for (int row = 0; row < rows; row++) {
-                int worldZ = Mth.floor(z + (2 * (row + 0.5) / rows - 1) * spanZ);
+                int worldZ = firstZ + row;
                 for (int column = 0; column < columns; column++) {
-                    int worldX = Mth.floor(x + (2 * (column + 0.5) / columns - 1) * spanX);
+                    int worldX = firstX + column;
                     int pixel = raster.pixel(worldX, worldZ);
                     pixels[row * columns + column] = (pixel >>> 24) == 0
                             ? raster.pixel((worldX & ~15) + 8, (worldZ & ~15) + 8) : pixel;
