@@ -46,17 +46,16 @@ final class SkillTreeRenderer {
         }
         for (Node node : nodes) {
             if (node.parent() == null || !node.matches(query)) continue;
-            Point start = screen(camera, viewport, node.parent());
+            Point start = screen(camera, viewport, node.parent().point());
             Point end = screen(camera, viewport, node.point());
             if (!edgeVisible(viewport, start, end)) continue;
-            if (node.level() > 0) {
+            if (node.skill() || node.level() > 0) {
                 mesh.line(start, end, node.skill() ? 2.0 : 1.55, withAlpha(node.color(), 203));
-            } else if (node.skill()) {
-                mesh.line(start, end, 0.8, 0x68588398);
             } else {
                 mesh.dashed(start, end, 0.8, 0x7973828f);
             }
         }
+        double detail = Math.min(1, camera.scale());
         for (Node node : nodes) {
             if (!node.matches(query)) continue;
             Point pos = screen(camera, viewport, node.point());
@@ -65,15 +64,15 @@ final class SkillTreeRenderer {
             boolean focused = node == hovered;
             boolean selected = selection != null && Objects.equals(node.route(), selection);
             boolean learned = node.level() > 0;
-            int rim = node.route() == null ? GOLD : learned ? glow(node.color()) : MUTED;
-            mesh.disc(pos, r + 2.2, 0xa0050a13);
+            int rim = node.route() == null ? GOLD : node.skill() || learned ? glow(node.color()) : MUTED;
+            mesh.disc(pos, r + 2.2 * detail, 0xa0050a13);
             mesh.disc(pos, r, node.skill() ? 0xff192a38 : learned ? 0xff203240 : 0xff242b37);
-            mesh.ring(pos, r - 1.0, r + 0.1, rim);
+            mesh.ring(pos, r - detail, r + 0.1 * detail, rim);
             if (node.progress() > 0) {
-                mesh.arc(pos, r + 0.9, r + 2.2, Mth.clamp(node.progress(), 0, 1), rim);
+                mesh.arc(pos, r + 0.9 * detail, r + 2.2 * detail, Mth.clamp(node.progress(), 0, 1), rim);
             }
             if (focused || selected) {
-                mesh.ring(pos, r + 2.9, r + (selected ? 4.7 : 4.0), selected ? GOLD : 0xffc8f1f0);
+                mesh.ring(pos, r + 2.9 * detail, r + (selected ? 4.7 : 4.0) * detail, selected ? GOLD : 0xffc8f1f0);
             }
         }
         graphics.flush();
@@ -133,7 +132,6 @@ final class SkillTreeRenderer {
                 : node.skill() ? Component.translatable("gui.auram.skills.level", node.level())
                 : Component.translatable("gui.auram.skills.adaptation_level", node.level(), node.maxLevel());
         Component state = node.route() == null ? Component.translatable("gui.auram.skills.reset")
-                : !node.openable() ? Component.translatable("gui.auram.skills.unavailable")
                 : !node.skill() && node.level() == 0 ? Component.translatable("gui.auram.skills.unlearned")
                 : null;
         List<FormattedCharSequence> lines = state == null ? List.of(name.getVisualOrderText(), level.getVisualOrderText())

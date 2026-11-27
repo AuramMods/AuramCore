@@ -195,6 +195,9 @@ public final class AuramMenu {
     @SubscribeEvent
     public static void closing(ScreenEvent.Closing event) {
         if (event.getScreen() == renderedScreen && active(event.getScreen())) {
+            if (tab(event.getScreen()) == Tab.SKILLS && MenuIntegrations.isSkillScreen(event.getScreen())) {
+                AdaptSkillTree.suspend();
+            }
             motion.captureClosing(Minecraft.getInstance());
             renderedScreen = null;
         }

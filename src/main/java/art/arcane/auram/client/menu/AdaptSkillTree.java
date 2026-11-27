@@ -14,23 +14,27 @@ import art.arcane.adapt.client.view.CatalogView;
 import art.arcane.adapt.client.view.IconRef;
 import art.arcane.adapt.client.view.PlayerView;
 import art.arcane.adapt.client.view.SkillView;
+import art.arcane.auram.client.menu.SkillTreeLayout.Anchor;
+import art.arcane.auram.client.menu.SkillTreeLayout.Placement;
+import art.arcane.auram.client.menu.SkillTreeLayout.Point;
+import art.arcane.auram.map.client.FullscreenMapFling;
 import art.arcane.auram.mixin.adapt.AdaptScreenAccess;
 import art.arcane.auram.mixin.adapt.AdaptSkillsAccess;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public final class AdaptSkillTree {
-    static final SkillTreeLayout.Point CENTER = new SkillTreeLayout.Point(0, 0);
+    static final Point CENTER = new Point(0, 0);
     private static final int MARGIN = 12;
     private static final int FOOT = 22;
     private static final long REFRESH_NANOS = 125_000_000L;
@@ -70,6 +74,11 @@ public final class AdaptSkillTree {
         session = new Session();
     }
 
+    static void suspend() {
+        session.cancelGesture();
+        session.fling.stop();
+    }
+
     static boolean editingText(Screen screen) {
         AdaptScreen adapt = content(screen);
         return adapt != null && adapt.editingText();
@@ -80,10 +89,8 @@ public final class AdaptSkillTree {
         if (adapt == null) return;
         ScreenRouter router = router(adapt);
         boolean root = adapt instanceof SkillsScreen;
-        if (!root) {
-            session.selection = adapt.route();
-            session.cancelGesture();
-        }
+        if (!root) session.selection = adapt.route();
+        if (!root || !adapt.overlays().isEmpty()) suspend();
         var viewport = viewport(screen);
         session.update(adapt, router, viewport);
         SkillTreeRenderer.draw(graphics, viewport, session.camera, session.nodes, session.selection,
@@ -108,22 +115,23 @@ public final class AdaptSkillTree {
         session.pendingX = 0;
         session.pendingY = 0;
         session.dragging = false;
+        session.fling.begin(System.nanoTime());
         return true;
     }
 
     static boolean drag(Screen screen, int button, double dx, double dy) {
         if (session.button != button || !(content(screen) instanceof SkillsScreen)) return false;
-        if (session.dragging) {
-            session.camera.pan(dx, dy);
-        } else {
+        if (!session.dragging) {
             session.pendingX += dx;
             session.pendingY += dy;
-            if (Math.hypot(session.pendingX, session.pendingY) >= 3) {
-                session.dragging = true;
-                session.manualView = true;
-                session.camera.pan(session.pendingX, session.pendingY);
-            }
+            if (Math.hypot(session.pendingX, session.pendingY) < 3) return true;
+            session.dragging = true;
+            session.manualView = true;
+            dx = session.pendingX;
+            dy = session.pendingY;
         }
+        session.camera.pan(dx, dy);
+        session.fling.drag(System.nanoTime(), dx, dy);
         return true;
     }
 
@@ -131,6 +139,7 @@ public final class AdaptSkillTree {
         if (session.button != button) return false;
         boolean click = !session.dragging && button == GLFW.GLFW_MOUSE_BUTTON_LEFT
                 && Math.hypot(x - session.pressX, y - session.pressY) < 4;
+        if (session.dragging) session.fling.release(System.nanoTime());
         session.cancelGesture();
         if (click && interactive(screen, x, y)) {
             var skills = (SkillsScreen) content(screen);
@@ -138,7 +147,7 @@ public final class AdaptSkillTree {
             Node node = hit(viewport, x, y);
             if (node != null && node.route() == null) {
                 recenter(skills, viewport);
-            } else if (node != null && node.openable()) {
+            } else if (node != null) {
                 session.selection = node.route();
                 skills.services().playClick();
                 router(skills).open(node.route());
@@ -151,13 +160,15 @@ public final class AdaptSkillTree {
         if (!interactive(screen, x, y)) return false;
         var view = viewport(screen);
         session.manualView = true;
-        session.camera.zoom(x, y, view.cx(), view.cy(), amount);
+        session.fling.stop();
+        session.camera.zoom(x, y, view.cx(), view.cy(), amount, System.nanoTime());
         return true;
     }
 
     private static void recenter(SkillsScreen skills, Viewport view) {
         session.manualView = false;
-        session.fit(view);
+        session.fling.stop();
+        session.fit(view, System.nanoTime());
         session.selection = null;
         skills.services().playClick();
     }
@@ -211,22 +222,38 @@ public final class AdaptSkillTree {
         }
     }
 
-    record Node(Route route, SkillTreeLayout.Point point, SkillTreeLayout.Point parent, String name,
-                String searchText, IconRef icon, int color, int level, int maxLevel, double progress,
-                boolean openable, boolean skill) {
+    record Node(Route route, Placement placement, Placement parent, String name,
+                String searchText, IconRef icon, int color, int level, int maxLevel, double progress, boolean skill) {
         boolean matches(String query) {
             return route == null || searchText.contains(query);
         }
 
+        Point point() {
+            return placement.point();
+        }
+
         double radius(double scale) {
-            return Math.max(route == null ? 10 : skill ? 7 : 5,
-                    Math.min(route == null ? 31 : skill ? 24 : 18, (route == null ? 24 : skill ? 17 : 13) * scale));
+            return Math.min(route == null ? 31 : skill ? 24 : 18, baseRadius() * scale);
+        }
+
+        double spacingRadius() {
+            return baseRadius() + 6 + (route != null && level > 0 ? 7 : 0);
+        }
+
+        private int baseRadius() {
+            return route == null ? 24 : skill ? 17 : 13;
         }
     }
 
+    private record NodeKey(String branch, Route route) {}
+
     private static final class Session {
         private final SkillTreeLayout.Camera camera = new SkillTreeLayout.Camera();
+        private final FullscreenMapFling fling = new FullscreenMapFling();
+        private final Placement center = new Placement(CENTER);
         private List<Node> nodes = List.of();
+        private List<Anchor> anchors = List.of();
+        private Map<NodeKey, Placement> placements = Map.of();
         private List<SkillView> seats = List.of();
         private PlayerView lastPlayer;
         private CatalogView lastCatalog;
@@ -234,9 +261,9 @@ public final class AdaptSkillTree {
         private Route selection;
         private String query = "";
         private boolean waiting = true;
-        private double extentX = 260;
-        private double extentY = 260;
-        private long nextUpdate;
+        private double extentX = 96;
+        private double extentY = 96;
+        private long nextUpdate = Long.MIN_VALUE;
         private int button = -1;
         private double pressX;
         private double pressY;
@@ -247,24 +274,34 @@ public final class AdaptSkillTree {
         private Viewport fittedViewport;
 
         private void update(AdaptScreen adapt, ScreenRouter router, Viewport viewport) {
-            boolean root = adapt instanceof SkillsScreen;
-            if (root) query = ((SkillsScreen) adapt).search().text().strip().toLowerCase(Locale.ROOT);
-            else query = "";
+            query = adapt instanceof SkillsScreen skills
+                    ? skills.search().text().strip().toLowerCase(Locale.ROOT) : "";
 
             long now = System.nanoTime();
-            if (!manualView && !viewport.equals(fittedViewport)) fit(viewport);
-            if (now < nextUpdate && camera.initialized()) return;
-            nextUpdate = now + REFRESH_NANOS;
+            camera.advance(now);
+            var offset = fling.advance(now);
+            camera.pan(offset.x(), offset.y());
+            for (Anchor anchor : anchors) anchor.placement().advance(now);
+
+            if (now >= nextUpdate) {
+                nextUpdate = now + REFRESH_NANOS;
+                refresh(adapt, router, now);
+            }
+            if (!manualView && !viewport.equals(fittedViewport)) fit(viewport, now);
+        }
+
+        private void refresh(AdaptScreen adapt, ScreenRouter router, long now) {
             PlayerView player = router.state().player();
             var catalog = router.state().catalog();
             if (player == null || catalog == null) return;
             waiting = false;
+
             List<SkillView> visible = seats;
             if (adapt instanceof SkillsScreen skills) {
                 visible = ((AdaptSkillsAccess) (Object) skills).auram$visibleSkills();
             } else if (seats.isEmpty()) {
-                // Adapt can enter a detail route without ever showing the Skills root.
-                visible = catalog.skills().stream().filter(skill -> skill.enabled() && player.access().canOpen(skill.id()))
+                // Adapt can open a detail route before it builds the Skills root.
+                visible = catalog.skills().stream()
                         .sorted(Comparator.comparing(skill -> LegacyText.strip(skill.name()), String.CASE_INSENSITIVE_ORDER))
                         .toList();
             }
@@ -277,21 +314,23 @@ public final class AdaptSkillTree {
             seats = visible;
 
             CatalogIndex index = new CatalogIndex(catalog, names);
-            List<List<AdaptationView>> children = new ArrayList<>(seats.size());
-            for (SkillView skill : seats) {
-                var line = CatalogIndex.line(player, skill.id());
-                children.add(line == null || line.level() < 1 ? List.of()
-                        : index.groups(player, skill.id()).stream().flatMap(List::stream).distinct().toList());
+            List<SkillView> discovered = visible.stream().filter(skill -> SkillTreeProgression.discovered(player, skill)).toList();
+            List<List<AdaptationView>> children = new ArrayList<>(discovered.size());
+            for (SkillView skill : discovered) {
+                children.add(SkillTreeProgression.reveal(player, index.groups(player, skill.id())).stream()
+                        .flatMap(List::stream).distinct().toList());
             }
             var branches = SkillTreeLayout.branches(children.stream().map(List::size).toList());
             List<Node> next = new ArrayList<>();
+            List<Anchor> nextAnchors = new ArrayList<>();
+            Map<NodeKey, Placement> nextPlacements = new HashMap<>();
             String playerName = Minecraft.getInstance().player.getName().getString();
-            next.add(new Node(null, CENTER, null, playerName, "", null, 0xffdaa56d, player.header().masterLevel(), 0,
-                    player.header().masterProgress(), true, true));
-            extentX = 96;
-            extentY = 96;
-            for (int i = 0; i < seats.size(); i++) {
-                var skill = seats.get(i);
+            var root = new Node(null, center, null, playerName, "", null, 0xffdaa56d, player.header().masterLevel(), 0,
+                    player.header().masterProgress(), true);
+            next.add(root);
+            nextAnchors.add(new Anchor(center, CENTER, root.spacingRadius()));
+            for (int i = 0; i < discovered.size(); i++) {
+                var skill = discovered.get(i);
                 var line = CatalogIndex.line(player, skill.id());
                 var branch = branches.get(i);
                 String search = searchable(skill.name(), skill.id(), skill.description());
@@ -299,35 +338,59 @@ public final class AdaptSkillTree {
                 List<AdaptationView> adaptations = children.get(i);
                 String skillSearch = search + " " + adaptations.stream()
                         .map(a -> searchable(a.name(), a.id(), a.description())).collect(Collectors.joining(" "));
-                next.add(new Node(new Route.Skill(skill.id()), branch.skill(), CENTER, LegacyText.strip(skill.name()),
+
+                var route = new Route.Skill(skill.id());
+                Placement skillPosition = place(nextPlacements, skill.id(), route, branch.skill());
+                var skillNode = new Node(route, skillPosition, center, LegacyText.strip(skill.name()),
                         skillSearch, skill.icon(), color, line == null ? 0 : line.level(), 0,
-                        line == null ? 0 : line.progress(), player.access().canOpen(skill.id()), true));
-                include(branch.skill());
+                        line == null ? 0 : line.progress(), true);
+                next.add(skillNode);
+                nextAnchors.add(new Anchor(skillPosition, branch.skill(), skillNode.spacingRadius()));
+
                 for (int j = 0; j < adaptations.size(); j++) {
                     var adaptation = adaptations.get(j);
                     var point = branch.adaptations().get(j);
-                    include(point);
-                    next.add(new Node(new Route.Adaptation(adaptation.id()), point, branch.skill(),
-                            LegacyText.strip(adaptation.name()), search + " " + searchable(adaptation.name(), adaptation.id(), adaptation.description()),
-                            adaptation.icon(), color, CatalogIndex.level(player, adaptation.id()), adaptation.maxLevel(),
-                            0, true, false));
+                    var adaptationRoute = new Route.Adaptation(adaptation.id());
+                    Placement position = place(nextPlacements, skill.id(), adaptationRoute, point);
+                    var node = new Node(adaptationRoute, position, skillPosition, LegacyText.strip(adaptation.name()),
+                            search + " " + searchable(adaptation.name(), adaptation.id(), adaptation.description()),
+                            adaptation.icon(), color, CatalogIndex.level(player, adaptation.id()), adaptation.maxLevel(), 0, false);
+                    next.add(node);
+                    nextAnchors.add(new Anchor(position, point, node.spacingRadius()));
                 }
             }
             nodes = List.copyOf(next);
-            if (!manualView) fit(viewport);
+            placements = nextPlacements;
+            if (anchors.equals(nextAnchors)) return;
+            anchors = nextAnchors;
+
+            List<Point> targets = SkillTreeLayout.spread(anchors);
+            extentX = 96;
+            extentY = 96;
+            for (int i = 0; i < targets.size(); i++) {
+                Point point = targets.get(i);
+                Anchor anchor = anchors.get(i);
+                anchor.placement().moveTo(point, now);
+                extentX = Math.max(extentX, Math.abs(point.x()) + anchor.radius());
+                extentY = Math.max(extentY, Math.abs(point.y()) + anchor.radius());
+            }
+            fittedViewport = null;
+        }
+
+        private Placement place(Map<NodeKey, Placement> next, String branch, Route route, Point point) {
+            var key = new NodeKey(branch, route);
+            Placement position = placements.get(key);
+            if (position == null) position = new Placement(point);
+            next.put(key, position);
+            return position;
         }
 
         private static String searchable(String name, String id, String description) {
             return LegacyText.strip(name + " " + id + " " + description).toLowerCase(Locale.ROOT);
         }
 
-        private void include(SkillTreeLayout.Point point) {
-            extentX = Math.max(extentX, Math.abs(point.x()));
-            extentY = Math.max(extentY, Math.abs(point.y()));
-        }
-
-        private void fit(Viewport viewport) {
-            camera.fit(viewport.width(), viewport.bottom() - viewport.top(), extentX, extentY);
+        private void fit(Viewport viewport, long now) {
+            camera.fit(viewport.width(), viewport.bottom() - viewport.top(), extentX, extentY, now);
             fittedViewport = viewport;
         }
 

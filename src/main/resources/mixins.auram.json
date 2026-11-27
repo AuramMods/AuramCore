@@ -288,6 +288,7 @@
     "adapt.AdaptScreenAccess",
     "adapt.AdaptScreenMixin",
     "adapt.AdaptSkillsAccess",
+    "adapt.AdaptSkillProgressionMixin",
     "adapt.AdaptOverviewKitMixin",
     "adapt.AdaptOverviewPopoverMixin",
     "adapt.AdaptOverviewSearchMixin",
