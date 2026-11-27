@@ -62,7 +62,7 @@ public final class AdaptSkillTree {
         int searchRight = skills.width() < 245 ? right : right - chipsWidth - 6;
         int searchWidth = Math.min(104, searchRight - MARGIN);
         search.place(new UiRect(searchRight - searchWidth, top + (skills.width() < 245 ? 22 : 0), searchWidth, 16), draw);
-        snackbar.place(new UiRect(MARGIN, Math.max(top + 18, skills.height() - FOOT - 22),
+        snackbar.place(new UiRect(MARGIN, Math.max(top + 18, footerTop(skills.height()) - 22),
                 Math.min(220, skills.width() - 2 * MARGIN), 18), draw);
     }
 
@@ -192,9 +192,13 @@ public final class AdaptSkillTree {
         return best;
     }
 
+    public static int footerTop(int height) {
+        return height - FOOT;
+    }
+
     private static Viewport viewport(Screen screen) {
         return new Viewport(screen.width, screen.width < 245 ? AuramMenu.BAR_HEIGHT + 54 : AuramMenu.BAR_HEIGHT + 32,
-                Math.max(AuramMenu.BAR_HEIGHT + 56, screen.height - FOOT));
+                Math.max(AuramMenu.BAR_HEIGHT + 56, footerTop(screen.height)));
     }
 
     record Viewport(int width, int top, int bottom) {

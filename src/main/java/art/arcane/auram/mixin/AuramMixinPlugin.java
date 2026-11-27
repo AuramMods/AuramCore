@@ -70,12 +70,16 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.ftbessentials.Waystone")) {
             return "net.blay09.mods.waystones.core.WaystoneManager";
         }
-        if (mixinClassName.startsWith("art.arcane.auram.mixin.adapt.")) {
-            return mixinClassName.endsWith("AdaptSkillsAccess")
-                    ? "art.arcane.adapt.client.screen.SkillsScreen" : "art.arcane.adapt.client.screen.AdaptScreen";
-        }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
+            case "art.arcane.auram.mixin.adapt.AdaptScreenAccess", "art.arcane.auram.mixin.adapt.AdaptScreenMixin" ->
+                    "art.arcane.adapt.client.screen.AdaptScreen";
+            case "art.arcane.auram.mixin.adapt.AdaptSkillsAccess" -> "art.arcane.adapt.client.screen.SkillsScreen";
+            case "art.arcane.auram.mixin.adapt.AdaptOverviewKitMixin" -> "art.arcane.adapt.client.ui.kit.KitScreen";
+            case "art.arcane.auram.mixin.adapt.AdaptOverviewPopoverMixin" -> "art.arcane.adapt.client.ui.kit.Popover";
+            case "art.arcane.auram.mixin.adapt.AdaptOverviewSearchMixin" -> "art.arcane.adapt.client.ui.kit.TextField";
+            case "art.arcane.auram.mixin.darkmodeeverywhere.AdaptOverviewContrastMixin" ->
+                    "com.buuz135.darkmodeeverywhere.ClientProxy";
             case "art.arcane.auram.mixin.ftbessentials.HomeManagerAccess" ->
                     "dev.ftb.mods.ftbessentials.util.SavedTeleportManager$HomeManager";
             case "art.arcane.auram.mixin.ftbessentials.SavedTeleportManagerAccess",
