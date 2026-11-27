@@ -116,7 +116,7 @@ public final class WaystoneDestinations {
 
     private static boolean rejectCommand(ServerPlayer player, SavedTeleportManager manager, String name) {
         if (!isLinked(manager, name)) return false;
-        player.sendSystemMessage(Component.translatable("auram.waystone.linked_destination", name));
+        DestinationFeedback.warning(player, Component.translatable("auram.waystone.linked_destination", name));
         return true;
     }
 

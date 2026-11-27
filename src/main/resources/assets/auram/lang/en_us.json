@@ -1,4 +1,10 @@
 {
+  "auram.waystone.waystones": "Waystones",
+  "auram.waystone.use_waystones": "Create homes & global warps with %s.",
+  "auram.waystone.home_saved": "%s home saved",
+  "auram.waystone.warp_saved": "%s global warp saved",
+  "auram.waystone.warp_operator_required": "Only operators can create warps with this command.",
+  "auram.waystone.arrived": "Teleported to %s",
   "auram.waystone.empty_name": "Enter a name for this Waystone.",
   "auram.waystone.home_taken": "You already have a home named %s. Choose a different Waystone name.",
   "auram.waystone.warp_taken": "There is already a global destination named %s. Choose another name or keep this Waystone private.",

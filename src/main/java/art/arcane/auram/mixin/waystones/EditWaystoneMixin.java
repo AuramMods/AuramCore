@@ -1,5 +1,6 @@
 package art.arcane.auram.mixin.waystones;
 
+import art.arcane.auram.waystone.DestinationFeedback;
 import art.arcane.auram.waystone.WaystoneDestinations;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -32,7 +33,7 @@ abstract class EditWaystoneMixin {
                 ? Component.translatable("auram.waystone.global_permission")
                 : WaystoneDestinations.editError(player.getServer(), stone, legalName, global);
         if (error != null) {
-            player.sendSystemMessage(error);
+            DestinationFeedback.warning(player, error);
             ci.cancel();
         }
     }
@@ -45,7 +46,11 @@ abstract class EditWaystoneMixin {
 
     @Inject(method = "handle", at = @At(value = "INVOKE",
             target = "Lnet/blay09/mods/waystones/core/WaystoneSyncManager;sendWaystoneUpdateToAll(Lnet/minecraft/server/MinecraftServer;Lnet/blay09/mods/waystones/api/IWaystone;)V"))
-    private static void auram$refreshDestinations(ServerPlayer player, EditWaystoneMessage message, CallbackInfo ci) {
+    private static void auram$refreshDestinations(ServerPlayer player, EditWaystoneMessage message, CallbackInfo ci,
+                                                 @Local Waystone stone) {
         WaystoneDestinations.changed();
+        if (WaystoneDestinations.isPlayerWaystone(stone) && stone.getOwnerUid() != null) {
+            DestinationFeedback.saved(player, stone.getName(), stone.isGlobal());
+        }
     }
 }
