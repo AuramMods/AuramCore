@@ -26,6 +26,8 @@ abstract class LargeMapNavigationMixin {
     @Shadow private Button infoButton;
     @Shadow private Button infoSortScreen;
     @Shadow private Button clearDeathpointsButton;
+    @Shadow private Button dimensionButton;
+    @Shadow private Button settingsButton;
     @Shadow MapDimension dimension;
 
     @Unique private boolean auram$seededView;
@@ -51,16 +53,18 @@ abstract class LargeMapNavigationMixin {
     }
 
     @Inject(method = "alignWidgets", at = @At("RETURN"))
-    private void auram$placeMapToolsBelowHeader(CallbackInfo ci) {
+    private void auram$placeMapToolsBesideRail(CallbackInfo ci) {
         auram$shift(claimChunksButton);
         auram$shift(waypointManagerButton);
         auram$shift(infoButton);
         auram$shift(infoSortScreen);
         auram$shift(clearDeathpointsButton);
+        auram$shift(dimensionButton);
+        auram$shift(settingsButton);
     }
 
     @Unique
     private void auram$shift(Button button) {
-        button.setY(button.getPosY() + AuramMenu.BAR_HEIGHT);
+        button.setX(button.getPosX() + AuramMenu.RAIL_WIDTH);
     }
 }

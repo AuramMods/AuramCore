@@ -10,17 +10,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = BaseScreen.class, remap = false)
 abstract class FtbJournalLayoutMixin {
     @Inject(method = "setFullscreen", at = @At("RETURN"))
-    private void auram$reserveJournalHeader(CallbackInfoReturnable<Boolean> result) {
+    private void auram$reserveJournalRail(CallbackInfoReturnable<Boolean> result) {
         if (AuramMenu.isJournalGui(this)) {
             BaseScreen journal = (BaseScreen) (Object) this;
-            journal.setHeight(Math.max(1, journal.height - AuramMenu.BAR_HEIGHT));
+            journal.setWidth(Math.max(1, journal.width - AuramMenu.RAIL_WIDTH));
         }
     }
 
-    @Inject(method = "getY", at = @At("HEAD"), cancellable = true)
-    private void auram$startJournalBelowHeader(CallbackInfoReturnable<Integer> result) {
+    @Inject(method = "getX", at = @At("HEAD"), cancellable = true)
+    private void auram$startJournalBesideRail(CallbackInfoReturnable<Integer> result) {
         if (AuramMenu.isJournalGui(this)) {
-            result.setReturnValue(AuramMenu.BAR_HEIGHT);
+            result.setReturnValue(AuramMenu.RAIL_WIDTH);
         }
     }
 }

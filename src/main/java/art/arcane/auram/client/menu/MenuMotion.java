@@ -56,11 +56,11 @@ final class MenuMotion {
 
     private void capture(Minecraft client) {
         var main = client.getMainRenderTarget();
-        frame.capture(client, main.viewHeight, main.viewWidth, main.viewHeight);
+        frame.capture(client, main.viewWidth, main.viewHeight, main.viewWidth, main.viewHeight);
     }
 
     private void draw(GuiGraphics graphics, float opacity) {
         graphics.flush();
-        MenuGlass.drawFrame(graphics, frame.texture(), graphics.guiWidth(), graphics.guiHeight(), 0, 0, opacity);
+        MenuGlass.drawFrame(graphics, frame.texture(), graphics.guiWidth(), graphics.guiHeight(), 1, 0, opacity);
     }
 }
