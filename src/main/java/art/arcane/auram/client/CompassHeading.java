@@ -1,7 +1,7 @@
 package art.arcane.auram.client;
 
 public final class CompassHeading {
-    private static final long SETTLE_NANOS = 1_000_000_000L;
+    private static final long SETTLE_NANOS = 500_000_000L;
     private static final double EXP_END = Math.exp(-6.0);
     private boolean initialized;
     private long startedAt;

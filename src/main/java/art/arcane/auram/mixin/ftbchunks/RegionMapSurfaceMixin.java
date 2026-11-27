@@ -80,16 +80,18 @@ abstract class RegionMapSurfaceMixin extends Panel implements RegionMapSurfaceAc
     @WrapMethod(method = "draw")
     private void auram$drawAtFractionalZoom(GuiGraphics graphics, Theme theme, int x, int y, int w, int h,
                                            Operation<Void> original) {
-        if (auram$zoom == null) {
+        float scale = (float) auram$zoomScale();
+        double fractionX = auram$fraction(getScrollX());
+        double fractionY = auram$fraction(getScrollY());
+        if (scale == 1 && fractionX == 0 && fractionY == 0) {
             original.call(graphics, theme, x, y, w, h);
             return;
         }
-        float scale = (float) auram$zoom.scale();
         var pose = graphics.pose();
         pose.pushPose();
         // FTB truncates its draw offsets to integers. The pose supplies the remainder.
-        pose.translate(x * (1 - scale) - auram$fraction(getScrollX()) * scale,
-                y * (1 - scale) - auram$fraction(getScrollY()) * scale, 0);
+        pose.translate(x * (1 - scale) - fractionX * scale,
+                y * (1 - scale) - fractionY * scale, 0);
         pose.scale(scale, scale, 1);
         try {
             original.call(graphics, theme, x, y, w, h);
