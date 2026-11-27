@@ -45,6 +45,8 @@ public final class WaystoneDestinations {
     public static Component editError(MinecraftServer server, IWaystone stone, String name, boolean global) {
         String key = key(name);
         if (key.isEmpty()) return Component.translatable("auram.waystone.empty_name");
+        // Let existing stones go private even if an older save already had conflicting names.
+        if (key.equals(key(stone.getName())) && (!global || stone.isGlobal())) return null;
 
         UUID owner = stone.getOwnerUid();
         var homes = ownerHomes(server, owner);
