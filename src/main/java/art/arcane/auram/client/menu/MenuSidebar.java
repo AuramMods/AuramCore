@@ -42,9 +42,11 @@ final class MenuSidebar {
         glass.draw(client, graphics, screenWidth, height, panelWidth, expandedWidth);
         graphics.vLine(panelWidth - 1, -1, height, 0xff354956);
         graphics.enableScissor(0, Math.min(INSET, height), panelWidth, Math.max(INSET, height - INSET));
-        for (int i = 0; i < tabs.size(); i++) {
-            int top = INSET + i * ROW_HEIGHT - (int) scroll;
-            if (top + ROW_HEIGHT <= INSET || top >= height - INSET) continue;
+        int origin = INSET - (int) scroll;
+        int first = (int) scroll / ROW_HEIGHT;
+        int last = Math.min(tabs.size(), Math.max(first, (height - INSET - origin + ROW_HEIGHT - 1) / ROW_HEIGHT));
+        for (int i = first; i < last; i++) {
+            int top = origin + i * ROW_HEIGHT;
             var tab = tabs.get(i);
             boolean active = tab == selected;
             boolean hovered = enabled && mouseX >= 0 && mouseX < panelWidth && mouseY >= Math.max(INSET, top)
@@ -54,16 +56,23 @@ final class MenuSidebar {
                         active ? 0x50367d89 : 0x30366273, active ? 0x29296169 : 0x20265157);
                 if (active) graphics.fill(2, top + 7, 4, top + ROW_HEIGHT - 7, 0xff9feee5);
             }
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            graphics.blit(tab.icon, (AuramMenu.RAIL_WIDTH - ICON_SIZE) / 2,
-                    top + (ROW_HEIGHT - ICON_SIZE) / 2, 0, 0, ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
-            RenderSystem.disableBlend();
             if (panelWidth > AuramMenu.RAIL_WIDTH) {
                 graphics.drawString(client.font, tab.title, AuramMenu.RAIL_WIDTH + 3,
                         top + (ROW_HEIGHT - client.font.lineHeight) / 2, active ? 0xe6fffa : 0xd0dce4);
             }
         }
+        // Flush buffered text and row backgrounds before drawing the immediate icon quads.
+        graphics.flush();
+        RenderSystem.disableDepthTest();
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        for (int i = first; i < last; i++) {
+            graphics.blit(tabs.get(i).icon, (AuramMenu.RAIL_WIDTH - ICON_SIZE) / 2,
+                    origin + i * ROW_HEIGHT + (ROW_HEIGHT - ICON_SIZE) / 2, 0, 0,
+                    ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
+        }
+        RenderSystem.disableBlend();
+        RenderSystem.enableDepthTest();
         graphics.disableScissor();
 
         int overflow = maxScroll(height, tabs.size());
