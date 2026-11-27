@@ -10,6 +10,7 @@ import com.mojang.logging.LogUtils;
 import org.slf4j.Logger;
 
 import java.util.ArrayDeque;
+import java.util.BitSet;
 import java.util.List;
 
 final class VaporWorker implements AutoCloseable {
@@ -20,9 +21,10 @@ final class VaporWorker implements AutoCloseable {
     private final ArrayDeque<VaporCompute.Inputs> computeInputs = new ArrayDeque<>(2);
     private boolean compute;
     private VoxelOccupancy computeOccupancy;
-    private boolean[] computeOpen;
+    private BitSet computeOpen;
     private WindTopology computeTopology;
     private boolean computeHasWind;
+    private boolean computeStarted;
     private final SourceInbox<VaporVolume.Source> sources = new SourceInbox<>(32);
     private final SourceInbox<WindField.Source> windSources = new SourceInbox<>(32);
     private WindField wind;
@@ -104,16 +106,20 @@ final class VaporWorker implements AutoCloseable {
             gusts = windSources.takePulses();
         }
         if (gpu) {
+            if (!computeStarted && pending.isEmpty() && continuous.isEmpty()
+                    && gusts.isEmpty() && windEmitters.isEmpty()) return;
+            computeStarted = true;
             prepareCompute(occupancy, atmosphere, pending, continuous, gusts, windEmitters);
             return;
         }
+        if (volume == null && pending.isEmpty() && continuous.isEmpty()
+                && gusts.isEmpty() && windEmitters.isEmpty()) return;
         long start = probe == null ? 0 : System.nanoTime();
         if (volume == null) volume = new VaporVolume();
         if (!windEmitters.isEmpty() || !gusts.isEmpty() || wind != null && wind.active()) {
             if (wind == null) wind = new WindField();
             if (occupancy != windOccupancy) {
-                boolean[] open = volume.updateOccupancy(occupancy);
-                wind.step(new WindTopology(occupancy.origin(), open), windEmitters, gusts);
+                wind.step(WindTopology.around(occupancy), windEmitters, gusts);
                 windOccupancy = occupancy;
             } else {
                 wind.step(wind.topology(), windEmitters, gusts);
@@ -139,7 +145,7 @@ final class VaporWorker implements AutoCloseable {
             computeOccupancy = occupancy;
         }
         if (computeHasWind && computeTopology == null) {
-            computeTopology = new WindTopology(occupancy.origin(), computeOpen);
+            computeTopology = WindTopology.around(occupancy);
         }
         var commands = new VaporCompute.Inputs(occupancy, computeOpen, computeTopology, erosion,
                 pulses, emitters, gusts, windEmitters);

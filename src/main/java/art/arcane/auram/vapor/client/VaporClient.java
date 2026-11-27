@@ -16,6 +16,7 @@ import art.arcane.auram.vapor.VaporNetwork;
 import art.arcane.auram.vapor.VaporObstacles;
 import art.arcane.auram.vapor.VaporState;
 import art.arcane.auram.wind.WindNetwork;
+import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -38,10 +39,15 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 import static art.arcane.auram.field.VoxelGrid.SECTION;
 import static art.arcane.auram.field.VoxelGrid.SECTIONS;
@@ -50,6 +56,7 @@ import static art.arcane.auram.field.VoxelGrid.VAPOR;
 @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
 public final class VaporClient {
     private static final int SECTION_READS_PER_TICK = 4;
+    private static final int LOD_READS_PER_BATCH = 4;
     private static final int MAX_WAITING_PULSES = 32;
     private static final int PULSE_WAIT_TICKS = 40;
     private static final SectionOccupancy EMPTY_SECTION = new SectionOccupancy(new BitSet());
@@ -192,9 +199,10 @@ public final class VaporClient {
                 ? VaporAmbient.Sources.EMPTY : VaporAmbient.sample(level, camera.blockPosition(), origin);
         Map<Key, VaporNetwork.Emitter> machines = paused || VaporAtmosphere.current() == null ? Map.of()
                 : LocalMachineVapor.collect(level, origin);
-        if (session != null || !local.empty() || !machines.isEmpty()
+        Object lodWorld = paused ? null : VoxyVaporSections.world();
+        if (session != null || !local.empty() || !machines.isEmpty() || lodWorld != null
                 || ClientFieldSources.VAPOR.has(level) || ClientFieldSources.WIND.has(level)) {
-            sessionFor(level).tick(origin, center, paused, local, machines);
+            sessionFor(level).tick(origin, center, paused, local, machines, lodWorld);
             VaporTexture.pumpCompute();
         }
     }
@@ -249,6 +257,16 @@ public final class VaporClient {
         private final Map<Position, SectionOccupancy> sections = new HashMap<>();
         private final Map<Position, LevelChunk> knownChunks = new LinkedHashMap<>();
         private final List<Position> window = new ArrayList<>();
+        private final Set<Position> pendingVanilla = new LinkedHashSet<>();
+        private final List<Position> lodWindow = new ArrayList<>();
+        private final Set<Position> lodParents = new HashSet<>();
+        private final Map<Position, Map<Key, VaporNetwork.Emitter>> lodEmitters = new HashMap<>();
+        private Object lodWorld;
+        private int lodCursor;
+        private int nextLodSweep;
+        private final Set<Position> dirtyLodParents = new LinkedHashSet<>();
+        private List<Position> lodRequest = List.of();
+        private CompletableFuture<Map<Position, VoxyVaporSections.Tile>> lodRead;
         private final ArrayDeque<WaitingPulse> pulses = new ArrayDeque<>();
         private final ArrayDeque<WaitingGust> gusts = new ArrayDeque<>();
         private List<WindNetwork.Emitter> windEmitters = List.of();
@@ -291,14 +309,16 @@ public final class VaporClient {
         }
 
         private void tick(Position next, BlockPos camera, boolean paused, VaporAmbient.Sources local,
-                          Map<Key, VaporNetwork.Emitter> machines) {
+                          Map<Key, VaporNetwork.Emitter> machines, Object lodWorld) {
             if (paused) {
                 worker.submit(input, erosion, List.of(), true, List.of(), List.of(), List.of());
                 return;
             }
             ticks++;
             if (!next.equals(origin)) moveWindow(next, camera);
-            readSections();
+            mergeSources(machines);
+            if (hasSimulationWork() || !local.empty()) readSections();
+            readLodSections(lodWorld);
             if (changed) {
                 input = new VoxelOccupancy(origin, sections);
                 changed = false;
@@ -315,7 +335,6 @@ public final class VaporClient {
                     pending.remove();
                 }
             }
-            mergeSources(machines);
             List<VaporVolume.Source> continuous = vapor;
             if (!local.burning().isEmpty()) {
                 continuous = new ArrayList<>(continuous);
@@ -346,6 +365,11 @@ public final class VaporClient {
             ClientFieldSources.VAPOR.collect(level, origin, ownedVapor);
             ClientFieldSources.WIND.collect(level, origin, ownedWind);
             ownedVapor.addAll(machines.values());
+            for (var entry : lodEmitters.values()) {
+                entry.forEach((key, source) -> {
+                    if (!remoteVapor.containsKey(key) && !ClientFieldSources.VAPOR.contains(level, key)) ownedVapor.add(source);
+                });
+            }
             if (sourcesChanged || !previousVapor.equals(ownedVapor) || !previousMachines.equals(machines)) {
                 if (remoteVapor.isEmpty()) {
                     vapor = ClientFieldSources.mergeLegacy(emitters, ownedVapor,
@@ -417,24 +441,133 @@ public final class VaporClient {
             }
             Position center = position(camera).section();
             window.sort(Comparator.comparingInt(pos -> distance(pos, center)));
-            sections.keySet().retainAll(window);
-            knownChunks.keySet().retainAll(window);
+            sections.keySet().removeIf(section -> !inWindow(section));
+            knownChunks.keySet().removeIf(section -> !inWindow(section));
+            lodEmitters.keySet().removeIf(section -> !inWindow(section));
+            lodWindow.clear();
+            lodParents.clear();
+            for (Position section : window) {
+                Position parent = new Position(section.x() >> 1, section.y() >> 1, section.z() >> 1);
+                if (lodParents.add(parent)) lodWindow.add(parent);
+            }
+            lodCursor = 0;
+            nextLodSweep = ticks;
+            pendingVanilla.clear();
+            for (Position section : window) {
+                if (!knownChunks.containsKey(section)) pendingVanilla.add(section);
+            }
+        }
+
+        private boolean hasSimulationWork() {
+            return !vapor.isEmpty() || !wind.isEmpty() || !pulses.isEmpty() || !gusts.isEmpty()
+                    || worker.frames().current() != null || VaporTexture.computeActive();
         }
 
         private void readSections() {
             int reads = 0;
-            for (Position section : window) {
-                if (sections.containsKey(section)) continue;
-                int index = level.getSectionIndexFromSectionY(section.y());
-                if (index < 0 || index >= level.getSectionsCount()) continue;
-                LevelChunk chunk = level.getChunkSource().getChunk(section.x(), section.z(), ChunkStatus.FULL, false);
-                if (chunk == null) continue;
-                LevelChunkSection blocks = chunk.getSection(index);
-                sections.put(section, blocks.hasOnlyAir() ? EMPTY_SECTION : readSection(section, blocks));
-                knownChunks.put(section, chunk);
+            // A distant source should start as soon as its chunk arrives.
+            for (VaporVolume.Source source : vapor) {
+                if (readVanillaSection(source.position().section()) && ++reads == SECTION_READS_PER_TICK) return;
+            }
+            var pending = pendingVanilla.iterator();
+            while (pending.hasNext()) {
+                Position section = pending.next();
+                pending.remove();
+                if (readVanillaSection(section) && ++reads == SECTION_READS_PER_TICK) return;
+            }
+        }
+
+        private boolean readVanillaSection(Position section) {
+            if (knownChunks.containsKey(section) || !inWindow(section)) return false;
+            int index = level.getSectionIndexFromSectionY(section.y());
+            if (index < 0 || index >= level.getSectionsCount()) return false;
+            LevelChunk chunk = level.getChunkSource().getChunk(section.x(), section.z(), ChunkStatus.FULL, false);
+            if (chunk == null) return false;
+            LevelChunkSection blocks = chunk.getSection(index);
+            sections.put(section, blocks.hasOnlyAir() ? EMPTY_SECTION : readSection(section, blocks));
+            knownChunks.put(section, chunk);
+            lodEmitters.remove(section);
+            changed = true;
+            refreshWeather = true;
+            return true;
+        }
+
+        private void readLodSections(Object world) {
+            if (lodWorld != world) {
+                lodWorld = world;
+                lodRead = null;
+                sections.keySet().removeIf(section -> !knownChunks.containsKey(section));
+                lodEmitters.clear();
                 changed = true;
-                refreshWeather = true;
-                if (++reads == SECTION_READS_PER_TICK) return;
+                lodCursor = 0;
+                nextLodSweep = ticks;
+            }
+            if (world == null) return;
+            if (lodRead != null) {
+                if (!lodRead.isDone()) return;
+                try {
+                    var tiles = lodRead.join();
+                    for (Position parent : lodRequest) acceptLodTiles(parent, tiles);
+                } catch (CompletionException error) {
+                    LogUtils.getLogger().debug("Could not read Voxy vapor terrain {}", lodRequest, error);
+                }
+                lodRead = null;
+            }
+            if (ticks % 2 != 0) return;
+            var batch = new ArrayList<Position>(LOD_READS_PER_BATCH);
+            var dirty = dirtyLodParents.iterator();
+            while (dirty.hasNext() && batch.size() < LOD_READS_PER_BATCH) {
+                Position parent = dirty.next();
+                dirty.remove();
+                if (lodParents.contains(parent) && hasMissingVanillaTile(parent)) batch.add(parent);
+            }
+            if (ticks >= nextLodSweep) {
+                while (lodCursor < lodWindow.size() && batch.size() < LOD_READS_PER_BATCH) {
+                    Position parent = lodWindow.get(lodCursor++);
+                    if (!batch.contains(parent) && hasMissingVanillaTile(parent)) batch.add(parent);
+                }
+                if (lodCursor == lodWindow.size()) {
+                    lodCursor = 0;
+                    nextLodSweep = ticks + 80;
+                }
+            }
+            if (!batch.isEmpty()) {
+                lodRequest = batch;
+                lodRead = VoxyVaporSections.read(world, batch);
+            }
+        }
+
+        private boolean hasMissingVanillaTile(Position parent) {
+            for (int y = parent.y() * 2; y < parent.y() * 2 + 2; y++) {
+                if (level.getSectionIndexFromSectionY(y) < 0 || level.getSectionIndexFromSectionY(y) >= level.getSectionsCount()) continue;
+                for (int z = parent.z() * 2; z < parent.z() * 2 + 2; z++) {
+                    for (int x = parent.x() * 2; x < parent.x() * 2 + 2; x++) {
+                        Position section = new Position(x, y, z);
+                        if (inWindow(section) && level.getChunkSource().getChunkNow(x, z) == null) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private void acceptLodTiles(Position parent, Map<Position, VoxyVaporSections.Tile> tiles) {
+            if (!lodParents.contains(parent)) return;
+            for (int y = parent.y() * 2; y < parent.y() * 2 + 2; y++) {
+                for (int z = parent.z() * 2; z < parent.z() * 2 + 2; z++) {
+                    for (int x = parent.x() * 2; x < parent.x() * 2 + 2; x++) {
+                        Position section = new Position(x, y, z);
+                        if (!inWindow(section) || level.getChunkSource().getChunkNow(x, z) != null) continue;
+                        VoxyVaporSections.Tile tile = tiles.get(section);
+                        if (tile == null) {
+                            changed |= sections.remove(section) != null;
+                            lodEmitters.remove(section);
+                            continue;
+                        }
+                        if (!tile.occupancy().equals(sections.put(section, tile.occupancy()))) changed = true;
+                        if (tile.emitters().isEmpty()) lodEmitters.remove(section);
+                        else lodEmitters.put(section, tile.emitters());
+                    }
+                }
             }
         }
 
@@ -458,10 +591,21 @@ public final class VaporClient {
 
         private void invalidateColumn(LevelChunk chunk, boolean unloading) {
             var pos = chunk.getPos();
+            if (unloading && lodWorld != null) {
+                // Keep the last observed collision while Voxy catches up to the vanilla unload.
+                for (Position section : window) {
+                    if (section.x() == pos.x && section.z() == pos.z && knownChunks.remove(section, chunk)) {
+                        dirtyLodParents.add(new Position(section.x() >> 1, section.y() >> 1, section.z() >> 1));
+                    }
+                }
+                return;
+            }
             for (Position section : window) {
                 if (section.x() != pos.x || section.z() != pos.z || (unloading && knownChunks.get(section) != chunk)) continue;
                 sections.remove(section);
                 knownChunks.remove(section);
+                lodEmitters.remove(section);
+                if (!unloading) pendingVanilla.add(section);
                 changed = true;
                 refreshWeather = true;
             }

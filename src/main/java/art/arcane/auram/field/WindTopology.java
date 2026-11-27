@@ -2,12 +2,13 @@ package art.arcane.auram.field;
 
 import java.nio.IntBuffer;
 import java.util.Arrays;
+import java.util.BitSet;
 
-import static art.arcane.auram.field.VoxelGrid.VAPOR;
+import static art.arcane.auram.field.VoxelGrid.WIND_BLOCKS;
 
 /** Connected air within each 2×2×2 cell and across its six faces. A cell has at most four components. */
 public final class WindTopology {
-    public static final VoxelGrid GRID = new VoxelGrid(VAPOR.side() / 2, 2);
+    public static final VoxelGrid GRID = new VoxelGrid(WIND_BLOCKS.side() / 2, 2);
     public static final int COMPONENTS = 4;
     public static final int NODES = GRID.cells() * COMPONENTS;
     public static final int LINK_MASK = 0x00ff_ffff;
@@ -18,11 +19,18 @@ public final class WindTopology {
     private static final int[] NEIGHBOR = {1, -1, SIDE, -SIDE, SIDE * SIDE, -SIDE * SIDE};
 
     private final VoxelGrid.Position origin;
-    private final int[] labels = new int[VAPOR.cells()];
+    private final int[] labels = new int[WIND_BLOCKS.cells()];
     /** Lower 24 bits are the connected component slots on the six neighbor faces. Upper byte is this component's air mask. */
     private final int[] nodes = new int[NODES];
 
-    public WindTopology(VoxelGrid.Position origin, boolean[] open) {
+    public static WindTopology around(VoxelOccupancy occupancy) {
+        int offset = (VoxelGrid.VAPOR.side() - WIND_BLOCKS.side()) / 2;
+        var base = occupancy.origin();
+        var origin = new VoxelGrid.Position(base.x() + offset, base.y() + offset, base.z() + offset);
+        return new WindTopology(origin, occupancy.openBlocks(WIND_BLOCKS, origin));
+    }
+
+    public WindTopology(VoxelGrid.Position origin, BitSet open) {
         this.origin = origin;
         Arrays.fill(labels, -1);
         int side = GRID.side();
@@ -32,24 +40,24 @@ public final class WindTopology {
             }
         }
 
-        int full = VAPOR.side();
+        int full = WIND_BLOCKS.side();
         for (int z = 0; z < full; z++) {
             for (int y = 0; y < full; y++) {
                 for (int x = 0; x < full; x++) {
-                    int node = labels[VAPOR.index(x, y, z)];
+                    int node = labels[WIND_BLOCKS.index(x, y, z)];
                     if (node < 0) continue;
-                    if ((x & 1) != 0 && x + 1 < full) link(node, labels[VAPOR.index(x + 1, y, z)], 0);
-                    if ((y & 1) != 0 && y + 1 < full) link(node, labels[VAPOR.index(x, y + 1, z)], 2);
-                    if ((z & 1) != 0 && z + 1 < full) link(node, labels[VAPOR.index(x, y, z + 1)], 4);
+                    if ((x & 1) != 0 && x + 1 < full) link(node, labels[WIND_BLOCKS.index(x + 1, y, z)], 0);
+                    if ((y & 1) != 0 && y + 1 < full) link(node, labels[WIND_BLOCKS.index(x, y + 1, z)], 2);
+                    if ((z & 1) != 0 && z + 1 < full) link(node, labels[WIND_BLOCKS.index(x, y, z + 1)], 4);
                 }
             }
         }
     }
 
-    private void partition(int x, int y, int z, boolean[] open) {
+    private void partition(int x, int y, int z, BitSet open) {
         int remaining = 0;
         for (int corner = 0; corner < 8; corner++) {
-            if (open[blockIndex(x, y, z, corner)]) remaining |= 1 << corner;
+            if (open.get(blockIndex(x, y, z, corner))) remaining |= 1 << corner;
         }
 
         int node = GRID.index(x, y, z) * COMPONENTS;
@@ -82,7 +90,7 @@ public final class WindTopology {
     }
 
     public int node(int x, int y, int z) {
-        return VAPOR.contains(x, y, z) ? labels[VAPOR.index(x, y, z)] : -1;
+        return WIND_BLOCKS.contains(x, y, z) ? labels[WIND_BLOCKS.index(x, y, z)] : -1;
     }
 
     public int node(VoxelGrid.Position world) {
@@ -106,6 +114,6 @@ public final class WindTopology {
     }
 
     public static int blockIndex(int x, int y, int z, int corner) {
-        return VAPOR.index(x * 2 + (corner & 1), y * 2 + ((corner >>> 1) & 1), z * 2 + (corner >>> 2));
+        return WIND_BLOCKS.index(x * 2 + (corner & 1), y * 2 + ((corner >>> 1) & 1), z * 2 + (corner >>> 2));
     }
 }

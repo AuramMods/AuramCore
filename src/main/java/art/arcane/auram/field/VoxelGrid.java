@@ -6,7 +6,8 @@ public record VoxelGrid(int side, int blocksPerCell) {
     public static final int WINDOW_BLOCKS = 64;
     public static final VoxelGrid BLOCKS = new VoxelGrid(WINDOW_BLOCKS, 1);
     public static final VoxelGrid SECTIONS = new VoxelGrid(SECTION, 1);
-    public static final int VAPOR_RADIUS = 32;
+    public static final int VAPOR_RADIUS = 128;
+    public static final VoxelGrid WIND_BLOCKS = new VoxelGrid(68, 1);
     // Two guard blocks on each face cover the wind alignment and the texture filter.
     public static final VoxelGrid VAPOR = new VoxelGrid(2 * VAPOR_RADIUS + 4, 1);
 
@@ -56,6 +57,18 @@ public record VoxelGrid(int side, int blocksPerCell) {
 
         public boolean empty() {
             return minX == maxX;
+        }
+
+        public int cells() {
+            return (maxX - minX) * (maxY - minY) * (maxZ - minZ);
+        }
+
+        public boolean contains(int x, int y, int z) {
+            return x >= minX && x < maxX && y >= minY && y < maxY && z >= minZ && z < maxZ;
+        }
+
+        public int index(int x, int y, int z) {
+            return x - minX + (maxX - minX) * (y - minY + (maxY - minY) * (z - minZ));
         }
 
         public Bounds include(int x, int y, int z) {

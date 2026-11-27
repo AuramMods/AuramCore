@@ -1,6 +1,5 @@
 package art.arcane.auram.field;
 
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Map;
 
@@ -12,15 +11,19 @@ public record VoxelOccupancy(Position origin, Map<Position, SectionOccupancy> se
         sections = Map.copyOf(sections);
     }
 
-    public boolean[] openBlocks() {
-        int side = VAPOR.side();
-        boolean[] open = new boolean[VAPOR.cells()];
+    public BitSet openBlocks() {
+        return openBlocks(VAPOR, origin);
+    }
+
+    public BitSet openBlocks(VoxelGrid grid, Position windowOrigin) {
+        int side = grid.side();
+        BitSet open = new BitSet(grid.cells());
         for (var entry : sections.entrySet()) {
             Position section = entry.getKey();
             SectionOccupancy occupancy = entry.getValue();
-            int x0 = section.x() * SECTION - origin.x();
-            int y0 = section.y() * SECTION - origin.y();
-            int z0 = section.z() * SECTION - origin.z();
+            int x0 = section.x() * SECTION - windowOrigin.x();
+            int y0 = section.y() * SECTION - windowOrigin.y();
+            int z0 = section.z() * SECTION - windowOrigin.z();
             int fromX = Math.max(0, -x0), toX = Math.min(SECTION, side - x0);
             int fromY = Math.max(0, -y0), toY = Math.min(SECTION, side - y0);
             int fromZ = Math.max(0, -z0), toZ = Math.min(SECTION, side - z0);
@@ -28,12 +31,12 @@ public record VoxelOccupancy(Position origin, Map<Position, SectionOccupancy> se
             boolean air = occupancy.occupied.isEmpty();
             for (int z = fromZ; z < toZ; z++) {
                 for (int y = fromY; y < toY; y++) {
-                    int row = VAPOR.index(x0 + fromX, y0 + y, z0 + z);
+                    int row = grid.index(x0 + fromX, y0 + y, z0 + z);
                     if (air) {
-                        Arrays.fill(open, row, row + toX - fromX, true);
+                        open.set(row, row + toX - fromX);
                     } else {
                         for (int x = fromX; x < toX; x++) {
-                            open[row + x - fromX] = !occupancy.blocked(x, y, z);
+                            if (!occupancy.blocked(x, y, z)) open.set(row + x - fromX);
                         }
                     }
                 }

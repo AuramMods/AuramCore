@@ -229,11 +229,28 @@ public class VaporVolumeTest {
         }
     }
 
+    @Test
+    public void farVaporSurvivesACameraRebaseAtTheEdgeOfTheField() {
+        var anchor = new Position(-126, 8, 8);
+        var terrain = new SectionOccupancy(new BitSet());
+        var firstOrigin = vaporOriginAround(0, 8, 8);
+        var secondOrigin = vaporOriginAround(2, 8, 8);
+        var source = new Source(anchor, 0.65f, 0);
+        var volume = new VaporVolume();
+        var before = volume.step(new VoxelOccupancy(firstOrigin, Map.of(anchor.section(), terrain)),
+                Erosion.CLEAR, List.of(), List.of(source));
+        var after = volume.step(new VoxelOccupancy(secondOrigin, Map.of(anchor.section(), terrain)),
+                Erosion.CLEAR, List.of(), List.of());
+        assertTrue(before.density(anchor.x() - firstOrigin.x(), 8 - firstOrigin.y(), 8 - firstOrigin.z()) > 0);
+        assertTrue(after.density(anchor.x() - secondOrigin.x(), 8 - secondOrigin.y(), 8 - secondOrigin.z()) > 0);
+        assertTrue(after.density(anchor.x() - secondOrigin.x(), 9 - secondOrigin.y(), 8 - secondOrigin.z()) > 0);
+    }
+
     private static VoxelOccupancy occupancy(BitSet blocked) {
         return new VoxelOccupancy(ORIGIN, Map.of(ORIGIN, new SectionOccupancy(blocked)));
     }
 
     private static int density(Snapshot snapshot, int x, int y, int z) {
-        return snapshot.density(index(x, y, z));
+        return snapshot.density(x, y, z);
     }
 }

@@ -4,9 +4,10 @@ import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.WindField.Source;
 import org.junit.Test;
 
+import java.util.BitSet;
 import java.util.List;
 
-import static art.arcane.auram.field.VoxelGrid.VAPOR;
+import static art.arcane.auram.field.VoxelGrid.WIND_BLOCKS;
 import static org.junit.Assert.*;
 
 public class WindFieldTest {
@@ -14,7 +15,7 @@ public class WindFieldTest {
 
     @Test
     public void flowsThroughABentDuctWithoutLeakingIntoAdjacentAir() {
-        boolean[] blocks = new boolean[VAPOR.cells()];
+        BitSet blocks = new BitSet(WIND_BLOCKS.cells());
         for (int x = 2; x <= 8; x++) open(blocks, x, 4, 2);
         for (int z = 2; z <= 12; z++) open(blocks, 8, 4, z);
         for (int z = 2; z <= 12; z++) open(blocks, 10, 4, z);
@@ -31,7 +32,7 @@ public class WindFieldTest {
 
     @Test
     public void strongerSourcesReachFartherAndDecayWhenStopped() {
-        boolean[] blocks = new boolean[VAPOR.cells()];
+        BitSet blocks = new BitSet(WIND_BLOCKS.cells());
         for (int x = 2; x < 54; x++) open(blocks, x, 4, 2);
         var topology = new WindTopology(ORIGIN, blocks);
         WindField strong = new WindField();
@@ -47,7 +48,7 @@ public class WindFieldTest {
 
     @Test
     public void opposingSourcesCancelAndAlignedSourcesAreBounded() {
-        boolean[] blocks = new boolean[VAPOR.cells()];
+        BitSet blocks = new BitSet(WIND_BLOCKS.cells());
         for (int x = 2; x < 20; x++) open(blocks, x, 4, 2);
         var topology = new WindTopology(ORIGIN, blocks);
         WindField field = new WindField();
@@ -61,7 +62,7 @@ public class WindFieldTest {
 
     @Test
     public void gustSurvivesATwoBlockShiftAndDisappearsAfterLeavingTheWindow() {
-        boolean[] blocks = new boolean[VAPOR.cells()];
+        BitSet blocks = new BitSet(WIND_BLOCKS.cells());
         for (int x = 0; x < 60; x++) open(blocks, x, 4, 2);
         var old = new WindTopology(ORIGIN, blocks);
         var moved = new WindTopology(new Position(2, 0, 0), blocks);
@@ -82,8 +83,8 @@ public class WindFieldTest {
         assertFalse(field.active());
     }
 
-    private static void open(boolean[] blocks, int x, int y, int z) {
-        blocks[VAPOR.index(x, y, z)] = true;
+    private static void open(BitSet blocks, int x, int y, int z) {
+        blocks.set(WIND_BLOCKS.index(x, y, z));
     }
 
     private static void run(WindField field, WindTopology topology, List<Source> sources, int ticks) {

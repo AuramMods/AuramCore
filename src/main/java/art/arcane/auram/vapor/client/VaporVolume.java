@@ -6,6 +6,7 @@ import art.arcane.auram.field.VoxelGrid.Bounds;
 import art.arcane.auram.field.VoxelGrid.Position;
 
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 
 import static art.arcane.auram.field.VoxelGrid.VAPOR;
@@ -80,22 +81,20 @@ final class VaporVolume {
     static final class Snapshot {
         final Position origin;
         final Bounds bounds;
+        private final Bounds storage;
         private final byte[] density;
-        private final boolean[] open;
+        private final BitSet open;
 
-        private Snapshot(Position origin, Bounds bounds, byte[] density, boolean[] open) {
+        private Snapshot(Position origin, Bounds bounds, Bounds storage, byte[] density, BitSet open) {
             this.origin = origin;
             this.bounds = bounds;
+            this.storage = storage;
             this.density = density;
             this.open = open;
         }
 
-        int density(int index) {
-            return Byte.toUnsignedInt(density[index]);
-        }
-
         int density(int x, int y, int z) {
-            return VAPOR.contains(x, y, z) ? density(index(x, y, z)) : 0;
+            return storage.contains(x, y, z) ? Byte.toUnsignedInt(density[storage.index(x, y, z)]) : 0;
         }
 
         Bounds boundsAt(Position reference) {
@@ -104,7 +103,35 @@ final class VaporVolume {
         }
 
         boolean open(int index) {
-            return open[index];
+            return open.get(index);
+        }
+    }
+
+    private static final class DensityBuffer {
+        private static final int PAGE_SHIFT = 10;
+        private static final int PAGE_SIZE = 1 << PAGE_SHIFT;
+        private static final int PAGE_MASK = PAGE_SIZE - 1;
+        private final float[][] pages = new float[(CELLS + PAGE_MASK) >> PAGE_SHIFT][];
+
+        float get(int index) {
+            float[] page = pages[index >> PAGE_SHIFT];
+            return page == null ? 0.0f : page[index & PAGE_MASK];
+        }
+
+        void set(int index, float value) {
+            int number = index >> PAGE_SHIFT;
+            float[] page = pages[number];
+            if (page == null) {
+                if (value == 0.0f) return;
+                pages[number] = page = new float[PAGE_SIZE];
+            }
+            page[index & PAGE_MASK] = value;
+        }
+
+        void clear() {
+            for (float[] page : pages) {
+                if (page != null) Arrays.fill(page, 0.0f);
+            }
         }
     }
 
@@ -116,11 +143,11 @@ final class VaporVolume {
     private final float[] windVector = new float[3];
     private final VaporPulse pulse = new VaporPulse();
     private VoxelOccupancy occupancy;
-    private boolean[] open = new boolean[CELLS];
-    private float[] density = new float[CELLS];
-    private float[] display = new float[CELLS];
-    private float[] next = new float[CELLS];
-    private float[] shiftedDisplay;
+    private BitSet open;
+    private DensityBuffer density = new DensityBuffer();
+    private DensityBuffer display = new DensityBuffer();
+    private DensityBuffer next = new DensityBuffer();
+    private DensityBuffer shiftedDisplay;
     private Bounds active = Bounds.EMPTY;
 
     Snapshot step(VoxelOccupancy updated, Erosion erosion, List<Source> pulses, List<Source> emitters) {
@@ -138,15 +165,17 @@ final class VaporVolume {
     }
 
     private void spread(Erosion erosion, WindField wind, FlowMeter meter) {
-        Arrays.fill(next, 0.0f);
+        next.clear();
         Bounds area = active;
         // Reserve space for the density that already occupies each cell after erosion.
         for (int z = area.minZ(); z < area.maxZ(); z++) {
             for (int y = area.minY(); y < area.maxY(); y++) {
                 for (int x = area.minX(); x < area.maxX(); x++) {
                     int index = index(x, y, z);
-                    float amount = density[index] * erosion.at(x, y, z);
-                    density[index] = next[index] = amount >= MIN_DENSITY ? amount : 0.0f;
+                    float amount = density.get(index) * erosion.at(x, y, z);
+                    if (amount < MIN_DENSITY) amount = 0.0f;
+                    density.set(index, amount);
+                    next.set(index, amount);
                 }
             }
         }
@@ -155,7 +184,7 @@ final class VaporVolume {
             for (int z = area.minZ(); z < area.maxZ(); z++) {
                 for (int x = area.minX(); x < area.maxX(); x++) {
                     int index = index(x, y, z);
-                    float amount = density[index];
+                    float amount = density.get(index);
                     if (amount == 0.0f) continue;
                     if (wind == null || !offerWind(index, x, y, z, amount, wind, meter)) {
                         offer(index, x, y, z, amount, 0, 0, 0, meter);
@@ -163,14 +192,17 @@ final class VaporVolume {
                 }
             }
         }
-        float[] old = density;
+        DensityBuffer old = density;
         density = next;
         next = old;
         active = area.expand(SIDE);
     }
 
     private boolean offerWind(int from, int x, int y, int z, float amount, WindField wind, FlowMeter meter) {
-        wind.sample(x, y, z, windVector);
+        var vaporOrigin = occupancy.origin();
+        var windOrigin = wind.topology().origin();
+        wind.sample(x + vaporOrigin.x() - windOrigin.x(), y + vaporOrigin.y() - windOrigin.y(),
+                z + vaporOrigin.z() - windOrigin.z(), windVector);
         float wx = windVector[0], wy = windVector[1], wz = windVector[2];
         float lengthSquared = wx * wx + wy * wy + wz * wz;
         if (lengthSquared < WindField.MIN_WIND * WindField.MIN_WIND) return false;
@@ -192,11 +224,11 @@ final class VaporVolume {
     }
 
     private void transfer(int from, int to, float offered, FlowMeter meter) {
-        if (!open[to]) return;
-        float accepted = acceptedTransfer(offered, next[to]);
+        if (!open.get(to)) return;
+        float accepted = acceptedTransfer(offered, next.get(to));
         if (accepted == 0.0f) return;
-        next[to] += accepted;
-        next[from] -= accepted;
+        next.set(to, next.get(to) + accepted);
+        next.set(from, next.get(from) - accepted);
         if (meter != null) meter.accept(from, to, accepted);
     }
 
@@ -210,7 +242,7 @@ final class VaporVolume {
 
     private void add(int index, float amount) {
         int x = index % SIDE, y = index / SIDE % SIDE, z = index / PLANE;
-        density[index] = Math.min(MAX_DENSITY, density[index] + amount);
+        density.set(index, Math.min(MAX_DENSITY, density.get(index) + amount));
         active = active.include(x, y, z);
     }
 
@@ -222,32 +254,33 @@ final class VaporVolume {
             for (int y = active.minY(); y < active.maxY(); y++) {
                 for (int x = active.minX(); x < active.maxX(); x++) {
                     int index = index(x, y, z);
-                    float target = density[index];
-                    float previous = display[index];
+                    float target = density.get(index);
+                    float previous = display.get(index);
                     // About 94% of a held increase becomes visible in one second at 20 Hz.
                     float value = previous + (target - previous) * (target > previous ? 0.13f : 0.25f);
-                    display[index] = value < MIN_DENSITY ? 0.0f : value;
-                    int packed = Math.round(display[index] * 255.0f);
+                    if (value < MIN_DENSITY) value = 0.0f;
+                    display.set(index, value);
+                    int packed = Math.round(value * 255.0f);
                     if (packed != 0) {
-                        if (pixels == null) pixels = new byte[CELLS];
-                        pixels[index] = (byte) packed;
+                        if (pixels == null) pixels = new byte[active.cells()];
+                        pixels[active.index(x, y, z)] = (byte) packed;
                         visible = visible.include(x, y, z);
                     }
-                    if (display[index] != 0.0f || target >= MIN_DENSITY) live = live.include(x, y, z);
+                    if (value != 0.0f || target >= MIN_DENSITY) live = live.include(x, y, z);
                 }
             }
         }
+        Bounds storage = active;
         active = live;
-        return pixels == null ? null : new Snapshot(occupancy.origin(), visible.expand(SIDE), pixels, open);
+        return pixels == null ? null : new Snapshot(occupancy.origin(), visible.expand(SIDE), storage, pixels, open);
     }
 
-    boolean[] updateOccupancy(VoxelOccupancy updated) {
+    private void updateOccupancy(VoxelOccupancy updated) {
         if (updated != occupancy) replaceOccupancy(updated);
-        return open;
     }
 
     private void replaceOccupancy(VoxelOccupancy updated) {
-        boolean[] newOpen = updated.openBlocks();
+        BitSet newOpen = updated.openBlocks();
         Position origin = updated.origin();
         if (occupancy != null && !active.empty()) {
             Position previous = occupancy.origin();
@@ -256,12 +289,12 @@ final class VaporVolume {
             int moveZ = previous.z() - origin.z();
             boolean moved = !previous.equals(origin);
             if (moved) {
-                Arrays.fill(next, 0.0f);
-                if (shiftedDisplay == null) shiftedDisplay = new float[CELLS];
-                else Arrays.fill(shiftedDisplay, 0.0f);
+                next.clear();
+                if (shiftedDisplay == null) shiftedDisplay = new DensityBuffer();
+                else shiftedDisplay.clear();
             }
-            float[] newDensity = moved ? next : density;
-            float[] newDisplay = moved ? shiftedDisplay : display;
+            DensityBuffer newDensity = moved ? next : density;
+            DensityBuffer newDisplay = moved ? shiftedDisplay : display;
             Bounds retained = Bounds.EMPTY;
             for (int z = active.minZ(); z < active.maxZ(); z++) {
                 for (int y = active.minY(); y < active.maxY(); y++) {
@@ -270,14 +303,15 @@ final class VaporVolume {
                         if (!inside(px, py, pz)) continue;
                         int oldIndex = index(x, y, z);
                         int newIndex = index(px, py, pz);
-                        if (!newOpen[newIndex]) {
-                            newDensity[newIndex] = 0.0f;
-                            newDisplay[newIndex] = 0.0f;
+                        if (!newOpen.get(newIndex)) {
+                            newDensity.set(newIndex, 0.0f);
+                            newDisplay.set(newIndex, 0.0f);
                             continue;
                         }
-                        if (density[oldIndex] == 0.0f && display[oldIndex] == 0.0f) continue;
-                        newDensity[newIndex] = density[oldIndex];
-                        newDisplay[newIndex] = display[oldIndex];
+                        float amount = density.get(oldIndex), shown = display.get(oldIndex);
+                        if (amount == 0.0f && shown == 0.0f) continue;
+                        newDensity.set(newIndex, amount);
+                        newDisplay.set(newIndex, shown);
                         retained = retained.include(px, py, pz);
                     }
                 }

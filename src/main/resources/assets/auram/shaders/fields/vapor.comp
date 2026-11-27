@@ -2,7 +2,7 @@
 
 layout(local_size_x = 4, local_size_y = 4, local_size_z = 4) in;
 
-layout(std430, binding = 0) readonly buffer Labels { int labels[]; };
+layout(std430, binding = 0) readonly buffer Terrain { uint terrain[]; };
 layout(std430, binding = 1) readonly buffer Wind { vec4 wind[]; };
 layout(std430, binding = 2) readonly buffer Current { vec2 currentVapor[]; };
 layout(std430, binding = 3) writeonly buffer Next { vec2 nextVapor[]; };
@@ -40,10 +40,6 @@ const float TRANSPORT_RATE = 0.745;
 const ivec3 DIRECTIONS[3] = ivec3[3](ivec3(1, 0, 0), ivec3(0, 1, 0), ivec3(0, 0, 1));
 shared uint groupVisible;
 
-bool inside(ivec3 pos) {
-    return all(greaterThanEqual(pos, ivec3(0))) && all(lessThan(pos, ivec3(VAPOR_SIDE)));
-}
-
 bool inRegion(ivec3 pos, ivec3 low, ivec3 high) {
     return all(greaterThanEqual(pos, low)) && all(lessThan(pos, high));
 }
@@ -52,8 +48,24 @@ int indexOf(ivec3 pos) {
     return pos.x + VAPOR_SIDE * (pos.y + VAPOR_SIDE * pos.z);
 }
 
+int regionIndex(ivec3 pos, ivec3 low, ivec3 high) {
+    ivec3 local = pos - low;
+    ivec2 size = (high - low).xy;
+    return local.x + size.x * (local.y + size.y * local.z);
+}
+
+int workIndex(ivec3 pos) {
+    return regionIndex(pos, regionMin, regionMax);
+}
+
+bool openCell(int index) {
+    return (terrain[index >> 5] & (1u << uint(index & 31))) != 0u;
+}
+
 int nodeAt(ivec3 pos) {
-    return inside(pos) ? labels[indexOf(pos)] : -1;
+    ivec3 cell = pos - (VAPOR_SIDE - WIND_BLOCK_SIDE) / 2;
+    if (any(lessThan(cell, ivec3(0))) || any(greaterThanEqual(cell, ivec3(WIND_BLOCK_SIDE)))) return -1;
+    return int(terrain[VAPOR_OPEN_WORDS + cell.x + WIND_BLOCK_SIDE * (cell.y + WIND_BLOCK_SIDE * cell.z)]);
 }
 
 vec3 sampleWind(ivec3 pos, int center) {
@@ -67,17 +79,20 @@ vec3 sampleWind(ivec3 pos, int center) {
     return base + 0.25 * nearby;
 }
 
-void propose(ivec3 pos, int index) {
+void propose(ivec3 pos, int index, bool open) {
     vec2 previous = vec2(0);
-    if (labels[index] >= 0 && inRegion(pos + shift, previousMin, previousMax)) previous = currentVapor[indexOf(pos + shift)];
+    if (open && inRegion(pos + shift, previousMin, previousMax)) {
+        previous = currentVapor[regionIndex(pos + shift, previousMin, previousMax)];
+    }
     ivec3 weather = pos >> WEATHER_SHIFT;
     float amount = previous.x * retention[weather.x + WEATHER_SIDE * (weather.y + WEATHER_SIDE * weather.z)];
     if (amount < MIN_DENSITY) amount = 0.0;
 
     vec3 directed = vec3(0);
     float base = amount;
-    if (hasWind && amount > 0.0) {
-        vec3 vector = sampleWind(pos, labels[index]);
+    int node = hasWind && amount > 0.0 ? nodeAt(pos) : -1;
+    if (node >= 0) {
+        vec3 vector = sampleWind(pos, node);
         float speed = length(vector);
         if (speed >= MIN_WIND) {
             float bias = min(0.98, 5.0 * speed);
@@ -95,8 +110,8 @@ float offeredInto(ivec3 pos) {
     for (int axis = 0; axis < 3; ++axis) {
         ivec3 lower = pos - DIRECTIONS[axis];
         ivec3 upper = pos + DIRECTIONS[axis];
-        if (inRegion(lower, regionMin, regionMax)) total += proposals[indexOf(lower)].positive[axis + 1];
-        if (inRegion(upper, regionMin, regionMax)) total += proposals[indexOf(upper)].negative[axis + 1];
+        if (inRegion(lower, regionMin, regionMax)) total += proposals[workIndex(lower)].positive[axis + 1];
+        if (inRegion(upper, regionMin, regionMax)) total += proposals[workIndex(upper)].negative[axis + 1];
     }
     return total;
 }
@@ -118,12 +133,11 @@ void meter(int from, int to, float amount) {
     if (from == outletOutside && to == outletInside) atomicAdd(incoming, int(round(amount * 16777216.0)));
 }
 
-void apply(ivec3 pos, int index) {
+void apply(ivec3 pos, int index, int cell, bool open) {
     if (gl_LocalInvocationIndex == 0u) groupVisible = 0u;
     barrier();
 
-    int node = labels[index];
-    if (node < 0) {
+    if (!open) {
         nextVapor[index] = vec2(0);
         imageStore(volume, pos, vec4(0));
     } else {
@@ -135,20 +149,20 @@ void apply(ivec3 pos, int index) {
             ivec3 lower = pos - DIRECTIONS[axis];
             ivec3 upper = pos + DIRECTIONS[axis];
             if (inRegion(lower, regionMin, regionMax)) {
-                int neighbor = indexOf(lower);
+                int neighbor = workIndex(lower);
                 float outflow = proposed.negative[axis + 1] * capacity[neighbor];
                 amount += proposals[neighbor].positive[axis + 1] * accepted - outflow;
-                if (outletInside >= 0) meter(index, neighbor, outflow);
+                if (outletInside >= 0) meter(cell, indexOf(lower), outflow);
             }
             if (inRegion(upper, regionMin, regionMax)) {
-                int neighbor = indexOf(upper);
+                int neighbor = workIndex(upper);
                 float outflow = proposed.positive[axis + 1] * capacity[neighbor];
                 amount += proposals[neighbor].negative[axis + 1] * accepted - outflow;
-                if (outletInside >= 0) meter(index, neighbor, outflow);
+                if (outletInside >= 0) meter(cell, indexOf(upper), outflow);
             }
         }
 
-        amount = clamp(amount + injection(index), 0.0, 1.0);
+        amount = clamp(amount + injection(cell), 0.0, 1.0);
         float previous = proposed.negative.x;
         float shown = previous + (amount - previous) * (amount > previous ? 0.13 : 0.25);
         if (shown < MIN_DENSITY) shown = 0.0;
@@ -168,10 +182,12 @@ void apply(ivec3 pos, int index) {
 
 void main() {
     ivec3 pos = regionMin + ivec3(gl_GlobalInvocationID);
-    int index = indexOf(pos);
-    if (phase == 0) propose(pos, index);
+    int index = workIndex(pos);
+    int cell = indexOf(pos);
+    bool open = openCell(cell);
+    if (phase == 0) propose(pos, index, open);
     else if (phase == 1) {
-        float inFlow = labels[index] < 0 ? 0.0 : offeredInto(pos);
+        float inFlow = open ? offeredInto(pos) : 0.0;
         capacity[index] = inFlow > 0.0 ? min(1.0, (1.0 - proposals[index].positive.x) / inFlow) : 0.0;
-    } else apply(pos, index);
+    } else apply(pos, index, cell, open);
 }

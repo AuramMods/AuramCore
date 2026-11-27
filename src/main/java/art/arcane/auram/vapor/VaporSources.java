@@ -3,6 +3,7 @@ package art.arcane.auram.vapor;
 import art.arcane.auram.Auram;
 import art.arcane.auram.field.ClientFieldSources.Key;
 import art.arcane.auram.field.FieldNetwork;
+import art.arcane.auram.field.VoxelGrid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -27,7 +28,7 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = Auram.MODID)
 public final class VaporSources {
     private static final int WORLD_EMITTER_LIMIT = 2048;
-    private static final double RANGE = 52.0;
+    private static final int RANGE = VoxelGrid.VAPOR_RADIUS + 2;
     private static final long REFRESH_TICKS = 40;
     private static final Map<ServerLevel, LevelSources> LEVELS = new IdentityHashMap<>();
     private static final Comparator<VaporNetwork.Emitter> EMITTER_ORDER = Comparator
@@ -100,6 +101,12 @@ public final class VaporSources {
         if (sources.emitters.isEmpty() && sources.pulses.isEmpty() && sources.sent.isEmpty() && sources.modern.isEmpty()) LEVELS.remove(level);
     }
 
+    private static boolean withinRange(ServerPlayer player, BlockPos pos, int range) {
+        return Math.abs(pos.getX() + 0.5 - player.getX()) <= range
+                && Math.abs(pos.getY() + 0.5 - player.getEyeY()) <= range
+                && Math.abs(pos.getZ() + 0.5 - player.getZ()) <= range;
+    }
+
     private static final class LevelSources {
         private final Map<Key, ActiveEmitter> emitters = new HashMap<>();
         private final List<VaporNetwork.Pulse> pulses = new ArrayList<>();
@@ -131,7 +138,7 @@ public final class VaporSources {
                     .limit(VaporNetwork.MAX_EMITTERS_PER_CLIENT)
                     .toList();
             List<VaporNetwork.Pulse> nearbyPulses = pulses.stream()
-                    .filter(pulse -> pulse.position().closerToCenterThan(player.position(), RANGE + pulse.radius()))
+                    .filter(pulse -> withinRange(player, pulse.position(), RANGE + pulse.radius()))
                     .limit(VaporNetwork.MAX_PULSES_PER_TICK)
                     .toList();
             if (ownsVisuals) {
@@ -175,7 +182,7 @@ public final class VaporSources {
         }
 
         private static boolean visible(ServerLevel level, ServerPlayer observer, BlockPos pos) {
-            return pos.distToCenterSqr(observer.position()) <= RANGE * RANGE && level.hasChunkAt(pos);
+            return withinRange(observer, pos, RANGE) && level.hasChunkAt(pos);
         }
     }
 }

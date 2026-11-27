@@ -27,11 +27,11 @@ public class VaporWindowTest {
         var occupancy = new VoxelOccupancy(origin, Map.of(
                 new VoxelGrid.Position(-1, -1, -1), new VoxelOccupancy.SectionOccupancy(solid),
                 new VoxelGrid.Position(4, 4, 4), new VoxelOccupancy.SectionOccupancy(new BitSet())));
-        boolean[] open = occupancy.openBlocks();
-        assertTrue(open[VAPOR.index(0, 0, 0)]);
-        assertFalse(open[VAPOR.index(1, 1, 1)]);
-        assertTrue(open[VAPOR.index(67, 67, 67)]);
-        assertFalse(open[VAPOR.index(2, 2, 2)]);
-        assertEquals(new VoxelGrid.Position(4, 4, 4), VAPOR.lastSection(origin));
+        BitSet open = occupancy.openBlocks();
+        assertTrue(open.get(VAPOR.index(0, 0, 0)));
+        assertFalse(open.get(VAPOR.index(1, 1, 1)));
+        assertTrue(open.get(VAPOR.index(67, 67, 67)));
+        assertFalse(open.get(VAPOR.index(2, 2, 2)));
+        assertEquals(new VoxelGrid.Position(16, 16, 16), VAPOR.lastSection(origin));
     }
 }

@@ -12,6 +12,7 @@ import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import static art.arcane.auram.field.VoxelGrid.SECTIONS;
+import static art.arcane.auram.field.VoxelGrid.WIND_BLOCKS;
 import static org.junit.Assert.*;
 
 public class WindVaporTest {
@@ -34,7 +35,7 @@ public class WindVaporTest {
     @Test
     public void diagonalWindDrivesBothAxesAndOpposingWindRestoresBaseline() throws Exception {
         var terrain = new VoxelOccupancy(ORIGIN, Map.of(ORIGIN, new SectionOccupancy(new BitSet())));
-        var topology = new WindTopology(ORIGIN, terrain.openBlocks());
+        var topology = new WindTopology(ORIGIN, terrain.openBlocks(WIND_BLOCKS, ORIGIN));
         var wind = new WindField();
         Position center = new Position(6, 6, 6);
         WindField.Source diagonal = new WindField.Source(center, .55f, 0, .55f);
@@ -59,7 +60,14 @@ public class WindVaporTest {
         var baseline = left.step(terrain, fullRetention, List.of(), List.of());
         var actual = right.step(terrain, fullRetention, List.of(), List.of(), cancelled, null);
         assertEquals(baseline.bounds, actual.bounds);
-        for (int i = 0; i < VaporVolume.CELLS; i++) assertEquals(baseline.density(i), actual.density(i));
+        var tested = baseline.bounds.union(actual.bounds);
+        for (int z = tested.minZ(); z < tested.maxZ(); z++) {
+            for (int y = tested.minY(); y < tested.maxY(); y++) {
+                for (int x = tested.minX(); x < tested.maxX(); x++) {
+                    assertEquals(baseline.density(x, y, z), actual.density(x, y, z));
+                }
+            }
+        }
     }
 
     @Test
@@ -69,7 +77,7 @@ public class WindVaporTest {
         blocked.clear(SECTIONS.index(6, 6, 6));
         blocked.clear(SECTIONS.index(7, 6, 6));
         var terrain = new VoxelOccupancy(ORIGIN, Map.of(ORIGIN, new SectionOccupancy(blocked)));
-        var topology = new WindTopology(ORIGIN, terrain.openBlocks());
+        var topology = new WindTopology(ORIGIN, terrain.openBlocks(WIND_BLOCKS, ORIGIN));
         var wind = new WindField();
         Position from = new Position(6, 6, 6);
         Position to = new Position(7, 6, 6);
@@ -89,7 +97,10 @@ public class WindVaporTest {
     private static float density(VaporVolume volume, int x, int y, int z) throws Exception {
         Field field = VaporVolume.class.getDeclaredField("density");
         field.setAccessible(true);
-        return ((float[]) field.get(volume))[VaporVolume.index(x, y, z)];
+        Object buffer = field.get(volume);
+        var get = buffer.getClass().getDeclaredMethod("get", int.class);
+        get.setAccessible(true);
+        return (float) get.invoke(buffer, VaporVolume.index(x, y, z));
     }
 
     private static double fixture(boolean ceiling, boolean fan) {
@@ -114,7 +125,7 @@ public class WindVaporTest {
         int outside = ceiling ? VaporVolume.index(7, 9, 7) : VaporVolume.index(10, 6, 7);
         var terrain = new VoxelOccupancy(ORIGIN, Map.of(ORIGIN, new SectionOccupancy(blocked)));
         var volume = new VaporVolume();
-        var topology = new WindTopology(ORIGIN, terrain.openBlocks());
+        var topology = new WindTopology(ORIGIN, terrain.openBlocks(WIND_BLOCKS, ORIGIN));
         var wind = new WindField();
         double[] cross = new double[1];
         VaporVolume.FlowMeter meter = (from, to, amount) -> {

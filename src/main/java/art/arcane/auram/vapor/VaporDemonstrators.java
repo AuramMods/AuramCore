@@ -108,6 +108,14 @@ public final class VaporDemonstrators {
         }
     }
 
+    /** Block-state emitters are also observable in exact Voxy block snapshots. */
+    public static VaporNetwork.Emitter lodEmitter(BlockPos anchor, BlockState state) {
+        BlockEmitter source = blockEmitter(state);
+        if (source == null) return null;
+        BlockPos vent = source.ventAbove() ? anchor.above() : anchor.immutable();
+        return new VaporNetwork.Emitter(source.id(), vent, source.rate());
+    }
+
     private static BlockEmitter blockEmitter(BlockState state) {
         if (state.is(Blocks.FIRE) || state.is(Blocks.SOUL_FIRE)) return FIRE_EMITTER;
         if (state.getBlock() instanceof CampfireBlock && state.getValue(CampfireBlock.LIT)) return CAMPFIRE_EMITTER;

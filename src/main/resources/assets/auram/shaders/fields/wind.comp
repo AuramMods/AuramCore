@@ -38,8 +38,8 @@ void rebase(int node, uint descriptor) {
     for (uint part = descriptor >> 24; part != 0u; part &= part - 1u) {
         int bit = findLSB(part);
         ivec3 block = base + ivec3(bit & 1, (bit >> 1) & 1, bit >> 2);
-        if (any(lessThan(block, ivec3(0))) || any(greaterThanEqual(block, ivec3(VAPOR_SIDE)))) continue;
-        int old = oldLabels[block.x + VAPOR_SIDE * (block.y + VAPOR_SIDE * block.z)];
+        if (any(lessThan(block, ivec3(0))) || any(greaterThanEqual(block, ivec3(WIND_BLOCK_SIDE)))) continue;
+        int old = oldLabels[VAPOR_OPEN_WORDS + block.x + WIND_BLOCK_SIDE * (block.y + WIND_BLOCK_SIDE * block.z)];
         if (old < 0) continue;
         sum += currentWind[old].xyz;
         count += 1.0;

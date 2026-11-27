@@ -5,6 +5,7 @@ import art.arcane.auram.field.VoxelGrid.Position;
 import art.arcane.auram.field.VoxelOccupancy;
 import art.arcane.auram.field.WindField;
 import art.arcane.auram.field.WindTopology;
+import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.MemoryUtil;
@@ -15,17 +16,20 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import static art.arcane.auram.field.VoxelGrid.VAPOR;
+import static art.arcane.auram.field.VoxelGrid.WIND_BLOCKS;
 import static org.lwjgl.opengl.GL43C.*;
 
 /** Render-thread solver. Only sources, terrain changes and small asynchronous reports cross the GL boundary. */
 final class VaporCompute implements AutoCloseable {
     private static final int BINDINGS = 8;
-    private static final int CELLS = VAPOR.cells();
+    private static final int OPEN_WORDS = (VAPOR.cells() + 31) / 32;
+    private static final int WIND_WORDS = WIND_BLOCKS.cells();
     private static final int WEATHER_SIDE = VaporVolume.Erosion.SIDE_SAMPLES;
     private static final int WEATHER_CELLS = WEATHER_SIDE * WEATHER_SIDE * WEATHER_SIDE;
     // std430 aligns the uvec2 additions after the float weather array to two words.
@@ -34,7 +38,7 @@ final class VaporCompute implements AutoCloseable {
     private static final int REPORT_INTS = 8;
     private static final int[] INITIAL_REPORT = {VAPOR.side(), VAPOR.side(), VAPOR.side(), 0, 0, 0, 0, 0};
 
-    record Inputs(VoxelOccupancy occupancy, boolean[] open, WindTopology topology, VaporVolume.Erosion erosion,
+    record Inputs(VoxelOccupancy occupancy, BitSet open, WindTopology topology, VaporVolume.Erosion erosion,
                   List<VaporVolume.Source> pulses, List<VaporVolume.Source> emitters,
                   List<WindField.Source> gusts, List<WindField.Source> windEmitters) {}
 
@@ -44,11 +48,13 @@ final class VaporCompute implements AutoCloseable {
     private final Report[] reports = {new Report(), new Report(), new Report()};
     private final FieldProbe probe = FieldProbe.create("compute_submit");
     private final VaporPulse pulse = new VaporPulse();
-    private final float[] additions = new float[CELLS];
-    private final int[] touched = new int[CELLS];
+    private final Int2FloatOpenHashMap additions = new Int2FloatOpenHashMap();
+    private final int[] vaporCapacity = new int[2];
+    private int workingCapacity;
+    private int inputCapacity;
     private int additionCount;
 
-    private IntBuffer upload = MemoryUtil.memAllocInt(CELLS * 2 + WEATHER_WORDS);
+    private IntBuffer upload = MemoryUtil.memAllocInt(OPEN_WORDS + WIND_WORDS);
     private Program windProgram;
     private Program vaporProgram;
     private int links;
@@ -86,15 +92,15 @@ final class VaporCompute implements AutoCloseable {
             windProgram = new Program("wind.comp");
             vaporProgram = new Program("vapor.comp");
             for (int i = 0; i < 2; i++) {
-                labels[i] = buffer(CELLS * Integer.BYTES, GL_DYNAMIC_DRAW, false);
+                labels[i] = buffer((OPEN_WORDS + WIND_WORDS) * Integer.BYTES, GL_DYNAMIC_DRAW, false);
                 wind[i] = buffer(WindTopology.NODES * 4 * Float.BYTES, GL_DYNAMIC_COPY, true);
-                vapor[i] = buffer(CELLS * 2 * Float.BYTES, GL_DYNAMIC_COPY, true);
+                vapor[i] = glGenBuffers();
             }
             links = buffer(WindTopology.NODES * Integer.BYTES, GL_DYNAMIC_DRAW, false);
             windInput = buffer(160 * 32, GL_STREAM_DRAW, false);
-            vaporInput = buffer((WEATHER_WORDS + 2 * CELLS) * Integer.BYTES, GL_DYNAMIC_DRAW, false);
-            proposals = buffer(CELLS * 8 * Float.BYTES, GL_DYNAMIC_COPY, false);
-            capacity = buffer(CELLS * Float.BYTES, GL_DYNAMIC_COPY, false);
+            vaporInput = glGenBuffers();
+            proposals = glGenBuffers();
+            capacity = glGenBuffers();
             for (Report report : reports) report.buffer = buffer(REPORT_INTS * Integer.BYTES, GL_STREAM_READ, false);
         } catch (RuntimeException failure) {
             close();
@@ -154,8 +160,12 @@ final class VaporCompute implements AutoCloseable {
     private void uploadTerrain(Inputs input) {
         labelIndex ^= 1;
         upload.clear();
+        long[] words = input.open.toLongArray();
+        for (int i = 0; i < OPEN_WORDS; i++) {
+            long word = i / 2 < words.length ? words[i / 2] : 0L;
+            upload.put((int) (word >>> ((i & 1) * 32)));
+        }
         if (input.topology != null) input.topology.writeLabels(upload);
-        else for (boolean cell : input.open) upload.put(cell ? 0 : -1);
         upload.flip();
         upload(labels[labelIndex], 0, upload);
         if (input.topology != null) {
@@ -227,10 +237,13 @@ final class VaporCompute implements AutoCloseable {
     }
 
     private void advanceVapor(Inputs input, int volumeTexture, int sx, int sy, int sz) {
+        ensureInputCapacity();
         updateWeather(input.erosion);
+        uploadAdditions();
         Bounds padded = bounds.expand(VAPOR.side());
         Bounds region = new Bounds(padded.minX() & ~3, padded.minY() & ~3, padded.minZ() & ~3,
                 (padded.maxX() + 3) & ~3, (padded.maxY() + 3) & ~3, (padded.maxZ() + 3) & ~3);
+        ensureWorkingCapacity(region.cells());
         Report report = reserveReport();
         glUseProgram(vaporProgram.id);
         bind(0, labels[labelIndex]);
@@ -271,27 +284,62 @@ final class VaporCompute implements AutoCloseable {
         additionCount = 0;
         for (var source : input.pulses) pulse.visit(source, origin, input.open, this::add);
         for (var source : input.emitters) pulse.visit(source, origin, input.open, this::add);
-        if (additionCount == 0) return;
-        Arrays.sort(touched, 0, additionCount);
-        upload.clear();
-        for (int i = 0; i < additionCount; i++) {
-            int index = touched[i];
-            upload.put(index).put(Float.floatToRawIntBits(additions[index]));
-            additions[index] = 0;
+        additionCount = additions.size();
+        for (int index : additions.keySet()) {
             int x = index % VAPOR.side();
             int y = index / VAPOR.side() % VAPOR.side();
             int z = index / (VAPOR.side() * VAPOR.side());
             bounds = bounds.include(x, y, z);
         }
-        bounds = bounds.expand(VAPOR.side());
+        if (additionCount > 0) bounds = bounds.expand(VAPOR.side());
+    }
+
+    private void add(int index, float density) {
+        if (density > 0) additions.addTo(index, density);
+    }
+
+    private void uploadAdditions() {
+        if (additionCount == 0) return;
+        int[] cells = additions.keySet().toIntArray();
+        Arrays.sort(cells);
+        upload.clear();
+        for (int index : cells) {
+            upload.put(index).put(Float.floatToRawIntBits(additions.get(index)));
+        }
+        additions.clear();
         upload.flip();
         upload(vaporInput, WEATHER_WORDS * Integer.BYTES, upload);
     }
 
-    private void add(int index, float density) {
-        if (density <= 0) return;
-        if (additions[index] == 0) touched[additionCount++] = index;
-        additions[index] += density;
+    private void ensureInputCapacity() {
+        int words = WEATHER_WORDS + additionCount * 2;
+        if (words <= inputCapacity) return;
+        inputCapacity = grownCapacity(words);
+        allocate(vaporInput, inputCapacity * Integer.BYTES, GL_DYNAMIC_DRAW);
+        if (upload.capacity() < inputCapacity) upload = MemoryUtil.memRealloc(upload, inputCapacity);
+        weather = null;
+    }
+
+    private void ensureWorkingCapacity(int cells) {
+        int next = vaporIndex ^ 1;
+        if (stored.empty() && vaporCapacity[vaporIndex] == 0) {
+            // The first step has no previous density, but the shader still binds the buffer.
+            allocate(vapor[vaporIndex], 2 * Float.BYTES, GL_DYNAMIC_COPY);
+            vaporCapacity[vaporIndex] = 1;
+        }
+        if (cells > vaporCapacity[next]) {
+            vaporCapacity[next] = grownCapacity(cells);
+            allocate(vapor[next], vaporCapacity[next] * 2 * Float.BYTES, GL_DYNAMIC_COPY);
+        }
+        if (cells > workingCapacity) {
+            workingCapacity = grownCapacity(cells);
+            allocate(proposals, workingCapacity * 8 * Float.BYTES, GL_DYNAMIC_COPY);
+            allocate(capacity, workingCapacity * Float.BYTES, GL_DYNAMIC_COPY);
+        }
+    }
+
+    private static int grownCapacity(int count) {
+        return Integer.highestOneBit(count - 1) << 1;
     }
 
     private void updateWeather(VaporVolume.Erosion updated) {
@@ -367,10 +415,17 @@ final class VaporCompute implements AutoCloseable {
 
     private static int buffer(int bytes, int usage, boolean initialize) {
         int buffer = glGenBuffers();
-        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
-        glBufferData(GL_SHADER_STORAGE_BUFFER, bytes, usage);
+        allocate(buffer, bytes, usage);
         if (initialize) clear(buffer);
         return buffer;
+    }
+
+    private static void allocate(int buffer, int bytes, int usage) {
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
+        glBufferData(GL_SHADER_STORAGE_BUFFER, bytes, usage);
+        if (glGetBufferParameteri(GL_SHADER_STORAGE_BUFFER, GL_BUFFER_SIZE) != bytes) {
+            throw new IllegalStateException("Could not allocate " + bytes + " bytes for the voxel field");
+        }
     }
 
     private static void clear(int buffer) {
@@ -455,6 +510,8 @@ final class VaporCompute implements AutoCloseable {
             try {
                 int header = source.indexOf('\n') + 1;
                 String dimensions = "#define VAPOR_SIDE " + VAPOR.side()
+                        + "\n#define VAPOR_OPEN_WORDS " + OPEN_WORDS
+                        + "\n#define WIND_BLOCK_SIDE " + WIND_BLOCKS.side()
                         + "\n#define WIND_SIDE " + WindTopology.GRID.side()
                         + "\n#define WEATHER_SIDE " + WEATHER_SIDE
                         + "\n#define WEATHER_SHIFT " + VaporVolume.Erosion.SHIFT + "\n";

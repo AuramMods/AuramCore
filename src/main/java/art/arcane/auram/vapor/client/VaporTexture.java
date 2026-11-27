@@ -11,7 +11,7 @@ import net.irisshaders.iris.gl.uniform.UniformHolder;
 import net.irisshaders.iris.uniforms.CameraUniforms;
 import net.minecraft.client.Minecraft;
 import org.joml.Vector3f;
-import org.lwjgl.BufferUtils;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
@@ -51,14 +51,13 @@ public final class VaporTexture {
     public static int texture() {
         if (texture == 0) {
             texture = glGenTextures();
-            staging = BufferUtils.createByteBuffer(VaporVolume.CELLS * 4);
             VoxelTextureUpload.withUnpackState(texture, () -> {
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
                 glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-                glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, SIDE, SIDE, SIDE, 0, GL_RGBA, GL_UNSIGNED_BYTE, staging);
+                glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, SIDE, SIDE, SIDE, 0, GL_RGBA, GL_UNSIGNED_BYTE, (ByteBuffer) null);
             });
         }
         return texture;
@@ -79,6 +78,8 @@ public final class VaporTexture {
         }
         uploaded = FieldFrames.empty();
         bounds = Bounds.EMPTY;
+        MemoryUtil.memFree(staging);
+        staging = null;
         active = false;
     }
 
@@ -153,15 +154,19 @@ public final class VaporTexture {
         int dy = previous == null ? 0 : occupancy.origin.y() - previous.origin.y();
         int dz = previous == null ? 0 : occupancy.origin.z() - previous.origin.z();
         boolean sameOrigin = dx == 0 && dy == 0 && dz == 0;
+        int bytes = region.cells() * 4;
+        if (staging == null || staging.capacity() < bytes) {
+            staging = MemoryUtil.memRealloc(staging, bytes);
+        }
         staging.clear();
         for (int z = region.minZ(); z < region.maxZ(); z++) {
             for (int y = region.minY(); y < region.maxY(); y++) {
                 for (int x = region.minX(); x < region.maxX(); x++) {
                     int i = VaporVolume.index(x, y, z);
-                    int earlier = previous == null ? 0 : sameOrigin ? previous.density(i)
+                    int earlier = previous == null ? 0 : sameOrigin ? previous.density(x, y, z)
                             : previous.density(x + dx, y + dy, z + dz);
                     staging.put((byte) earlier);
-                    staging.put((byte) (current == null ? 0 : current.density(i)));
+                    staging.put((byte) (current == null ? 0 : current.density(x, y, z)));
                     staging.put((byte) (occupancy.open(i) ? 255 : 0));
                     staging.put((byte) 0);
                 }

@@ -2,7 +2,10 @@ package art.arcane.auram.vapor.client;
 
 import art.arcane.auram.field.VoxelGrid.Position;
 
-import java.util.Arrays;
+import art.arcane.auram.vapor.Vapor;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+
+import java.util.BitSet;
 
 import static art.arcane.auram.field.VoxelGrid.VAPOR;
 import static art.arcane.auram.vapor.client.VaporVolume.*;
@@ -10,32 +13,29 @@ import static art.arcane.auram.vapor.client.VaporVolume.*;
 /** Rasterizes both backends' pulse inputs using the same fine-block paths. */
 final class VaporPulse {
     private static final int PLANE = SIDE * SIDE;
-    private final int[] pulseQueue = new int[CELLS];
-    private final int[] pulseVisits = new int[CELLS];
-    private int pulseId;
-    private boolean[] open;
+    private static final int DIAMETER = 2 * Vapor.MAX_RADIUS + 1;
+    private final int[] pulseQueue = new int[DIAMETER * DIAMETER * DIAMETER];
+    private final IntOpenHashSet visited = new IntOpenHashSet();
+    private BitSet open;
 
     @FunctionalInterface
     interface CellConsumer {
         void accept(int index, float amount);
     }
 
-    void visit(VaporVolume.Source source, Position origin, boolean[] open, CellConsumer consumer) {
+    void visit(VaporVolume.Source source, Position origin, BitSet open, CellConsumer consumer) {
         this.open = open;
         int x = source.position().x() - origin.x();
         int y = source.position().y() - origin.y();
         int z = source.position().z() - origin.z();
-        if (source.density() == 0 || !VAPOR.contains(x, y, z) || !open[index(x, y, z)]) return;
+        if (source.density() == 0 || !VAPOR.contains(x, y, z) || !open.get(index(x, y, z))) return;
         if (source.radius() == 0) {
             consumer.accept(index(x, y, z), source.density());
             return;
         }
 
         // Visit only cells connected to the pulse center within its radius.
-        if (++pulseId == 0) {
-            Arrays.fill(pulseVisits, 0);
-            pulseId = 1;
-        }
+        visited.clear();
         int center = index(x, y, z);
         int tail = visit(center, 0);
         int radiusSquared = source.radius() * source.radius();
@@ -58,8 +58,7 @@ final class VaporPulse {
     }
 
     private int visit(int offset, int tail) {
-        if (!open[offset] || pulseVisits[offset] == pulseId) return tail;
-        pulseVisits[offset] = pulseId;
+        if (!open.get(offset) || !visited.add(offset)) return tail;
         pulseQueue[tail] = offset;
         return tail + 1;
     }
