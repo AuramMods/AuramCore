@@ -144,6 +144,13 @@ public final class AuramMenu {
         if (currentTab == Tab.SYSTEM || currentTab == Tab.SKILLS) {
             backdrop.render(event.getGuiGraphics(), event.getScreen().width, event.getScreen().height, 1.0F);
         }
+        if (currentTab == Tab.SKILLS && MenuIntegrations.isSkillScreen(event.getScreen())) {
+            var client = Minecraft.getInstance();
+            var window = client.getWindow();
+            int x = (int) (client.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth());
+            int y = (int) (client.mouseHandler.ypos() * window.getGuiScaledHeight() / window.getScreenHeight());
+            AdaptSkillTree.render(event.getScreen(), event.getGuiGraphics(), x, y);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
@@ -236,6 +243,8 @@ public final class AuramMenu {
                 event.setCanceled(true);
                 capturedMouseButton = event.getButton();
                 openTab(client, selected, target);
+            } else if (selected == Tab.SKILLS && AdaptSkillTree.press(screen, event.getMouseX(), event.getMouseY(), event.getButton())) {
+                event.setCanceled(true);
             }
             return;
         }
@@ -257,19 +266,31 @@ public final class AuramMenu {
         if (capturedMouseButton == event.getButton()) {
             capturedMouseButton = -1;
             event.setCanceled(true);
+        } else if (active(event.getScreen()) && tab(event.getScreen()) == Tab.SKILLS
+                && AdaptSkillTree.release(event.getScreen(), event.getMouseX(), event.getMouseY(), event.getButton())) {
+            event.setCanceled(true);
         }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void mouseDrag(ScreenEvent.MouseDragged.Pre event) {
-        if (capturedMouseButton == event.getMouseButton()) event.setCanceled(true);
+        if (capturedMouseButton == event.getMouseButton()
+                || active(event.getScreen()) && tab(event.getScreen()) == Tab.SKILLS
+                && AdaptSkillTree.drag(event.getScreen(), event.getMouseButton(), event.getDragX(), event.getDragY())) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void mouseScroll(ScreenEvent.MouseScrolled.Pre event) {
-        if (!active(event.getScreen()) || event.getMouseY() < 0 || event.getMouseY() >= BAR_HEIGHT) return;
-        var selected = tab(event.getScreen());
-        if (selected != null && !nativeModal(event.getScreen(), selected)) event.setCanceled(true);
+        var screen = event.getScreen();
+        if (!active(screen)) return;
+        var selected = tab(screen);
+        if (selected == null || nativeModal(screen, selected)) return;
+        if (event.getMouseY() >= 0 && event.getMouseY() < BAR_HEIGHT
+                || selected == Tab.SKILLS && AdaptSkillTree.scroll(screen, event.getMouseX(), event.getMouseY(), event.getScrollDelta())) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -285,7 +306,7 @@ public final class AuramMenu {
             client.setScreen(null);
             return;
         }
-        if (nativeModal(event.getScreen(), selected)) return;
+        if (nativeModal(event.getScreen(), selected) || selected == Tab.SKILLS && AdaptSkillTree.editingText(event.getScreen())) return;
         var target = boundTab(client, key -> key.matches(event.getKeyCode(), event.getScanCode())
                 && matchesModifier(key, event.getModifiers()));
         if (target != null) {
@@ -379,6 +400,7 @@ public final class AuramMenu {
 
     private static void reset(Minecraft client) {
         backdrop.close(client);
+        if (MenuIntegrations.loaded(Tab.SKILLS)) AdaptSkillTree.reset();
         world = null;
         lastTab = null;
         renderedScreen = null;

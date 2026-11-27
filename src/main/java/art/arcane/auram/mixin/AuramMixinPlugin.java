@@ -70,6 +70,10 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.ftbessentials.Waystone")) {
             return "net.blay09.mods.waystones.core.WaystoneManager";
         }
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.adapt.")) {
+            return mixinClassName.endsWith("AdaptSkillsAccess")
+                    ? "art.arcane.adapt.client.screen.SkillsScreen" : "art.arcane.adapt.client.screen.AdaptScreen";
+        }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
             case "art.arcane.auram.mixin.ftbessentials.HomeManagerAccess" ->

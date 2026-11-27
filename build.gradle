@@ -65,6 +65,15 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 repositories {
     ivy {
+        name = 'Auram pack pinned mods'
+        url = 'https://raw.githubusercontent.com/AuramMods/Auram'
+        patternLayout {
+            artifact '[revision]/minecraft/mods/Adapt v3.0.0 [Forge] 1.20.1+47.4.5.[ext]'
+        }
+        metadataSources { artifact() }
+        content { includeModule 'auram.pack', 'adapt-forge' }
+    }
+    ivy {
         name = 'Thaumaturge Forge releases'
         url = 'https://github.com/AuramMods/Thaumaturge/releases/download'
         patternLayout {
@@ -107,6 +116,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     // Optional runtime targets; compile against the pack's actual Malum/Lodestone APIs.
     compileOnly fg.deobf('curse.maven:journeymap-32274:5789363')
+    compileOnly('auram.pack:adapt-forge:1b711ce0e8b3f33b7d255a74326da0c104a72106') { transitive = false }
     compileOnly(fg.deobf('dev.ftb.mods:ftb-chunks-forge:2001.3.6') { transitive = false })
     compileOnly(fg.deobf('dev.ftb.mods:ftb-essentials-forge:2001.2.3') { transitive = false })
     compileOnly(fg.deobf('maven.modrinth:waystones:Z7sBfgIR') { transitive = false })

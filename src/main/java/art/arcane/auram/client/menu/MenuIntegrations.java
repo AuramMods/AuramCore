@@ -60,7 +60,11 @@ final class MenuIntegrations {
     }
 
     static boolean isSkillScreen(Screen screen) {
-        if (failedSkills || !screen.getClass().getName().equals(ADAPT_WRAPPER)) return false;
+        return skillContent(screen) != null;
+    }
+
+    static Object skillContent(Screen screen) {
+        if (failedSkills || !screen.getClass().getName().equals(ADAPT_WRAPPER)) return null;
         try {
             if (skillContent == null) {
                 skillContent = screen.getClass().getDeclaredMethod("content");
@@ -68,13 +72,13 @@ final class MenuIntegrations {
             }
             Object content = skillContent.invoke(screen);
             for (Class<?> type = content.getClass(); type != null; type = type.getSuperclass()) {
-                if (type.getName().equals(ADAPT_SCREEN)) return true;
+                if (type.getName().equals(ADAPT_SCREEN)) return content;
             }
         } catch (ReflectiveOperationException | LinkageError error) {
             failedSkills = true;
             LOGGER.warn("Auram could not identify Adapt's skills screen", error);
         }
-        return false;
+        return null;
     }
 
     enum SkillsResult { OPEN, WAITING, DISABLED, UNAVAILABLE }
