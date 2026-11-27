@@ -7,6 +7,7 @@ import art.arcane.auram.field.FieldNetwork;
 import art.arcane.auram.light.LightNetwork;
 import art.arcane.auram.loot.RockLootModifier;
 import art.arcane.auram.map.SurfaceMapNetwork;
+import art.arcane.auram.waystone.DestinationMapNetwork;
 import art.arcane.auram.tweak.LogRetention;
 import art.arcane.auram.util.RecipeCache;
 import art.arcane.auram.vapor.VaporNetwork;
@@ -99,6 +100,7 @@ public class Auram {
         context.registerConfig(ModConfig.Type.COMMON, AuramConfig.COMMON_SPEC);
         context.registerConfig(ModConfig.Type.SERVER, AuramConfig.SERVER_SPEC);
         SurfaceMapNetwork.register();
+        DestinationMapNetwork.register();
         VaporNetwork.register();
         WindNetwork.register();
         LightNetwork.register();

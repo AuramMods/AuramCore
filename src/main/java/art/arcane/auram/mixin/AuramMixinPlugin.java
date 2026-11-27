@@ -15,7 +15,11 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         String optionalTarget = optionalTarget(mixinClassName);
         if (optionalTarget == null) return true;
         try {
-            ClassNode dependency = MixinService.getService().getBytecodeProvider().getClassNode(optionalTarget);
+            var provider = MixinService.getService().getBytecodeProvider();
+            if (isWaystoneBridge(mixinClassName) && !optionalTarget.equals(targetClassName)) {
+                provider.getClassNode(targetClassName);
+            }
+            ClassNode dependency = provider.getClassNode(optionalTarget);
             if (mixinClassName.equals("art.arcane.auram.mixin.psychedelicraft.JeiFluidFocusMixin")) {
                 return dependency.methods.stream().noneMatch(method ->
                         method.name.equals("createFocusLink") && method.desc.equals("(Ljava/util/Collection;)V"));
@@ -26,6 +30,12 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         } catch (IOException e) {
             throw new IllegalStateException("Cannot read " + optionalTarget, e);
         }
+    }
+
+    private static boolean isWaystoneBridge(String mixinClassName) {
+        return mixinClassName.startsWith("art.arcane.auram.mixin.waystones.")
+                || mixinClassName.startsWith("art.arcane.auram.mixin.ftbessentials.Waystone")
+                || mixinClassName.equals("art.arcane.auram.mixin.ftbchunks.WaystoneMapIconsMixin");
     }
 
     private static String optionalTarget(String mixinClassName) {
@@ -53,8 +63,20 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.startsWith("art.arcane.auram.mixin.customnetherportals.")) {
             return "com.leclowndu93150.custom_nether_portals.mixin.PortalForcerMixin";
         }
+
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.waystones.")) {
+            return "dev.ftb.mods.ftbessentials.util.SavedTeleportManager";
+        }
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.ftbessentials.Waystone")) {
+            return "net.blay09.mods.waystones.core.WaystoneManager";
+        }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
+            case "art.arcane.auram.mixin.ftbessentials.HomeManagerAccess" ->
+                    "dev.ftb.mods.ftbessentials.util.SavedTeleportManager$HomeManager";
+            case "art.arcane.auram.mixin.ftbessentials.SavedTeleportManagerAccess",
+                    "art.arcane.auram.mixin.ftbessentials.SavedTeleportManagerSyncMixin" ->
+                    "dev.ftb.mods.ftbessentials.util.SavedTeleportManager";
             case "art.arcane.auram.mixin.menu.FtbJournalLayoutMixin" ->
                     "dev.ftb.mods.ftbquests.client.gui.quests.QuestScreen";
             case "art.arcane.auram.mixin.supplementaries.CartographerPreviewMixin",

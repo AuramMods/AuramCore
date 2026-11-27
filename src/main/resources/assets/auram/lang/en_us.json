@@ -1,4 +1,13 @@
 {
+  "auram.waystone.empty_name": "Enter a name for this Waystone.",
+  "auram.waystone.home_taken": "You already have a home named %s. Choose a different Waystone name.",
+  "auram.waystone.warp_taken": "There is already a global destination named %s. Choose another name or keep this Waystone private.",
+  "auram.waystone.global_permission": "Only the owner can change the global status of this Waystone.",
+  "auram.waystone.linked_destination": "%s is linked to a Waystone. Change its name or global status at the Waystone.",
+  "auram.waystone.no_safe_landing": "There is no safe place to stand near %s.",
+  "auram.waystone.marker.home": "Home",
+  "auram.waystone.marker.warp": "Warp",
+  "auram.waystone.marker.home_and_warp": "Home and warp",
   "gui.auram.menu.system": "System",
   "gui.auram.menu.map": "Map",
   "gui.auram.menu.journal": "Journal",
