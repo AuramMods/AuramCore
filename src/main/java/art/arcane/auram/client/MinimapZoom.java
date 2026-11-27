@@ -2,10 +2,10 @@ package art.arcane.auram.client;
 
 public final class MinimapZoom {
     public static final double EXTRA_WIDE_ZOOM = 0.5;
-    public static final int STOCK_TEXTURE_CHUNKS = 15;
+    public static final int STOCK_TEXTURE_CHUNKS = 17;
     private static final double STOCK_WIDEST_ZOOM = 1.0;
-    // Double the stock 7-chunk radius while keeping the player's chunk at the center.
-    private static final int WIDE_TEXTURE_CHUNKS = 2 * (STOCK_TEXTURE_CHUNKS - 1) + 1;
+    // Both sizes include one guard chunk on each side for movement between uploads.
+    private static final int WIDE_TEXTURE_CHUNKS = 31;
 
     private MinimapZoom() {}
 

@@ -25,11 +25,11 @@ public class MinimapZoomTest {
 
     @Test
     public void wideTextureCoversBothDirectionsOfTheTransition() {
-        assertEquals(15, MinimapZoom.textureChunks(1.0F, 2.0));
-        assertEquals(29, MinimapZoom.textureChunks(1.0F, 0.5));
+        assertEquals(17, MinimapZoom.textureChunks(1.0F, 2.0));
+        assertEquals(31, MinimapZoom.textureChunks(1.0F, 0.5));
         int wideChunks = MinimapZoom.textureChunks(0.75F, 1.0);
-        assertEquals(29, wideChunks);
-        // Even at the far edge of the player's chunk, the texture covers the 224-block radius.
-        assertTrue((wideChunks / 2) * 16 >= 112.0 / MinimapZoom.EXTRA_WIDE_ZOOM);
+        assertEquals(31, wideChunks);
+        // At the player's chunk edge, the widest view still has a full guard chunk.
+        assertTrue((wideChunks / 2) * 16 >= 112.0 / MinimapZoom.EXTRA_WIDE_ZOOM + 16.0);
     }
 }
