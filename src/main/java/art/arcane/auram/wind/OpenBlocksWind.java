@@ -7,7 +7,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public final class OpenBlocksWind {
     static final ResourceLocation FAN = ResourceLocation.fromNamespaceAndPath("open_blocks", "fan");
-    private static final float FULL_POWER = 0.30f;
+    private static final float FULL_POWER = 0.06f;
 
     private OpenBlocksWind() {}
 
