@@ -283,6 +283,7 @@
     "ftbchunks.LargeMapSurfaceAccess",
     "ftbchunks.LargeMapNavigationMixin",
     "ftbchunks.MapRegionSurfaceMixin",
+    "ftbchunks.MapTileFadeMixin",
     "ftbchunks.MapDimensionSurfaceMixin",
     "adapt.AdaptScreenAccess",
     "adapt.AdaptScreenMixin",

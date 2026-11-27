@@ -3,6 +3,8 @@ package art.arcane.auram.map.client;
 import art.arcane.auram.map.SurfaceTile;
 
 public interface MapRegionSurfaceAccess {
+    MapTileFades auram$tileFades();
+
     void auram$markStreamOnly();
 
     boolean auram$isStreamOnly();
