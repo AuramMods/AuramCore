@@ -10,6 +10,7 @@ import com.mojang.blaze3d.platform.TextureUtil;
 import dev.ftb.mods.ftbchunks.client.FTBChunksClient;
 import dev.ftb.mods.ftbchunks.client.FTBChunksClientConfig;
 import dev.ftb.mods.ftbchunks.client.map.MapDimension;
+import dev.ftb.mods.ftblibrary.math.XZ;
 import dev.ftb.mods.ftblibrary.snbt.config.DoubleValue;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -132,6 +133,14 @@ abstract class MinimapZoomMixin {
             target = "Ldev/ftb/mods/ftblibrary/math/MathUtils;mod(DD)D"))
     private double auram$terrainV(double position, double chunkSize, Operation<Double> wrap) {
         return position - currentPlayerChunkZ * chunkSize;
+    }
+
+    @WrapOperation(method = "renderHud", at = @At(value = "INVOKE",
+            target = "Ldev/ftb/mods/ftblibrary/math/XZ;of(II)Ldev/ftb/mods/ftblibrary/math/XZ;"))
+    private XZ auram$liveChunkForMapInfo(int cachedX, int cachedZ, Operation<XZ> create,
+                                        @Local(name = "cx") int playerChunkX, @Local(name = "cz") int playerChunkZ) {
+        // HUD components must follow the player while the texture still covers the previous chunk.
+        return create.call(playerChunkX, playerChunkZ);
     }
 
     @ModifyConstant(method = "renderHud", constant = @Constant(intValue = 240), require = 2)
