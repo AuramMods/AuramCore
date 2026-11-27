@@ -293,6 +293,8 @@
     "adapt.AdaptOverviewSearchMixin",
     "darkmodeeverywhere.AdaptOverviewContrastMixin",
     "ftbchunks.MinimapOverlayMixin",
+    "ftbchunks.MinimapWidgetMixin",
+    "ftbchunks.MinimapBlendCaptureMixin",
     "ftbchunks.MinimapZoomMixin",
     "ftbchunks.DestinationMapIconsMixin",
     "ftbchunks.WaystoneMapIconsMixin",
