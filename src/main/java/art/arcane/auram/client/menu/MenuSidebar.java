@@ -11,6 +11,8 @@ final class MenuSidebar {
     private static final int ROW_HEIGHT = 34;
     private static final int INSET = 5;
     private static final int ICON_SIZE = 16;
+    private static final int ICON_LEFT = (AuramMenu.RAIL_WIDTH - ICON_SIZE) / 2;
+    private static final int ICON_TOP = (ROW_HEIGHT - ICON_SIZE) / 2;
     private static final int EXPANDED_WIDTH = 148;
 
     private final MenuGlass glass = new MenuGlass();
@@ -18,39 +20,35 @@ final class MenuSidebar {
     private float scroll;
     private boolean expanded;
     private long lastFrame;
-    private AuramMenu.Tab lastSelected;
 
     void draw(Minecraft client, GuiGraphics graphics, int screenWidth, int height, int mouseX, int mouseY,
               AuramMenu.Tab selected, List<AuramMenu.Tab> tabs, boolean enabled) {
         int expandedWidth = Math.max(AuramMenu.RAIL_WIDTH, Math.min(EXPANDED_WIDTH, screenWidth / 2));
-        int hoverWidth = expanded ? expandedWidth : AuramMenu.RAIL_WIDTH;
-        expanded = enabled && mouseX >= 0 && mouseX < hoverWidth && mouseY >= 0 && mouseY < height;
+        scroll = Mth.clamp(scroll, 0, maxScroll(height, tabs.size()));
+        int origin = INSET - (int) scroll;
+        int hoveredRow = rowAt(mouseY, height, tabs.size());
+        int iconTop = origin + hoveredRow * ROW_HEIGHT + ICON_TOP;
+        boolean overIcon = mouseX >= ICON_LEFT && mouseX < ICON_LEFT + ICON_SIZE
+                && mouseY >= iconTop && mouseY < iconTop + ICON_SIZE;
+        boolean overExpandedRow = expanded && mouseX >= 0 && mouseX < expandedWidth;
+        expanded = enabled && hoveredRow >= 0 && (overIcon || overExpandedRow);
         long now = System.nanoTime();
         float dt = lastFrame == 0 ? 0 : Math.min((now - lastFrame) / 1_000_000_000F, 0.05F);
         lastFrame = now;
         int target = expanded ? expandedWidth : AuramMenu.RAIL_WIDTH;
         width = Mth.approach(width, target, dt * 850);
         int panelWidth = Math.min(screenWidth, Math.round(width));
-        if (lastSelected != selected) {
-            int row = tabs.indexOf(selected) * ROW_HEIGHT;
-            if (row < scroll) scroll = row;
-            if (row + ROW_HEIGHT > scroll + height - 2 * INSET) scroll = row + ROW_HEIGHT - height + 2 * INSET;
-            lastSelected = selected;
-        }
-        scroll = Mth.clamp(scroll, 0, maxScroll(height, tabs.size()));
 
         glass.draw(client, graphics, screenWidth, height, panelWidth, expandedWidth);
         graphics.vLine(panelWidth - 1, -1, height, 0xff354956);
         graphics.enableScissor(0, Math.min(INSET, height), panelWidth, Math.max(INSET, height - INSET));
-        int origin = INSET - (int) scroll;
         int first = (int) scroll / ROW_HEIGHT;
         int last = Math.min(tabs.size(), Math.max(first, (height - INSET - origin + ROW_HEIGHT - 1) / ROW_HEIGHT));
         for (int i = first; i < last; i++) {
             int top = origin + i * ROW_HEIGHT;
             var tab = tabs.get(i);
             boolean active = tab == selected;
-            boolean hovered = enabled && mouseX >= 0 && mouseX < panelWidth && mouseY >= Math.max(INSET, top)
-                    && mouseY < Math.min(height - INSET, top + ROW_HEIGHT);
+            boolean hovered = enabled && i == hoveredRow && mouseX >= 0 && mouseX < panelWidth;
             if (active || hovered) {
                 graphics.fillGradient(3, top + 2, panelWidth - 3, top + ROW_HEIGHT - 2,
                         active ? 0x50367d89 : 0x30366273, active ? 0x29296169 : 0x20265157);
@@ -67,8 +65,7 @@ final class MenuSidebar {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         for (int i = first; i < last; i++) {
-            graphics.blit(tabs.get(i).icon, (AuramMenu.RAIL_WIDTH - ICON_SIZE) / 2,
-                    origin + i * ROW_HEIGHT + (ROW_HEIGHT - ICON_SIZE) / 2, 0, 0,
+            graphics.blit(tabs.get(i).icon, ICON_LEFT, origin + i * ROW_HEIGHT + ICON_TOP, 0, 0,
                     ICON_SIZE, ICON_SIZE, ICON_SIZE, ICON_SIZE);
         }
         RenderSystem.disableBlend();
@@ -89,8 +86,14 @@ final class MenuSidebar {
     }
 
     AuramMenu.Tab tabAt(double y, int height, List<AuramMenu.Tab> tabs) {
+        int row = rowAt(y, height, tabs.size());
+        return row >= 0 ? tabs.get(row) : null;
+    }
+
+    private int rowAt(double y, int height, int tabCount) {
+        if (y < INSET || y >= height - INSET) return -1;
         int index = ((int) y - INSET + (int) scroll) / ROW_HEIGHT;
-        return y >= INSET && y < height - INSET && index < tabs.size() ? tabs.get(index) : null;
+        return index < tabCount ? index : -1;
     }
 
     void scroll(double delta, int height, int tabCount) {
@@ -106,6 +109,5 @@ final class MenuSidebar {
         scroll = 0;
         expanded = false;
         lastFrame = 0;
-        lastSelected = null;
     }
 }
