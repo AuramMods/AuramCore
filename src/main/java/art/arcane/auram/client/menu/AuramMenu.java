@@ -89,6 +89,12 @@ public final class AuramMenu {
         return screen instanceof PauseScreen && ((PauseScreenAccess) screen).auram$hasPauseMenu();
     }
 
+    static boolean coversWorld() {
+        var client = Minecraft.getInstance();
+        return world != null && client.level == world && client.player != null
+                && renderedScreen == client.screen && isSystem(renderedScreen) && motion.openingFinished();
+    }
+
     private static boolean active(Screen screen) {
         var client = Minecraft.getInstance();
         return screen == client.screen && client.player != null && client.level != null;

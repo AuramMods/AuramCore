@@ -33,8 +33,13 @@ final class MenuMotion {
     }
 
     void drawOpening(GuiGraphics graphics) {
-        if (openingCover > 0 && MenuGlass.ready()) draw(graphics, openingCover);
+        if (openingCover <= 0) openedAt = 0;
+        else if (MenuGlass.ready()) draw(graphics, openingCover);
         openingCover = 0;
+    }
+
+    boolean openingFinished() {
+        return openedAt == 0;
     }
 
     void captureClosing(Minecraft client) {
