@@ -19,7 +19,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Mod.EventBusSubscriber(modid = Auram.MODID)
 public final class DestinationMapSync {
     private static final int HOME = 1;
     private static final int WARP = 2;
@@ -31,22 +30,25 @@ public final class DestinationMapSync {
         dirty = true;
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void playerJoined(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && ModList.get().isLoaded("ftbessentials")) send(player);
-    }
+    @Mod.EventBusSubscriber(modid = Auram.MODID)
+    public static final class Events {
+        @SubscribeEvent(priority = EventPriority.LOWEST)
+        public static void playerJoined(PlayerEvent.PlayerLoggedInEvent event) {
+            if (event.getEntity() instanceof ServerPlayer player && ModList.get().isLoaded("ftbessentials")) send(player);
+        }
 
-    @SubscribeEvent
-    public static void publishChanges(TickEvent.ServerTickEvent event) {
-        if (!dirty || event.phase != TickEvent.Phase.END || !ModList.get().isLoaded("ftbessentials")) return;
-        dirty = false;
-        event.getServer().getPlayerList().getPlayers().forEach(DestinationMapSync::send);
-    }
+        @SubscribeEvent
+        public static void publishChanges(TickEvent.ServerTickEvent event) {
+            if (!dirty || event.phase != TickEvent.Phase.END || !ModList.get().isLoaded("ftbessentials")) return;
+            dirty = false;
+            event.getServer().getPlayerList().getPlayers().forEach(DestinationMapSync::send);
+        }
 
-    @SubscribeEvent
-    public static void clearServer(ServerStoppedEvent event) {
-        if (ModList.get().isLoaded("waystones") && ModList.get().isLoaded("ftbessentials")) WaystoneDestinations.changed();
-        dirty = false;
+        @SubscribeEvent
+        public static void clearServer(ServerStoppedEvent event) {
+            if (ModList.get().isLoaded("waystones") && ModList.get().isLoaded("ftbessentials")) WaystoneDestinations.changed();
+            dirty = false;
+        }
     }
 
     private static void send(ServerPlayer player) {

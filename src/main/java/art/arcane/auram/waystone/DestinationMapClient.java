@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
 public final class DestinationMapClient {
     private static Map<ResourceLocation, List<DestinationIcon>> icons = Map.of();
     private static final List<DestinationMapNetwork.Marker> incoming = new ArrayList<>();
@@ -55,10 +54,15 @@ public final class DestinationMapClient {
         LargeMapScreen.refreshIconsIfOpen();
     }
 
-    @SubscribeEvent
-    public static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
-        incoming.clear();
-        icons = Map.of();
+    @Mod.EventBusSubscriber(modid = Auram.MODID, value = Dist.CLIENT)
+    public static final class ConnectionEvents {
+        @SubscribeEvent
+        public static void logout(ClientPlayerNetworkEvent.LoggingOut event) {
+            if (ModList.get().isLoaded("ftbchunks")) {
+                incoming.clear();
+                icons = Map.of();
+            }
+        }
     }
 
     public static void addIcons(MapIconEvent event) {
