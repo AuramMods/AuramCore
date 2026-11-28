@@ -1,9 +1,9 @@
 package art.arcane.auram.client.menu;
 
-import art.arcane.adapt.api.world.PlayerSkillLine;
-import art.arcane.adapt.client.screen.CatalogIndex;
-import art.arcane.adapt.client.screen.LearnRules;
+import art.arcane.adapt.engine.world.PlayerSkillLine;
 import art.arcane.adapt.client.view.AdaptationView;
+import art.arcane.adapt.client.view.CatalogIndex;
+import art.arcane.adapt.client.view.LearnRules;
 import art.arcane.adapt.client.view.PlayerView;
 import art.arcane.adapt.client.view.SkillView;
 

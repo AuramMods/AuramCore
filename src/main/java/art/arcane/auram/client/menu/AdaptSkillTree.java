@@ -2,7 +2,6 @@ package art.arcane.auram.client.menu;
 
 import art.arcane.adapt.client.protocol.Route;
 import art.arcane.adapt.client.screen.AdaptScreen;
-import art.arcane.adapt.client.screen.CatalogIndex;
 import art.arcane.adapt.client.screen.ScreenRouter;
 import art.arcane.adapt.client.screen.SkillsScreen;
 import art.arcane.adapt.client.ui.UiDraw;
@@ -10,6 +9,7 @@ import art.arcane.adapt.client.ui.kit.LegacyText;
 import art.arcane.adapt.client.ui.kit.UiNode;
 import art.arcane.adapt.client.ui.kit.UiRect;
 import art.arcane.adapt.client.view.AdaptationView;
+import art.arcane.adapt.client.view.CatalogIndex;
 import art.arcane.adapt.client.view.CatalogView;
 import art.arcane.adapt.client.view.IconRef;
 import art.arcane.adapt.client.view.PlayerView;
