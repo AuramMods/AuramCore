@@ -39,6 +39,10 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
     }
 
     private static String optionalTarget(String mixinClassName) {
+        if (mixinClassName.startsWith("art.arcane.auram.mixin.derenderpatcher.BlissTool")
+                || mixinClassName.equals("art.arcane.auram.mixin.derenderpatcher.ShaderCompatAccess")) {
+            return "com.derenderpatcher.compat.ShaderCompat";
+        }
         if (mixinClassName.startsWith("art.arcane.auram.mixin.vapor.")) {
             return "net.irisshaders.iris.api.v0.IrisApi";
         }

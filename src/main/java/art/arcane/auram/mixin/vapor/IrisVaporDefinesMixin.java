@@ -22,6 +22,9 @@ abstract class IrisVaporDefinesMixin {
         if (FMLLoader.getLoadingModList().getModFileById("tconstruct") != null) {
             builder.add(new StringPair("AURAM_TINKERS_FLUID_BACKEND", ""));
         }
+        if (FMLLoader.getLoadingModList().getModFileById("derenderpatcher") != null) {
+            builder.add(new StringPair("AURAM_DRACONIC_TOOL_CAPTURE", ""));
+        }
         return builder.build();
     }
 }
