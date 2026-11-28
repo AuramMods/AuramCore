@@ -16,7 +16,8 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         if (optionalTarget == null) return true;
         try {
             var provider = MixinService.getService().getBytecodeProvider();
-            if (isWaystoneBridge(mixinClassName) && !optionalTarget.equals(targetClassName)) {
+            if ((isWaystoneBridge(mixinClassName) || mixinClassName.startsWith("art.arcane.auram.mixin.felling."))
+                    && !optionalTarget.equals(targetClassName)) {
                 provider.getClassNode(targetClassName);
             }
             ClassNode dependency = provider.getClassNode(optionalTarget);
@@ -76,6 +77,10 @@ public final class AuramMixinPlugin implements IMixinConfigPlugin {
         }
         // Some mixins depend on a second mod or target vanilla classes directly.
         return switch (mixinClassName) {
+            case "art.arcane.auram.mixin.felling.PlayerTreeCutMixin", "art.arcane.auram.mixin.felling.TreeRemovalMixin" ->
+                    "art.arcane.adapt.content.skill.SkillAxes";
+            case "art.arcane.auram.mixin.felling.AdaptBlockSnapshotMixin", "art.arcane.auram.mixin.felling.AdaptAxesCuttingToolMixin" ->
+                    "me.adda.enhanced_falling_trees.event.EventHandler";
             case "art.arcane.auram.mixin.adapt.AdaptScreenAccess", "art.arcane.auram.mixin.adapt.AdaptScreenMixin" ->
                     "art.arcane.adapt.client.screen.AdaptScreen";
             case "art.arcane.auram.mixin.adapt.AdaptSkillsAccess" -> "art.arcane.adapt.client.screen.SkillsScreen";
